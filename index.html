@@ -194,8 +194,6 @@
 // IMPORTANT: Adjust your production parameters string cleanly here
 const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlicHNxbGxnaXRudHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NTM1NDQsImV4cCI6MjA5OTMyOTU0NH0.V8FT2cDAJMcfv1mtgCGWZck5wxswAlj7tyW-KbaJ8bM"; // Paste your complete token key string intact
-
-const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let activeUserToken = null;
 let state = { destinations: [], startCity: '', startDate: '', endDate: '', transport: '', vibes: [], budget: 0 };
 let currentStep = 1;
