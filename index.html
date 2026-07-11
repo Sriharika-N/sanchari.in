@@ -496,12 +496,19 @@ function buildSummary() {
 function triggerBuiltInGeneration() {
   const statusEl = document.getElementById('apiStatusMessage');
   statusEl.style.color = "green";
-  statusEl.textContent = "Compiling customizable blocks instantly...";
+  statusEl.textContent = "Compiling your tailored adventure blueprint maps...";
 
   const perHeadBudget = state.budgetScope === 'Per-Person Scope' ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
-  const dailyBudgetAllocation = Math.round((perHeadBudget * 0.4) / state.days); 
-  const dailyTransitAllocation = Math.round((perHeadBudget * 0.3) / state.days);
-  const dailyStayAllocation = Math.round((perHeadBudget * 0.3) / state.days);
+  
+  // Calculate elastic variance ranges instead of rigid exact values
+  const dailyBudgetAllocationMin = Math.round((perHeadBudget * 0.35) / state.days);
+  const dailyBudgetAllocationMax = Math.round((perHeadBudget * 0.45) / state.days);
+  
+  const dailyTransitMin = Math.round((perHeadBudget * 0.25) / state.days);
+  const dailyTransitMax = Math.round((perHeadBudget * 0.35) / state.days);
+
+  const dailyStayMin = Math.round((perHeadBudget * 0.25) / state.days);
+  const dailyStayMax = Math.round((perHeadBudget * 0.35) / state.days);
 
   let htmlBody = "";
 
@@ -516,34 +523,75 @@ function triggerBuiltInGeneration() {
       }
     }
 
-    let interCityTransitText = `Drive private own transport setup (${state.vehicleMode}) to ${day.place}. Estimated allocation cost: ₹${dailyTransitAllocation} INR.`;
-    if(state.vehicleMode === "No Private Vehicle") {
-      interCityTransitText = `Take local transit link/inter-city bus from connecting hub stations directly into ${day.place}. Allocation: ₹${dailyTransitAllocation} INR.`;
+    // Dynamic Transit Mode strings based on selections
+    let transitCardHtml = "";
+    if (state.transport === "Full Road Trip") {
+      transitCardHtml = `🚗 <strong>${state.startCity} ➔ ${day.place} Road Trip:</strong> Hit the highway early via your ${state.vehicleMode}. Cruise at steady optimal windows to beat local bottleneck queues.`;
+    } else {
+      transitCardHtml = `🚇 <strong>Hub Interconnect:</strong> Transfer via ${state.transport}. Arrange for a reliable last-mile local link directly to ${day.place}.`;
     }
 
+    // Dynamic high-value details matching user's custom text inputs
+    const userCustomGoal = day.thingsToDo && day.thingsToDo !== "Explore local highlights" 
+      ? `🎯 <strong>Custom Traveler Focus:</strong> Ensure you dedicate time to: <em>"${day.thingsToDo}"</em>.`
+      : `🌟 <strong>Vibe Focus:</strong> Actively exploring the area with an emphasis on local character elements.`;
+
     htmlBody += `
-      <div class="daily-card" style="border-left: 4px solid var(--coral);">
-        <h3 style="color:var(--ocean-dark); font-family:'Fraunces', serif;">📅 Day ${index + 1} — ${getDayName(day.date)}, ${day.date}</h3>
-        <p style="margin-top:4px;">📍 <strong>Target Destination Location:</strong> ${day.place}</p>
-        <p style="margin-top:2px;">✨ <strong>Active Day Vibe Configurations:</strong> <span style="color:var(--coral); font-weight:600;">${day.vibes.join(', ')}</span></p>
+      <div class="daily-card" style="border-left: 5px solid var(--coral); padding: 20px; margin-bottom: 24px; background:#fff; border-radius:16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
         
-        <div style="margin-top:10px; padding:8px; background:var(--paper); border-radius:6px; font-size:13px;">
-          <strong>🎯 Selected Custom Things to Do:</strong> ${day.thingsToDo}
+        <!-- HEADER ROW WITH WEEKDAY NAMES -->
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--border); padding-bottom:10px; margin-bottom:15px;">
+          <h3 style="color:var(--ocean-dark); font-family:'Fraunces', serif; font-size:18px;">☀️ Day ${index + 1} — ${getDayName(day.date)}, ${day.date}</h3>
+          <span style="background:var(--coral-light); color:var(--coral); font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; text-transform:uppercase;">${day.vibes[0]}</span>
         </div>
 
-        <div class="display-title" style="font-size:13px; margin-top:12px;">🚗 Inter-City Interconnect & How to Travel:</div>
-        <p style="font-size:13px; color:var(--ink);">${interCityTransitText}</p>
+        <p style="margin-bottom:12px; font-size:14px;">📍 <strong>Target Destination Hub:</strong> <span style="color:var(--ocean); font-weight:600;">${day.place}</span></p>
 
-        <div class="display-title" style="font-size:13px; margin-top:8px;">🏨 Verified Local Stay Recommendations & Verified Reviews:</div>
-        <p style="font-size:13px; color:var(--success); font-weight:500;">${baseLookup.lodging}</p>
+        <!-- HIGH USP TIME-SEGMENTED ACTIVITY BLOCK -->
+        <div style="margin-top:15px; display:flex; flex-direction:column; gap:12px;">
+          
+          <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);">
+            <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">🌅 Morning Strategy</div>
+            <p style="font-size:14px; margin-top:3px; color:var(--ink);">${transitCardHtml}</p>
+          </div>
 
-        <div class="display-title" style="font-size:13px; margin-top:8px;">💰 Day ${index + 1} Micro-Budget Allocation Splittings (Per Head):</div>
-        <table style="width:100%; font-size:12px; margin-top:4px; border-collapse:collapse; text-align:left;">
-          <tr><td style="padding:2px 0;">🍔 Food & Local Sights:</td><td style="font-weight:600;">₹${dailyBudgetAllocation.toLocaleString('en-IN')} INR</td></tr>
-          <tr><td style="padding:2px 0;">🚌 Segment Transit Cost:</td><td style="font-weight:600;">₹${dailyTransitAllocation.toLocaleString('en-IN')} INR</td></tr>
-          <tr><td style="padding:2px 0;">🛌 Hotel Accommodation Night Room:</td><td style="font-weight:600;">₹${dailyStayAllocation.toLocaleString('en-IN')} INR</td></tr>
-          <tr style="border-top:1px solid var(--border);"><td style="padding:4px 0; font-weight:600;">Daily Sum Total Target:</td><td style="font-weight:700; color:var(--coral);">₹${(dailyBudgetAllocation + dailyTransitAllocation + dailyStayAllocation).toLocaleString('en-IN')} INR</td></tr>
-        </table>
+          <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);">
+            <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">☀️ Afternoon Spotlight (The Experience USP)</div>
+            <p style="font-size:14px; margin-top:3px; color:var(--ink);">${userCustomGoal}</p>
+            <ul style="margin-top:6px; padding-left:18px; font-size:13px; color:var(--ocean-mid); display:flex; flex-direction:column; gap:2px;">
+              <li>📸 Iconic Destination Sight: ${baseLookup.famous[0] || "Explore main architectural hotspots."}</li>
+              <li>🌿 Hidden Offbeat Target: ${baseLookup.gems[0] || "Unwind at a scenic overlook path hidden from mainstream routes."}</li>
+            </ul>
+          </div>
+
+          <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);">
+            <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">🌙 Evening Wind-down & Dine</div>
+            <p style="font-size:14px; margin-top:3px; color:var(--ink);">Head out for a relaxed traditional culinary run. Sample authentic local recipes away from commercial main avenues.</p>
+          </div>
+
+        </div>
+
+        <!-- ACCOMMODATION DATA SECTION -->
+        <div style="margin-top:15px; border-top:1px solid var(--border); padding-top:12px;">
+          <div style="font-size:12px; font-weight:600; color:var(--ocean-dark); text-transform:uppercase; margin-bottom:4px;">🏨 Curated Accommodation Base Options</div>
+          <div style="font-size:13px; color:var(--success); background:var(--success-bg); padding:8px 12px; border-radius:8px; border:1px solid #ccebdc;">
+            ${baseLookup.lodging}
+          </div>
+        </div>
+
+        <!-- ELASTIC ESTIMATED BUDGET RANGE COMPILATION -->
+        <div style="margin-top:15px; border-top:1px dashed var(--border); padding-top:12px;">
+          <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; margin-bottom:6px;">📊 Estimated Elastic Range Matrix (Per Head)</div>
+          <div style="display:grid; grid-template-columns: repeat(3, 1xl); gap:10px; font-size:12px; background:var(--sand); padding:10px; border-radius:8px;">
+            <div>🍲 <strong>Food & Local Sights:</strong><br> ₹${dailyBudgetAllocationMin.toLocaleString('en-IN')} – ₹${dailyBudgetAllocationMax.toLocaleString('en-IN')}</div>
+            <div>🚌 <strong>Transit Expenses:</strong><br> ₹${dailyTransitMin.toLocaleString('en-IN')} – ₹${dailyTransitMax.toLocaleString('en-IN')}</div>
+            <div>🛌 <strong>Night Accommodation:</strong><br> ₹${dailyStayMin.toLocaleString('en-IN')} – ₹${dailyStayMax.toLocaleString('en-IN')}</div>
+          </div>
+          <div style="margin-top:8px; text-align:right; font-size:13px; font-weight:600; color:var(--ocean-dark);">
+            💵 Estimated Day Range Total: <span style="color:var(--coral); font-weight:700;">₹${(dailyBudgetAllocationMin + dailyTransitMin + dailyStayMin).toLocaleString('en-IN')} – ₹${(dailyBudgetAllocationMax + dailyTransitMax + dailyStayMax).toLocaleString('en-IN')} INR</span>
+          </div>
+        </div>
+
       </div>
     `;
   });
