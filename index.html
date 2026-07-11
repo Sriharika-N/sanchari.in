@@ -48,7 +48,6 @@
   .daily-card { background: var(--white); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 16px; }
   .vibe-checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
   .vibe-checkbox-label { font-size: 13px; display: flex; align-items: center; gap: 4px; background: var(--paper); padding: 4px 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); }
-  .vibe-checkbox-label input { cursor: pointer; }
 </style>
 </head>
 <body>
@@ -225,7 +224,7 @@
     <!-- OUTPUT SCREEN -->
     <div id="outputPanel" style="display:none; padding: 24px; background: #fff;">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--border); padding-bottom:10px; margin-bottom:20px;">
-        <h2 style="font-family:'Fraunces', serif; color: var(--ocean-dark);">✨ Your Custom Live Trip Itinerary</h2>
+        <h2 style="font-family:'Fraunces', serif; color: var(--ocean-dark);">✨ Your Custom Live Itinerary Blueprint</h2>
         <button class="btn btn-ghost" style="padding: 6px 14px; font-size:12px; color:var(--coral); border-color:var(--coral);" onclick="modifyItinerary()">✏️ Modify & Adjust</button>
       </div>
       <div id="outputBody"></div>
@@ -243,7 +242,7 @@ let activeUserToken = null;
 
 let state = { 
   destinations: [], startCity: '', startDate: '', endDate: '', days: 0,
-  crew: '', groupSize: 1, transport: '', vehicleMode: '', dailyVibes: {}, budgetVal: 0, budgetScope: '' 
+  crew: '', groupSize: 1, transport: '', vehicleMode: '', dailyPlanData: [], budgetVal: 0, budgetScope: '' 
 };
 let currentStep = 1;
 const TOTAL_STEPS = 7;
@@ -251,33 +250,27 @@ const TOTAL_STEPS = 7;
 const travelKnowledgeBase = {
   "coorg": {
     famous: ["Abbey Falls Sightseeing Tour", "Raja's Seat Sunset Viewpoint", "Namdroling Monastery"],
-    gems: ["Chelavara Falls Trekking Path", "Kote Betta Offbeat Ridge View"],
-    lodging: "Coorg Cliff Resort ⭐⭐⭐⭐⭐ (9.2/10 Review Score) / Zostel Coorg ⭐⭐⭐⭐ (8.8/10 Review Score)"
+    gems: ["Chelavara Falls Trekking Path", "Kote Betta Offbeat Ridge View"]
   },
   "munnar": {
     famous: ["Eravikulam National Park", "Mattupetty Dam Boating", "Top Station View"],
-    gems: ["Lockhart Gap Offbeat Trekking View", "Attukad Waterfalls Hidden Trail"],
-    lodging: "Blanket Hotel Munnar ⭐⭐⭐⭐⭐ (9.5/10 Review Score) / Tea Harvest ⭐⭐⭐⭐ (8.9/10 Review Score)"
+    gems: ["Lockhart Gap Offbeat Trekking View", "Attukad Waterfalls Hidden Trail"]
   },
   "gokarna": {
     famous: ["Om Beach Waterfront Trek", "Mahabaleshwar Temple Complex", "Kudle Beach Shacks"],
-    gems: ["Half Moon Beach Secluded Path", "Paradise Beach Wild Camping Spot"],
-    lodging: "Kahani Paradise ⭐⭐⭐⭐⭐ (9.6/10 Review Score) / Zostel Gokarna ⭐⭐⭐⭐ (9.0/10 Review Score)"
+    gems: ["Half Moon Beach Secluded Path", "Paradise Beach Wild Camping Spot"]
   },
   "hampi": {
     famous: ["Virupaksha Temple Courtyard", "Vittala Temple Stone Chariot", "Hemakuta Hill Sunset"],
-    gems: ["Sanapur Lake Coracle Boat Rides", "Anegundi Ancient Village Walk"],
-    lodging: "Evolve Back Hampi ⭐⭐⭐⭐⭐ (9.8/10 Review Score) / Hampi Boulders ⭐⭐⭐⭐ (8.7/10 Review Score)"
+    gems: ["Sanapur Lake Coracle Boat Rides", "Anegundi Ancient Village Walk"]
   },
   "spiti valley": {
     famous: ["Key Monastery Cliffside Complex", "Chandratal Lake High-Altitude Trek"],
-    gems: ["Langza Fossil Hunting Ridge", "Mud Village Pin Valley Outpost"],
-    lodging: "Spiti Horizon Stays ⭐⭐⭐⭐⭐ (9.1/10 Review Score) / Kaza Village Homestays ⭐⭐⭐⭐ (8.5/10 Review Score)"
+    gems: ["Langza Fossil Hunting Ridge", "Mud Village Pin Valley Outpost"]
   },
   "default": {
     famous: ["Central City Historical Tour", "Panoramic Viewpoint Excursion"],
-    gems: ["Hidden Nature Trail Overlook", "Offbeat Artisanal Heritage Village Walk"],
-    lodging: "Boutique Eco Resort ⭐⭐⭐⭐⭐ (9.0/10 Review Score) / Local Backpacker Hostel ⭐⭐⭐⭐ (8.6/10 Review Score)"
+    gems: ["Hidden Nature Trail Overlook", "Offbeat Artisanal Heritage Village Walk"]
   }
 };
 
@@ -360,7 +353,7 @@ function generateDailyVibeSelectors() {
       
       <div class="form-group">
         <label>Target Destination/Place for this Day:</label>
-        <input type="text" class="daily-place-input" data-date="${dateStr}" placeholder="e.g. Madikeri Fort, Om Beach...">
+        <input type="text" class="daily-place-input" data-date="${dateStr}" placeholder="e.g. Coorg, Gokarna, Munnar...">
       </div>
 
       <div class="form-group">
@@ -444,7 +437,7 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
 
   try {
     await travelPlannerSupabaseClient.from('journey_feedback').insert({
-      step_number: stepNum, step_name: stepName, feedback_rating: 'v2_local_engine',
+      step_number: stepNum, step_name: stepName, feedback_rating: 'v3_rounded_pricing',
       user_comments: `Enhancement 1: ${imp1} | Enhancement 2: ${imp2}`
     });
   } catch(e) { console.warn("Trace capture skipped safely."); }
@@ -496,19 +489,14 @@ function buildSummary() {
 function triggerBuiltInGeneration() {
   const statusEl = document.getElementById('apiStatusMessage');
   statusEl.style.color = "green";
-  statusEl.textContent = "Compiling your tailored adventure blueprint maps...";
+  statusEl.textContent = "Compiling customized blocks instantly...";
 
   const perHeadBudget = state.budgetScope === 'Per-Person Scope' ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
   
-  // Calculate elastic variance ranges instead of rigid exact values
-  const dailyBudgetAllocationMin = Math.round((perHeadBudget * 0.35) / state.days);
-  const dailyBudgetAllocationMax = Math.round((perHeadBudget * 0.45) / state.days);
-  
-  const dailyTransitMin = Math.round((perHeadBudget * 0.25) / state.days);
-  const dailyTransitMax = Math.round((perHeadBudget * 0.35) / state.days);
-
-  const dailyStayMin = Math.round((perHeadBudget * 0.25) / state.days);
-  const dailyStayMax = Math.round((perHeadBudget * 0.35) / state.days);
+  // Clean roundings for realistic approximate values
+  const avgDailyFood = Math.round((perHeadBudget * 0.35) / state.days); 
+  const avgDailyTransit = Math.round((perHeadBudget * 0.30) / state.days);
+  const avgDailyStay = Math.round((perHeadBudget * 0.35) / state.days);
 
   let htmlBody = "";
 
@@ -523,72 +511,55 @@ function triggerBuiltInGeneration() {
       }
     }
 
-    // Dynamic Transit Mode strings based on selections
-    let transitCardHtml = "";
-    if (state.transport === "Full Road Trip") {
-      transitCardHtml = `🚗 <strong>${state.startCity} ➔ ${day.place} Road Trip:</strong> Hit the highway early via your ${state.vehicleMode}. Cruise at steady optimal windows to beat local bottleneck queues.`;
-    } else {
-      transitCardHtml = `🚇 <strong>Hub Interconnect:</strong> Transfer via ${state.transport}. Arrange for a reliable last-mile local link directly to ${day.place}.`;
+    let transitHtml = `🚗 <strong>Transit Vector:</strong> Move outward from your hubs using your self-driven ${state.vehicleMode}. Cruise at early windows to minimize traffic backlogs.`;
+    if(state.vehicleMode === "No Private Vehicle") {
+      transitHtml = `🚌 <strong>Transit Vector:</strong> Coordinate segment hops using verified local transit lines or connecting express buses.`;
     }
-
-    // Dynamic high-value details matching user's custom text inputs
-    const userCustomGoal = day.thingsToDo && day.thingsToDo !== "Explore local highlights" 
-      ? `🎯 <strong>Custom Traveler Focus:</strong> Ensure you dedicate time to: <em>"${day.thingsToDo}"</em>.`
-      : `🌟 <strong>Vibe Focus:</strong> Actively exploring the area with an emphasis on local character elements.`;
 
     htmlBody += `
       <div class="daily-card" style="border-left: 5px solid var(--coral); padding: 20px; margin-bottom: 24px; background:#fff; border-radius:16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
         
-        <!-- HEADER ROW WITH WEEKDAY NAMES -->
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--border); padding-bottom:10px; margin-bottom:15px;">
           <h3 style="color:var(--ocean-dark); font-family:'Fraunces', serif; font-size:18px;">☀️ Day ${index + 1} — ${getDayName(day.date)}, ${day.date}</h3>
           <span style="background:var(--coral-light); color:var(--coral); font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; text-transform:uppercase;">${day.vibes[0]}</span>
         </div>
 
-        <p style="margin-bottom:12px; font-size:14px;">📍 <strong>Target Destination Hub:</strong> <span style="color:var(--ocean); font-weight:600;">${day.place}</span></p>
+        <p style="margin-bottom:12px; font-size:14px;">📍 <strong>Target Location Hub:</strong> <span style="color:var(--ocean); font-weight:600;">${day.place}</span></p>
 
-        <!-- HIGH USP TIME-SEGMENTED ACTIVITY BLOCK -->
+        <!-- RICH TIME-SEGMENTED EXPERIENCES USP -->
         <div style="margin-top:15px; display:flex; flex-direction:column; gap:12px;">
           
           <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);">
-            <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">🌅 Morning Strategy</div>
-            <p style="font-size:14px; margin-top:3px; color:var(--ink);">${transitCardHtml}</p>
+            <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">🌅 Morning & Outbound Travel</div>
+            <p style="font-size:14px; margin-top:3px; color:var(--ink);">${transitHtml}</p>
           </div>
 
           <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);">
-            <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">☀️ Afternoon Spotlight (The Experience USP)</div>
-            <p style="font-size:14px; margin-top:3px; color:var(--ink);">${userCustomGoal}</p>
+            <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">☀️ Afternoon Spotlight Experience</div>
+            <p style="font-size:14px; margin-top:3px; color:var(--ink);">🎯 <strong>Custom Goal:</strong> <em>"${day.thingsToDo}"</em></p>
             <ul style="margin-top:6px; padding-left:18px; font-size:13px; color:var(--ocean-mid); display:flex; flex-direction:column; gap:2px;">
-              <li>📸 Iconic Destination Sight: ${baseLookup.famous[0] || "Explore main architectural hotspots."}</li>
-              <li>🌿 Hidden Offbeat Target: ${baseLookup.gems[0] || "Unwind at a scenic overlook path hidden from mainstream routes."}</li>
+              <li>📸 Key Sight Recommendation: ${baseLookup.famous[0] || "Explore main structural landmarks."}</li>
+              <li>🌿 Hidden Offbeat Target: ${baseLookup.gems[0] || "Discover secluded valley views off the beaten tracks."}</li>
             </ul>
           </div>
 
           <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);">
-            <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">🌙 Evening Wind-down & Dine</div>
-            <p style="font-size:14px; margin-top:3px; color:var(--ink);">Head out for a relaxed traditional culinary run. Sample authentic local recipes away from commercial main avenues.</p>
+            <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">🌙 Evening Wind-down</div>
+            <p style="font-size:14px; margin-top:3px; color:var(--ink);">Head out for a relaxed traditional culinary run. Sample authentic regional recipes away from commercial main avenues.</p>
           </div>
 
         </div>
 
-        <!-- ACCOMMODATION DATA SECTION -->
-        <div style="margin-top:15px; border-top:1px solid var(--border); padding-top:12px;">
-          <div style="font-size:12px; font-weight:600; color:var(--ocean-dark); text-transform:uppercase; margin-bottom:4px;">🏨 Curated Accommodation Base Options</div>
-          <div style="font-size:13px; color:var(--success); background:var(--success-bg); padding:8px 12px; border-radius:8px; border:1px solid #ccebdc;">
-            ${baseLookup.lodging}
-          </div>
-        </div>
-
-        <!-- ELASTIC ESTIMATED BUDGET RANGE COMPILATION -->
+        <!-- ROUNDED AVERAGE BUDGET SPLIT MATRIX -->
         <div style="margin-top:15px; border-top:1px dashed var(--border); padding-top:12px;">
-          <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; margin-bottom:6px;">📊 Estimated Elastic Range Matrix (Per Head)</div>
+          <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; margin-bottom:6px;">📊 Estimated Average Allocation Framework (Per Head)</div>
           <div style="display:grid; grid-template-columns: repeat(3, 1xl); gap:10px; font-size:12px; background:var(--sand); padding:10px; border-radius:8px;">
-            <div>🍲 <strong>Food & Local Sights:</strong><br> ₹${dailyBudgetAllocationMin.toLocaleString('en-IN')} – ₹${dailyBudgetAllocationMax.toLocaleString('en-IN')}</div>
-            <div>🚌 <strong>Transit Expenses:</strong><br> ₹${dailyTransitMin.toLocaleString('en-IN')} – ₹${dailyTransitMax.toLocaleString('en-IN')}</div>
-            <div>🛌 <strong>Night Accommodation:</strong><br> ₹${dailyStayMin.toLocaleString('en-IN')} – ₹${dailyStayMax.toLocaleString('en-IN')}</div>
+            <div>🍲 <strong>Food & Attractions:</strong><br> ~₹${avgDailyFood.toLocaleString('en-IN')}</div>
+            <div>🚌 <strong>Transit Expenses:</strong><br> ~₹${avgDailyTransit.toLocaleString('en-IN')}</div>
+            <div>🛌 <strong>Night Room Target:</strong><br> ~₹${avgDailyStay.toLocaleString('en-IN')}</div>
           </div>
           <div style="margin-top:8px; text-align:right; font-size:13px; font-weight:600; color:var(--ocean-dark);">
-            💵 Estimated Day Range Total: <span style="color:var(--coral); font-weight:700;">₹${(dailyBudgetAllocationMin + dailyTransitMin + dailyStayMin).toLocaleString('en-IN')} – ₹${(dailyBudgetAllocationMax + dailyTransitMax + dailyStayMax).toLocaleString('en-IN')} INR</span>
+            💵 Average Estimated Day Cost: <span style="color:var(--coral); font-weight:700;">₹${(avgDailyFood + avgDailyTransit + avgDailyStay).toLocaleString('en-IN')} INR</span>
           </div>
         </div>
 
