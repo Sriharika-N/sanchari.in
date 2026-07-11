@@ -258,7 +258,7 @@
       <div id="apiStatusMessage" style="margin-top:14px; font-weight:600;"></div>
     </div>
 
-    <!-- 🌟 SIMPLIFIED BETA TESTER COMPULSORY FEEDBACK CARD MODULE -->
+    <!-- SIMPLIFIED BETA TESTER COMPULSORY FEEDBACK CARD MODULE -->
     <div class="compulsory-feedback-card" id="compulsoryFeedbackContainer">
       <div class="feedback-title" style="font-weight:600; font-size:14px; color: var(--ocean-dark); margin-bottom: 4px;">📋 Beta Tester Portal Review</div>
       <p style="font-size: 12px; color: var(--muted); margin-bottom: 10px;">Please share how this application workflow feels and what additional details or features you think this layout page should display to advance.</p>
@@ -279,7 +279,8 @@
 
 <script>
 const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; 
+// Clean, valid initialization without trailing browser parsing markers
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlic3FsbGdpdG50d2EiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNzEwNTE4OSwiZXhwIjoyMDUyNjgxMTg5fQ.q0zM8gK1M0k4q0m1_K0k4q0m1_K0k4q0m1_K0k4q0m1"; 
 
 const travelPlannerSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let activeUserToken = null;
@@ -302,7 +303,7 @@ const travelKnowledgeBase = {
   "munnar": {
     famous: ["Eravikulam High Plateau Valley", "Mattupetty Lake Boating Gates", "Top Station Horizon Peak", "Tea Museum Heritage Walk"],
     gems: ["Lockhart Gap Panoramic Ridge Way", "Attukad Waterfalls Secluded Glade", "Anamudi Foothill Secret Trails", "Pothamedu Hidden Clouds Viewpoint"],
-    breakfast: ["Freshly picked Munnar leaf blends with local idlis", "Highland cardamon tea with appam variants", "Keralite home-style breakfast buffers"],
+    breakfast: ["Freshly picked Munnar leaf blends with local idlis", "Highland cardamon tea with appam variants", "Highland home-style breakfast buffers"],
     eats: ["Rapsy Restaurant regional specialty dishes", "Guru's Malabar spice parotta counters", "High Range Traditional Local Dine Outpost"]
   },
   "gokarna": {
@@ -363,9 +364,12 @@ function triggerForgotPasswordRecovery() {
 async function loginWithGoogle() {
   const { error } = await travelPlannerSupabaseClient.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.origin } // <-- This grabs the active live URL
+    options: { redirectTo: window.location.origin }
   });
-  ...
+  if (error) {
+    const box = document.getElementById('authErrorMsg');
+    box.textContent = error.message; box.classList.add('show');
+  }
 }
 
 async function handleCredentialAuth() {
@@ -454,7 +458,6 @@ function generateDailyVibeSelectors() {
     const dayName = current.toLocaleDateString('en-US', { weekday: 'long' });
     const dateStr = current.toISOString().split('T')[0];
 
-    // Mark transit buffers contextually to make things clear for the tracker
     let conditionalInputLayout = "";
     if (state.transitDaysAllocation >= 2 && i === 0) {
       conditionalInputLayout = `<p style="color:var(--coral); font-size:12px; font-weight:600;">🛣️ Outbound Route Segment Day (Configured in Step 3)</p>`;
@@ -496,8 +499,11 @@ function updateProgressBar() {
   document.getElementById('progressFill').style.width = ((currentStep / TOTAL_STEPS) * 100) + '%';
   const tabs = document.getElementById('stepTabs').children;
   for (let i = 0; i < tabs.length; i++) {
-    if (i === currentStep - 1) tabs[i].classList.add('active');
-    else tabs[i].classList.remove('active');
+    if (i === currentStep - 1) {
+      tabs[i].classList.add('active');
+    } else {
+      tabs[i].classList.remove('active');
+    }
   }
 }
 
@@ -535,7 +541,6 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
     if (!state.budgetVal || !state.budgetScope) { err.classList.add('show'); return; }
   }
 
-  // 🌟 HARDENED FEEDBACK INTAKE LOGIC BLOCK
   const betaFeedbackText = document.getElementById('singleBetaFeedbackInput').value.trim();
   if (!betaFeedbackText) {
     alert("Beta Architecture Notice: Please fill out the feedback window box below to unlock application navigation steps.");
@@ -544,7 +549,7 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
 
   try {
     await travelPlannerSupabaseClient.from('journey_feedback').insert({
-      step_number: stepNum, step_name: stepName, feedback_rating: 'v7_transit_hardened',
+      step_number: stepNum, step_name: stepName, feedback_rating: 'v8_syntax_resolved',
       user_comments: betaFeedbackText
     });
   } catch(e) { console.warn("Log captured locally safely."); }
@@ -621,7 +626,6 @@ async function triggerBuiltInGeneration() {
 
     let dayVibeHeaderString = day.vibes.join(" + ");
     
-    // 🌟 AUTOMATED CONTEXTUAL ROUTING BUILDER STRATEGIES BASED ON SELECTIONS
     let dynamicMorningStrategy = `🥞 <strong>Morning Activation:</strong> Start early with a local food run to sample: <em>"${morningBreakfastVibe}"</em>. Afterwards, organize gear and map out local directional paths into ${day.place}.`;
     let dynamicEveningStrategy = `🌙 <strong>Evening Strategy:</strong> Head down to the traditional culinary quarter to experience: <em>"${eveningCulinaryVibe}"</em>. Keep it casual and explore back-alley traditional bazaars away from crowded paths.`;
 
@@ -634,7 +638,6 @@ async function triggerBuiltInGeneration() {
       dynamicMorningStrategy = `🧳 <strong>Return Vector Prep:</strong> Clear stay invoices, bundle tracking assets, and commence final packing procedures. Prepare for back-haul travel links.`;
       dynamicEveningStrategy = `🏡 <strong>Homeward Connection:</strong> Complete the return connection corridor back into <strong>${state.startCity}</strong> via your selected ${state.vehicleMode} setup. Trip conclusion.`;
     } else {
-      // Standard Vibe modifications applied strictly to non-transit days
       if(day.vibes.includes("🏔️ Adventure Trekking")) {
         dynamicMorningStrategy = `🏔️ <strong>Morning Activation:</strong> Pack hydration targets early. Prepare vehicles or coordinate transit vectors for rugged, high-altitude segment exploratory tracks around ${day.place}.`;
       }
