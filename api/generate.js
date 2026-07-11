@@ -14,7 +14,8 @@ export default async function handler(req, res) {
   const { payload, prompt } = req.body;
 
   try {
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
+    // 🌟 THE DROP-IN STABLE MODEL FIX
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
     
     const enhancedPrompt = `${prompt}
     Format your response strictly as a single JSON object. Do not wrap the response in markdown code blocks like \`\`\`json or include any text outside the raw JSON structure. 
@@ -53,7 +54,6 @@ export default async function handler(req, res) {
     const data = await geminiRes.json();
     let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     
-    // Aggressive normalization formatting scrub to completely isolate raw JSON
     rawText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
     
     let parsedPlan;
@@ -65,7 +65,6 @@ export default async function handler(req, res) {
 
     const authHeader = req.headers['authorization'] || `Bearer ${SUPABASE_KEY}`;
 
-    // Gracefully attempt history persistence without crashing if database connections time out
     try {
       await fetch(`${SUPABASE_URL}/rest/v1/trip_history`, {
         method: 'POST',
