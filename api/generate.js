@@ -7,20 +7,32 @@ export default async function handler(req, res) {
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_KEY = process.env.SUPABASE_KEY;
 
+  if (!GEMINI_API_KEY || !SUPABASE_URL || !SUPABASE_KEY) {
+    return res.status(500).json({ error: "Missing required backend infrastructure keys in Vercel configuration." });
+  }
+
   const { payload, prompt } = req.body;
 
   try {
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
     
-    const enhancedPrompt = `${prompt} 
-    Return a structural JSON object containing:
-    1. "famousActivities": Array of iconic sights in the location.
-    2. "hiddenGems": Array of offbeat, not-so-famous spots.
-    3. "timingOptimization": { "bestTimeToDepart": String, "layoverTransverseStrategy": String }
-    4. "multimodalBudgetOptions": { "budgetRoute": String, "premiumRoute": String, "optimizedStayRecommendation": String }
-    5. "itinerary": Daily layout map structured using the specified weekday names (e.g., Monday, Tuesday) matching the user's daily vibes matrix.
+    const enhancedPrompt = `${prompt}
+    Format your response strictly as a single JSON object. Do not wrap the response in markdown code blocks like \`\`\`json or include any text outside the raw JSON structure. 
     
-    CRITICAL: Return ONLY valid JSON. Do not include markdown blocks, backticks, or code wrappers outside the curly braces.`;
+    The JSON object must contain exactly these keys:
+    {
+      "famousActivities": ["activity 1", "activity 2"],
+      "hiddenGems": ["gem 1", "gem 2"],
+      "timingOptimization": {
+        "bestTimeToDepart": "detailed timing recommendation text string",
+        "layoverTransverseStrategy": "detailed routing/transit optimization string"
+      },
+      "multimodalBudgetOptions": {
+        "budgetRoute": "economy transit details string",
+        "premiumRoute": "premium transit details string",
+        "optimizedStayRecommendation": "hotel/stay optimization details string"
+      }
+    }`;
 
     const geminiRes = await fetch(geminiUrl, {
       method: 'POST',
@@ -29,38 +41,49 @@ export default async function handler(req, res) {
         'x-goog-api-key': GEMINI_API_KEY
       },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: enhancedPrompt }] }],
-        generationConfig: { responseMimeType: "application/json", temperature: 0.5 }
+        contents: [{ parts: [{ text: enhancedPrompt }] }]
       })
     });
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
-      throw new Error(`Gemini Engine Refusal: ${errText}`);
+      return res.status(502).json({ error: `Gemini Engine Refusal: ${errText}` });
     }
     
     const data = await geminiRes.json();
     let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     
-    rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const parsedPlan = JSON.parse(rawText);
+    // Aggressive normalization formatting scrub to completely isolate raw JSON
+    rawText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+    
+    let parsedPlan;
+    try {
+      parsedPlan = JSON.parse(rawText);
+    } catch (parseErr) {
+      return res.status(422).json({ error: "Failed to parse raw text response stream from AI engine into structural JSON formatting." });
+    }
 
     const authHeader = req.headers['authorization'] || `Bearer ${SUPABASE_KEY}`;
 
-    await fetch(`${SUPABASE_URL}/rest/v1/trip_history`, {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': authHeader,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({
-        destination: payload.destination.toString(),
-        start_city: payload.startCity,
-        plan_data: parsedPlan
-      })
-    });
+    // Gracefully attempt history persistence without crashing if database connections time out
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/trip_history`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+          destination: Array.isArray(payload.destination) ? payload.destination.toString() : payload.destination,
+          start_city: payload.startCity,
+          plan_data: parsedPlan
+        })
+      });
+    } catch (dbErr) {
+      console.warn("Telemetry persistence skipped:", dbErr.message);
+    }
 
     return res.status(200).json(parsedPlan);
 
