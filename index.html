@@ -587,10 +587,8 @@
 
 <script>
 // ── CONFIG ───────────────────────────────────────────────────────────────────
-// REPLACE THIS WITH YOUR REAL API KEY (Format: AIzaSy...)
-const GEMINI_API_KEY = 'AQ.Ab8RN6LQZxQ4R1BpIRRzt-2Tuo56VtT92VJPXzwHzh6Qs3wHgQ'; 
-const GEMINI_URL = `[https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$](https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$){GEMINI_API_KEY}`;
-
+const GEMINI_API_KEY = 'AQ.Ab8RN6JJmGRQU2OG_8Qj_1gyRAgoSOPn3cRkrnziaGm7RLmO0w'; 
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 // ── STATE ────────────────────────────────────────────────────────────────────
 let state = {
   destination:'', startCity:'', startDate:'', endDate:'', days:0, nights:0,
