@@ -363,12 +363,9 @@ function triggerForgotPasswordRecovery() {
 async function loginWithGoogle() {
   const { error } = await travelPlannerSupabaseClient.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.origin }
+    options: { redirectTo: window.location.origin } // <-- This grabs the active live URL
   });
-  if (error) {
-    const box = document.getElementById('authErrorMsg');
-    box.textContent = error.message; box.classList.add('show');
-  }
+  ...
 }
 
 async function handleCredentialAuth() {
