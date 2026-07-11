@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Travel Planner — Let's Explore!</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Supabase Auth Client Library Bundle CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
@@ -45,6 +46,8 @@
   .error-box.show { display: block; }
   .display-section { margin-top: 20px; padding: 16px; background: var(--sand); border-radius: 12px; }
   .display-title { font-weight: 600; color: var(--ocean-dark); margin-top: 10px; margin-bottom: 4px; border-bottom: 1px solid var(--border); padding-bottom: 2px;}
+  .daily-vibe-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; background: var(--paper); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); }
+  .daily-vibe-label { font-size: 12px; font-weight: 600; min-width: 90px; }
 </style>
 </head>
 <body>
@@ -59,129 +62,175 @@
     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
 
     <div class="step-tabs" id="stepTabs">
-      <div class="step-tab active">🗺️ Destination</div>
+      <div class="step-tab active">🗺️ Dest</div>
+      <div class="step-tab">👥 Crew</div>
       <div class="step-tab">📅 Dates</div>
-      <div class="step-tab">🚗 Travel</div>
-      <div class="step-tab">✨ Vibe</div>
+      <div class="step-tab">🚗 Transit</div>
+      <div class="step-tab">✨ Vibes</div>
       <div class="step-tab">💰 Budget</div>
       <div class="step-tab">🚀 Review</div>
     </div>
 
-    <!-- STEP 1: MULTISELECT DESTINATION -->
+    <!-- STEP 1: DESTINATIONS (MULTISELECT) -->
     <div class="step-panel active" id="step1">
       <div class="step-heading">Where are we exploring? 🗺️</div>
-      <p class="step-sub">Select multiple destinations to build a multi-city route blueprint!</p>
+      <p class="step-sub">Select multiple destinations to build a multi-city route blueprint.</p>
       <div class="form-group">
-        <label>Select All Targets That Appeal:</label>
+        <label>Select Destinations:</label>
         <div class="chips" id="destChips">
           <div class="chip" data-val="Coorg, Karnataka">Coorg, KA ☕</div>
           <div class="chip" data-val="Munnar, Kerala">Munnar, KL 🍵</div>
           <div class="chip" data-val="Gokarna, Karnataka">Gokarna, KA 🏖️</div>
           <div class="chip" data-val="Hampi, Karnataka">Hampi, KA 🗿</div>
           <div class="chip" data-val="Spiti Valley, HP">Spiti Valley, HP 🏔️</div>
-          <div class="chip" data-val="Meghalaya">Meghalaya 🌧️</div>
         </div>
       </div>
       <div class="form-group">
         <label>Or enter a custom location name</label>
-        <input type="text" id="customDest" placeholder="e.g. Ooty, Wayanad, Leh...">
+        <input type="text" id="customDest" placeholder="e.g. Ooty, Wayanad...">
       </div>
       <div class="form-group">
         <label>Starting Location</label>
         <input type="text" id="startCity" placeholder="e.g. Bangalore">
       </div>
-      <button class="btn btn-primary" onclick="submitStepAndProgress(1, 2, 'Destinations Selection')">Next — Pick Dates →</button>
+      <button class="btn btn-primary" onclick="submitStepAndProgress(1, 2, 'Destinations Selection')">Next — Companion Crew →</button>
       <div class="error-box" id="err1">Please select at least one destination and fill in your starting location.</div>
     </div>
 
-    <!-- STEP 2: DATES WITH VALIDATION -->
+    <!-- STEP 2: COMPANION CREW -->
     <div class="step-panel" id="step2">
-      <div class="step-heading">When is the big adventure? 📅</div>
-      <p class="step-sub">Pick your calendar range smoothly.</p>
+      <div class="step-heading">Who is traveling? 👥</div>
+      <p class="step-sub">This determines individual vs. group budget splitting ratios automatically.</p>
+      <div class="form-group">
+        <label>Select Companion Setup</label>
+        <div class="chips" id="crewChips">
+          <div class="chip" data-val="Solo">🧍 Solo (Individual Budget)</div>
+          <div class="chip" data-val="Couple">💑 Couple (Dual Split)</div>
+          <div class="chip" data-val="Friends">👯 Friends Group (Per-Head Split)</div>
+          <div class="chip" data-val="Family">👨‍👩‍👧 Family (Consolidated Group Budget)</div>
+        </div>
+      </div>
+      <div class="form-group" id="groupSizeField" style="display:none;">
+        <label>Total Number of Travelers</label>
+        <input type="number" id="groupSize" min="1" value="1" onchange="state.groupSize = parseInt(this.value) || 1">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goBack(1)">← Back</button>
+        <button class="btn btn-primary" onclick="submitStepAndProgress(2, 3, 'Companion Mapping')">Next — Pick Dates →</button>
+      </div>
+      <div class="error-box" id="err2">Please select a companion style configuration.</div>
+    </div>
+
+    <!-- STEP 3: DATES WITH REAL-TIME CONSTRAINT VALIDATION -->
+    <div class="step-panel" id="step3">
+      <div class="step-heading">When is the adventure? 📅</div>
       <div class="form-group"><label>Start Date</label><input type="date" id="startDate" onchange="validateDates()"></div>
       <div class="form-group"><label>End Date</label><input type="date" id="endDate" onchange="validateDates()"></div>
       <div class="error-box" id="dateErrorBox">⚠️ Danger: The return date cannot be set chronologically prior to your departure date! Please adjust your calendar matrix selections.</div>
       
       <div class="btn-row">
-        <button class="btn btn-ghost" onclick="goBack(1)">← Back</button>
-        <button class="btn btn-primary" id="btnStep2" onclick="submitStepAndProgress(2, 3, 'Date Setup')">Next — Transport →</button>
-      </div>
-      <div class="error-box" id="err2">Please select valid operational travel dates.</div>
-    </div>
-
-    <!-- STEP 3: TRANSPORT -->
-    <div class="step-panel" id="step3">
-      <div class="step-heading">Preferred Transport Mode 🚗</div>
-      <div class="form-group">
-        <div class="chips" id="transportChips">
-          <div class="chip" data-val="Flight">✈️ Flight</div>
-          <div class="chip" data-val="Train">🚂 Train</div>
-          <div class="chip" data-val="Car Drive">🚗 Car</div>
-          <div class="chip" data-val="Bike Ride">🏍️ Bike</div>
-        </div>
-      </div>
-      <div class="btn-row">
         <button class="btn btn-ghost" onclick="goBack(2)">← Back</button>
-        <button class="btn btn-primary" onclick="submitStepAndProgress(3, 4, 'Transport Setup')">Next — Vibe →</button>
+        <button class="btn btn-primary" id="btnStep3" onclick="submitStepAndProgress(3, 4, 'Date Setup')">Next — Transit Hubs →</button>
       </div>
-      <div class="error-box" id="err3">Please choose a target transport mechanism parameter.</div>
+      <div class="error-box" id="err3">Please choose valid dates.</div>
     </div>
 
-    <!-- STEP 4: VIBE -->
+    <!-- STEP 4: MULTI-MODAL TRANSPORT & TRANSIT OPTION HUB -->
     <div class="step-panel" id="step4">
-      <div class="step-heading">Travel Vibe Styles ✨</div>
+      <div class="step-heading">Transit & Road Trip Preferences 🚗💨</div>
+      <p class="step-sub">Configure how you'll move between cities and out from your starting point.</p>
+      
       <div class="form-group">
-        <div class="chips" id="vibeChips">
-          <div class="chip" data-val="Adventure Tracking">🏔️ Adventure & Trekking</div>
-          <div class="chip" data-val="Hidden Offbeat Sights">🌿 Hidden Gems</div>
-          <div class="chip" data-val="Local Cafes & Foodies">🍛 Local Food</div>
-          <div class="chip" data-val="Relaxation & Resorts">🏖️ Slow Travel</div>
+        <label>Primary Hub Connection Mode</label>
+        <div class="chips" id="transportChips">
+          <div class="chip" data-val="Full Road Trip">🛣️ Complete Road Trip (Start to End)</div>
+          <div class="chip" data-val="Flight Connected">✈️ Fly to Hub (Then Rent/Transfer)</div>
+          <div class="chip" data-val="Train Connected">🚂 Train to Hub (Then Rent/Transfer)</div>
         </div>
       </div>
+
+      <div class="form-group">
+        <label>Self/Own Vehicle Allocation (If Applicable)</label>
+        <div class="chips" id="vehicleChips">
+          <div class="chip" data-val="Own Private Car">🚗 Own Car (Self-Driven)</div>
+          <div class="chip" data-val="Own Private Bike">🏍️ Own Bike (Self-Ridden)</div>
+          <div class="chip" data-val="No Private Vehicle">❌ No Own Transport (Need Inter-City Breakdown Cabs/Buses)</div>
+        </div>
+      </div>
+
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="goBack(3)">← Back</button>
-        <button class="btn btn-primary" onclick="submitStepAndProgress(4, 5, 'Vibe Selection')">Next — Budget Configuration →</button>
+        <button class="btn btn-primary" onclick="submitStepAndProgress(4, 5, 'Transit Configuration')">Next — Flexible Vibes →</button>
       </div>
-      <div class="error-box" id="err4">Please select at least one vibe layout block parameter.</div>
+      <div class="error-box" id="err4">Please select your primary transport parameters.</div>
     </div>
 
-    <!-- STEP 5: BUDGET MATRIX CONFIG -->
+    <!-- STEP 5: FLEXIBLE DAILY VIBES MAP -->
     <div class="step-panel" id="step5">
-      <div class="step-heading">Plan your financial boundaries 💰</div>
-      <p class="step-sub">Input your target amount so the AI can construct optimal multimodal options and stay strategies!</p>
+      <div class="step-heading">Daily Vibe Customization ✨</div>
+      <p class="step-sub">We know you don't travel with the same vibe every day. Customize your style per day!</p>
+      
       <div class="form-group">
-        <label>Enter Targeted Budget Value (INR)</label>
-        <input type="number" id="budgetAmount" placeholder="e.g. 15000" min="1000">
+        <label>Configure Vibe Targets per Day Calendar Row:</label>
+        <div id="dailyVibeContainer">
+          <p style="color:var(--muted); font-size:13px;">Please configure your dates in step 3 to populate daily customization matrices.</p>
+        </div>
       </div>
+
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="goBack(4)">← Back</button>
-        <button class="btn btn-primary" onclick="submitStepAndProgress(5, 6, 'Budget Configuration')">Next — Final Steps →</button>
+        <button class="btn btn-primary" onclick="submitStepAndProgress(5, 6, 'Vibe Mapping')">Next — Budget Allocations →</button>
       </div>
-      <div class="error-box" id="err5">Please present a valid numerical target financial amount parameter.</div>
+      <div class="error-box" id="err5">Please verify your daily vibe structure.</div>
     </div>
 
-    <!-- STEP 6: MOTIVATIONAL SUMMARY & TRIGGER -->
+    <!-- STEP 6: DYNAMIC BUDGET SCOPING -->
     <div class="step-panel" id="step6">
-      <div class="step-heading" style="color: var(--coral);">Pack your bags! Adventure calls! 🎒🔥</div>
+      <div class="step-heading">Financial Parameters 💰</div>
+      <p class="step-sub">State your target limits to help optimize multimodal networks.</p>
+      
+      <div class="form-group">
+        <label id="budgetInputLabel">Target Budget Allocation Amount (INR)</label>
+        <input type="number" id="budgetAmount" placeholder="e.g. 20000" min="1000">
+      </div>
+
+      <div class="form-group">
+        <label>Budget Calculation Focus Preference</label>
+        <div class="chips" id="budgetScopeChips">
+          <div class="chip" data-val="Per-Person Scope" id="scopeIndividual">Individual Basis Budget</div>
+          <div class="chip" data-val="Entire Group Scope" id="scopeTotal">Total Consolidated Group Budget</div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goBack(5)">← Back</button>
+        <button class="btn btn-primary" onclick="submitStepAndProgress(6, 7, 'Budget Mapping')">Next — Review Blueprint →</button>
+      </div>
+      <div class="error-box" id="err6">Please define your financial tier tracking configuration.</div>
+    </div>
+
+    <!-- STEP 7: MOTIVATIONAL SUMMARY -->
+    <div class="step-panel" id="step7">
+      <div class="step-heading" style="color: var(--coral);">Adventure is calling! Pack your bags! 🎒🔥</div>
       <p class="step-sub">Everything checks out perfectly. Get ready for an absolutely phenomenal journey!</p>
       <div id="tripSummary" class="info-box"></div>
       
       <div class="btn-row">
-        <button class="btn btn-ghost" onclick="goBack(5)">← Back</button>
-        <button class="btn btn-primary" style="background: var(--ocean-dark);" onclick="triggerAiGeneration()">🚀 Build My Optimized Route Plan</button>
+        <button class="btn btn-ghost" onclick="goBack(6)">← Back</button>
+        <button class="btn btn-primary" style="background: var(--ocean-dark);" onclick="triggerAiGeneration()">🚀 Generate My Optimized Route Plan</button>
       </div>
       <div id="apiStatusMessage" style="margin-top:14px; font-weight:600;"></div>
     </div>
 
     <!-- MANDATORY FEEDBACK FORM MODULE -->
     <div class="compulsory-feedback-card" id="compulsoryFeedbackContainer">
-      <div class="feedback-title" style="font-weight:600; font-size:13px; color: var(--ocean-dark);">📋 Layout Step Manifest Validation Required</div>
-      <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">State 2 feature enhancements or ideas for this tracking pipeline view to unlock step controls.</p>
+      <div class="feedback-title" style="font-weight:600; font-size:13px; color: var(--ocean-dark);">📋 Layout Step Verification Required</div>
+      <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">State 2 feature enhancements or design adjustments for this view to clear checkpoints.</p>
       <input type="text" id="improvement1" placeholder="Improvement / Feature Target Idea 1..." style="margin-bottom: 8px;">
       <input type="text" id="improvement2" placeholder="Improvement / Feature Target Idea 2...">
     </div>
 
-    <!-- CLEAN OUTPUT CONSOLE PANEL -->
+    <!-- OUTPUT CONSOLE DISPLAY PANEL -->
     <div id="outputPanel" style="display:none; padding: 24px; background: #fff;">
       <h2 style="font-family:'Fraunces', serif; color: var(--ocean-dark);">✨ Your Optimized AI Trip Blueprint</h2>
       <div id="outputBody"></div>
@@ -191,12 +240,17 @@
 </div>
 
 <script>
-// IMPORTANT: Adjust your production parameters string cleanly here
+// ── MASTER CONFIGURATION BLOCK ───────────────────────────────────────────────
 const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlicHNxbGxnaXRudHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NTM1NDQsImV4cCI6MjA5OTMyOTU0NH0.V8FT2cDAJMcfv1mtgCGWZck5wxswAlj7tyW-KbaJ8bM"; // Paste your complete token key string intact
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlicHNxbGxnaXRudHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NTM1NDQsImV4cCI6MjA5OTMyOTU0NH0.V8FT2cDAJMcfv1mtgCGWZck5wxswAlj7tyW-KbaJ8bM"; // The single initialization declaration instance
 let activeUserToken = null;
-let state = { destinations: [], startCity: '', startDate: '', endDate: '', transport: '', vibes: [], budget: 0 };
+
+let state = { 
+  destinations: [], startCity: '', startDate: '', endDate: '', days: 0,
+  crew: '', groupSize: 1, transport: '', vehicleMode: '', dailyVibes: {}, budgetVal: 0, budgetScope: '' 
+};
 let currentStep = 1;
+const TOTAL_STEPS = 7;
 
 window.addEventListener('load', async () => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -212,35 +266,56 @@ async function loginWithGoogle() {
     provider: 'google',
     options: { redirectTo: window.location.origin }
   });
-  if (error) alert("Gmail SSO Exception: " + error.message);
+  if (error) alert("Gmail Single-Sign-On Failure: " + error.message);
 }
 
-// ── NATIVE CHRONOLOGICAL VALIDATION ENGINE ──────────────────────────────────
 function validateDates() {
   const startVal = document.getElementById('startDate').value;
   const endVal = document.getElementById('endDate').value;
   const errBox = document.getElementById('dateErrorBox');
-  const nextBtn = document.getElementById('btnStep2');
+  const nextBtn = document.getElementById('btnStep3');
 
   if (startVal && endVal) {
-    const s = new Date(startVal);
-    const e = new Date(endVal);
-
+    const s = new Date(startVal), e = new Date(endVal);
     if (e < s) {
-      errBox.classList.add('show');
-      nextBtn.disabled = true;
-      nextBtn.style.opacity = '0.4';
-      return false;
+      errBox.classList.add('show'); nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; return false;
     }
+    state.days = Math.round((e - s) / 86400000) + 1;
+    generateDailyVibeSelectors();
   }
-  errBox.classList.remove('show');
-  nextBtn.disabled = false;
-  nextBtn.style.opacity = '1';
-  return true;
+  errBox.classList.remove('show'); nextBtn.disabled = false; nextBtn.style.opacity = '1'; return true;
+}
+
+function generateDailyVibeSelectors() {
+  const container = document.getElementById('dailyVibeContainer');
+  container.innerHTML = '';
+  const start = new Date(state.startDate);
+  
+  for (let i = 0; i < state.days; i++) {
+    const current = new Date(start);
+    current.setDate(start.getDate() + i);
+    const dayName = current.toLocaleDateString('en-US', { weekday: 'long' });
+    const dateStr = current.toISOString().split('T')[0];
+
+    const row = document.createElement('div');
+    row.className = 'daily-vibe-row';
+    row.innerHTML = `
+      <div class="daily-vibe-label">${dayName} (${dateStr}):</div>
+      <select class="vibe-day-select" data-date="${dateStr}">
+        <option value="Offbeat & Hidden Gems">🌿 Hidden Gems Focus</option>
+        <option value="Adventure & Trekking">🏔️ Adventure & Trekking</option>
+        <option value="Local Food obsessed">🍛 Local Food & Cafes</option>
+        <option value="Slow travel & Wellness">🧘 Slow Travel & Wellness</option>
+        <option value="Shopping & Markets">🛍️ Shopping & Markets</option>
+        <option value="History & Heritage">🏛️ History & Heritage</option>
+      </select>
+    `;
+    container.appendChild(row);
+  }
 }
 
 function updateProgressBar() {
-  document.getElementById('progressFill').style.width = ((currentStep / 6) * 100) + '%';
+  document.getElementById('progressFill').style.width = ((currentStep / TOTAL_STEPS) * 100) + '%';
 }
 
 async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
@@ -250,36 +325,37 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   if (stepNum === 1) {
     state.startCity = document.getElementById('startCity').value.trim();
     const custom = document.getElementById('customDest').value.trim();
-    if (custom) state.destinations.push(custom);
+    if (custom && !state.destinations.includes(custom)) state.destinations.push(custom);
     if (state.destinations.length === 0 || !state.startCity) { err.classList.add('show'); return; }
   }
-  if (stepNum === 2) {
-    state.startDate = document.getElementById('startDate').value;
-    state.endDate = document.getElementById('endDate').value;
-    if (!state.startDate || !state.endDate || !validateDates()) { err.classList.add('show'); return; }
-  }
-  if (stepNum === 3 && !state.transport) { err.classList.add('show'); return; }
-  if (stepNum === 4 && state.vibes.length === 0) { err.classList.add('show'); return; }
+  if (stepNum === 2 && !state.crew) { err.classList.add('show'); return; }
+  if (stepNum === 3 && (!state.startDate || !state.endDate || !validateDates())) { err.classList.add('show'); return; }
+  if (stepNum === 4 && (!state.transport || !state.vehicleMode)) { err.classList.add('show'); return; }
   if (stepNum === 5) {
-    state.budget = parseInt(document.getElementById('budgetAmount').value);
-    if (!state.budget || state.budget <= 0) { err.classList.add('show'); return; }
+    state.dailyVibes = {};
+    document.querySelectorAll('.vibe-day-select').forEach(sel => {
+      state.dailyVibes[sel.dataset.date] = sel.value;
+    });
+  }
+  if (stepNum === 6) {
+    state.budgetVal = parseInt(document.getElementById('budgetAmount').value);
+    if (!state.budgetVal || !state.budgetScope) { err.classList.add('show'); return; }
   }
 
-  // Validate Compulsory Inputs
+  // Mandatory Feedback Pipeline Enforcer
   const imp1 = document.getElementById('improvement1').value.trim();
   const imp2 = document.getElementById('improvement2').value.trim();
   if (!imp1 || !imp2) {
-    alert("Validation Alert: Please list 2 design adjustments or functional feature ideas to clear layout checkpoints.");
+    alert("Compulsory Checkpoint Notice: Please input 2 feature improvements to unlock navigation controls.");
     return;
   }
 
-  // Back-end Trace Commits
   try {
     await supabase.from('journey_feedback').insert({
-      step_number: stepNum, step_name: stepName, feedback_rating: 'compulsory_trace',
-      user_comments: `Idea 1: ${imp1} | Idea 2: ${imp2}`
+      step_number: stepNum, step_name: stepName, feedback_rating: 'multimodal_pipeline_trace',
+      user_comments: `Enhancement 1: ${imp1} | Enhancement 2: ${imp2}`
     });
-  } catch(e) { console.error("Trace failure:", e); }
+  } catch(e) { console.error("Trace capture failed:", e); }
 
   document.getElementById('improvement1').value = '';
   document.getElementById('improvement2').value = '';
@@ -289,7 +365,7 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   document.getElementById(`step${nextStepNum}`).classList.add('active');
   updateProgressBar();
 
-  if (nextStepNum === 6) buildSummary();
+  if (nextStepNum === 7) buildSummary();
 }
 
 function goBack(prevStep) {
@@ -301,26 +377,33 @@ function goBack(prevStep) {
 
 function getDayName(dateStr) {
   if(!dateStr) return '';
-  const dateObj = new Date(dateStr);
-  return dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+  return new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long' });
 }
 
 function buildSummary() {
+  const totalCalculatedCost = state.budgetScope === 'Per-Person Scope' ? (state.budgetVal * state.groupSize) : state.budgetVal;
+  const perPersonCost = state.budgetScope === 'Per-Person Scope' ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
+
   document.getElementById('tripSummary').innerHTML = `
-    ☀️ Departure Day: <strong>${getDayName(state.startDate)}</strong> (${state.startDate})<br>
-    🌙 Return Day: <strong>${getDayName(state.endDate)}</strong> (${state.endDate})<br>
-    📍 Destination Array Routes: <strong>${state.destinations.join(' ➔ ')}</strong> departing from <strong>${state.startCity}</strong><br>
-    💰 Custom Investment Threshold: <strong>₹${state.budget.toLocaleString('en-IN')} INR</strong>
+    🗺️ Route Plan: <strong>${state.destinations.join(' ➔ ')}</strong> (Starting from: ${state.startCity})<br>
+    👥 Companions: <strong>${state.crew} Setup</strong> (Total Count: ${state.groupSize} Travelers)<br>
+    📅 Timeline Matrix: <strong>${getDayName(state.startDate)}, ${state.startDate}</strong> to <strong>${getDayName(state.endDate)}, ${state.endDate}</strong> (${state.days} Active Days)<br>
+    🚗 Transit Allocation: <strong>${state.transport}</strong> via <strong>${state.vehicleMode}</strong><br>
+    💰 Dynamic Budget Scope Allocation:<br>
+    &nbsp;&nbsp;· Calculated Per-Person Target: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR</strong><br>
+    &nbsp;&nbsp;· Consolidated Total Group Budget: <strong>₹${totalCalculatedCost.toLocaleString('en-IN')} INR</strong>
   `;
 }
 
 async function triggerAiGeneration() {
   const statusEl = document.getElementById('apiStatusMessage');
   statusEl.style.color = "var(--ink)";
-  statusEl.textContent = "Unlocking optimization pipelines with Gemini AI Engines...";
+  statusEl.textContent = "Processing optimized multicity layovers and multi-modal transport splits using Gemini...";
 
   const requestHeaders = { 'Content-Type': 'application/json' };
   if (activeUserToken) requestHeaders['Authorization'] = `Bearer ${activeUserToken}`;
+
+  const requiresTransportBreakdown = state.vehicleMode === 'No Private Vehicle';
 
   try {
     const res = await fetch('/api/generate', {
@@ -328,17 +411,23 @@ async function triggerAiGeneration() {
       headers: requestHeaders,
       body: JSON.stringify({
         payload: { destination: state.destinations, startCity: state.startCity },
-        prompt: `Map travel structures for ${state.destinations.join(', ')} out from ${state.startCity} from ${state.startDate} (${getDayName(state.startDate)}) to ${state.endDate} (${getDayName(state.endDate)}) allocating targets for ₹${state.budget} INR.`
+        prompt: `Plan a trip itinerary map for ${state.destinations.join(', ')} out from ${state.startCity}. 
+        Dates: from ${state.startDate} (${getDayName(state.startDate)}) to ${state.endDate} (${getDayName(state.endDate)}).
+        Companion profile: ${state.crew} with group count ${state.groupSize}.
+        Transit configuration options: Primary via ${state.transport} and vehicle allocation choice is ${state.vehicleMode}.
+        Flag status for requiring detailed step-by-step public transit inter-city travel distance breakdowns: ${requiresTransportBreakdown}.
+        Assigned target per-person pricing allocation framework: ₹${state.budgetVal} INR under scope preference: ${state.budgetScope}.
+        Daily strict vibe timeline assignment matrix: ${JSON.stringify(state.dailyVibes)}.`
       })
     });
 
-    if (!res.ok) throw new Error("Serverless logic block components failed executing.");
+    if (!res.ok) throw new Error("Backend compilation error returned.");
     const data = await res.json();
     
     statusEl.style.color = "green";
-    statusEl.textContent = "🎉 Epic plan computed and locked down successfully!";
+    statusEl.textContent = "🎉 Itinerary created successfully!";
     
-    document.getElementById('step6').style.display = 'none';
+    document.getElementById('step7').style.display = 'none';
     document.getElementById('compulsoryFeedbackContainer').style.display = 'none';
     document.getElementById('stepTabs').style.display = 'none';
     
@@ -346,53 +435,72 @@ async function triggerAiGeneration() {
     const outBody = document.getElementById('outputBody');
     outPanel.style.display = 'block';
 
-    // Loop through response object cleanly
     outBody.innerHTML = `
       <div class="display-section">
-        <div class="display-title">🌟 Iconic Sights (Famous Things To Do)</div>
+        <div class="display-title">🌟 Famous Sights (Iconic Activities)</div>
         <ul>${data.famousActivities.map(i => `<li>${i}</li>`).join('')}</ul>
         
         <div class="display-title">🌿 Hidden Gems (Not-so-Famous Sights)</div>
         <ul>${data.hiddenGems.map(i => `<li>${i}</li>`).join('')}</ul>
         
-        <div class="display-title">⏱️ Optimal Launch Timing & Transverse Layovers</div>
-        <p><strong>Departure Best window:</strong> ${data.timingOptimization.bestTimeToDepart}</p>
-        <p><strong>Layover strategy:</strong> ${data.timingOptimization.layoverTransverseStrategy}</p>
+        <div class="display-title">⏱️ Travel Layout Optimization & Layover Management</div>
+        <p><strong>Best departure window recommendation:</strong> ${data.timingOptimization.bestTimeToDepart}</p>
+        <p><strong>Transverse time mitigation strategy:</strong> ${data.timingOptimization.layoverTransverseStrategy}</p>
         
-        <div class="display-title">🚇 Multimodal Travel Route & Stay Matrix Options</div>
-        <p><strong>Economy Track Route:</strong> ${data.multimodalBudgetOptions.budgetRoute}</p>
-        <p><strong>Premium Track Route:</strong> ${data.multimodalBudgetOptions.premiumRoute}</p>
+        <div class="display-title">🚇 Inter-City Multimodal Routes & Stay Matrix Options</div>
+        <p><strong>Budget Economy Track:</strong> ${data.multimodalBudgetOptions.budgetRoute}</p>
+        <p><strong>Premium Speed Track:</strong> ${data.multimodalBudgetOptions.premiumRoute}</p>
         <p><strong>Lodging Suggestion:</strong> ${data.multimodalBudgetOptions.optimizedStayRecommendation}</p>
       </div>
     `;
     
   } catch (err) {
     statusEl.style.color = "red";
-    statusEl.textContent = `Error compiling asset track: ${err.message}`;
+    statusEl.textContent = `Execution Failed: ${err.message}`;
   }
 }
 
-// Chip Event Bindings
-function bindChips(containerId, stateKey, isMulti) {
+function setupExclusiveChips(containerId, stateKey, callback) {
   document.getElementById(containerId).querySelectorAll('.chip').forEach(chip => {
     chip.addEventListener('click', () => {
+      document.getElementById(containerId).querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      state[stateKey] = chip.dataset.val;
+      if(callback) callback(chip.dataset.val);
+    });
+  });
+}
+
+function setupMultiSelectChips(containerId, stateKey) {
+  document.getElementById(containerId).querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('selected');
       const val = chip.dataset.val;
-      if (!isMulti) {
-        document.getElementById(containerId).querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
-        chip.classList.add('selected');
-        state[stateKey] = val;
+      if (chip.classList.contains('selected')) {
+        if(!state[stateKey].includes(val)) state[stateKey].push(val);
       } else {
-        chip.classList.toggle('selected');
-        if (chip.classList.contains('selected')) state[stateKey].push(val);
-        else state[stateKey] = state[stateKey].filter(item => item !== val);
+        state[stateKey] = state[stateKey].filter(v => v !== val);
       }
     });
   });
 }
 
-bindChips('destChips', 'destinations', true);
-bindChips('transportChips', 'transport', false);
-bindChips('vibeChips', 'vibes', true);
+setupMultiSelectChips('destChips', 'destinations');
+setupExclusiveChips('crewChips', 'crew', (val) => {
+  const sizeField = document.getElementById('groupSizeField');
+  if (['Friends', 'Family'].includes(val)) {
+    sizeField.style.display = 'block';
+    state.groupSize = 4;
+    document.getElementById('groupSize').value = 4;
+  } else {
+    sizeField.style.display = 'none';
+    state.groupSize = val === 'Solo' ? 1 : 2;
+  }
+  document.getElementById('budgetInputLabel').textContent = val === 'Solo' ? 'Target Budget Allocation Amount (INR)' : 'Target Budget Allocation Amount per Person (INR)';
+});
+setupExclusiveChips('transportChips', 'transport');
+setupExclusiveChips('vehicleChips', 'vehicleMode');
+setupExclusiveChips('budgetScopeChips', 'budgetScope');
 </script>
 </body>
 </html>
