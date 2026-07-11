@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Travel Planner — Let's Explore!</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<!-- Supabase Auth Client Library Bundle CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
@@ -71,7 +70,7 @@
       <div class="step-tab">🚀 Review</div>
     </div>
 
-    <!-- STEP 1: DESTINATIONS (MULTISELECT) -->
+    <!-- STEP 1: MULTISELECT DESTINATIONS -->
     <div class="step-panel active" id="step1">
       <div class="step-heading">Where are we exploring? 🗺️</div>
       <p class="step-sub">Select multiple destinations to build a multi-city route blueprint.</p>
@@ -86,7 +85,7 @@
         </div>
       </div>
       <div class="form-group">
-        <label>Or enter a custom location name</label>
+        <label>Or enter custom location</label>
         <input type="text" id="customDest" placeholder="e.g. Ooty, Wayanad...">
       </div>
       <div class="form-group">
@@ -121,7 +120,7 @@
       <div class="error-box" id="err2">Please select a companion style configuration.</div>
     </div>
 
-    <!-- STEP 3: DATES WITH REAL-TIME CONSTRAINT VALIDATION -->
+    <!-- STEP 3: DATES WITH REAL-TIME DATE ERROR CONSTRAINT -->
     <div class="step-panel" id="step3">
       <div class="step-heading">When is the adventure? 📅</div>
       <div class="form-group"><label>Start Date</label><input type="date" id="startDate" onchange="validateDates()"></div>
@@ -135,11 +134,10 @@
       <div class="error-box" id="err3">Please choose valid dates.</div>
     </div>
 
-    <!-- STEP 4: MULTI-MODAL TRANSPORT & TRANSIT OPTION HUB -->
+    <!-- STEP 4: TRANSPORT MODES -->
     <div class="step-panel" id="step4">
       <div class="step-heading">Transit & Road Trip Preferences 🚗💨</div>
       <p class="step-sub">Configure how you'll move between cities and out from your starting point.</p>
-      
       <div class="form-group">
         <label>Primary Hub Connection Mode</label>
         <div class="chips" id="transportChips">
@@ -148,16 +146,14 @@
           <div class="chip" data-val="Train Connected">🚂 Train to Hub (Then Rent/Transfer)</div>
         </div>
       </div>
-
       <div class="form-group">
-        <label>Self/Own Vehicle Allocation (If Applicable)</label>
+        <label>Self/Own Vehicle Allocation</label>
         <div class="chips" id="vehicleChips">
           <div class="chip" data-val="Own Private Car">🚗 Own Car (Self-Driven)</div>
           <div class="chip" data-val="Own Private Bike">🏍️ Own Bike (Self-Ridden)</div>
           <div class="chip" data-val="No Private Vehicle">❌ No Own Transport (Need Inter-City Breakdown Cabs/Buses)</div>
         </div>
       </div>
-
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="goBack(3)">← Back</button>
         <button class="btn btn-primary" onclick="submitStepAndProgress(4, 5, 'Transit Configuration')">Next — Flexible Vibes →</button>
@@ -165,18 +161,16 @@
       <div class="error-box" id="err4">Please select your primary transport parameters.</div>
     </div>
 
-    <!-- STEP 5: FLEXIBLE DAILY VIBES MAP -->
+    <!-- STEP 5: PER-DAY VIBES MAP -->
     <div class="step-panel" id="step5">
       <div class="step-heading">Daily Vibe Customization ✨</div>
-      <p class="step-sub">We know you don't travel with the same vibe every day. Customize your style per day!</p>
-      
+      <p class="step-sub">Customize your travel rhythm day-by-day!</p>
       <div class="form-group">
-        <label>Configure Vibe Targets per Day Calendar Row:</label>
+        <label>Configure Vibe Targets per Day Row:</label>
         <div id="dailyVibeContainer">
           <p style="color:var(--muted); font-size:13px;">Please configure your dates in step 3 to populate daily customization matrices.</p>
         </div>
       </div>
-
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="goBack(4)">← Back</button>
         <button class="btn btn-primary" onclick="submitStepAndProgress(5, 6, 'Vibe Mapping')">Next — Budget Allocations →</button>
@@ -184,16 +178,14 @@
       <div class="error-box" id="err5">Please verify your daily vibe structure.</div>
     </div>
 
-    <!-- STEP 6: DYNAMIC BUDGET SCOPING -->
+    <!-- STEP 6: DYNAMIC BUDGET OPTIONS -->
     <div class="step-panel" id="step6">
       <div class="step-heading">Financial Parameters 💰</div>
-      <p class="step-sub">State your target limits to help optimize multimodal networks.</p>
-      
+      <p class="step-sub">State your limits to compute optimal multimodal networks and stays.</p>
       <div class="form-group">
         <label id="budgetInputLabel">Target Budget Allocation Amount (INR)</label>
         <input type="number" id="budgetAmount" placeholder="e.g. 20000" min="1000">
       </div>
-
       <div class="form-group">
         <label>Budget Calculation Focus Preference</label>
         <div class="chips" id="budgetScopeChips">
@@ -201,7 +193,6 @@
           <div class="chip" data-val="Entire Group Scope" id="scopeTotal">Total Consolidated Group Budget</div>
         </div>
       </div>
-
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="goBack(5)">← Back</button>
         <button class="btn btn-primary" onclick="submitStepAndProgress(6, 7, 'Budget Mapping')">Next — Review Blueprint →</button>
@@ -209,7 +200,7 @@
       <div class="error-box" id="err6">Please define your financial tier tracking configuration.</div>
     </div>
 
-    <!-- STEP 7: MOTIVATIONAL SUMMARY -->
+    <!-- STEP 7: EXCITEMENT & MOTIVATIONAL SUMMARY -->
     <div class="step-panel" id="step7">
       <div class="step-heading" style="color: var(--coral);">Adventure is calling! Pack your bags! 🎒🔥</div>
       <p class="step-sub">Everything checks out perfectly. Get ready for an absolutely phenomenal journey!</p>
@@ -222,15 +213,15 @@
       <div id="apiStatusMessage" style="margin-top:14px; font-weight:600;"></div>
     </div>
 
-    <!-- MANDATORY FEEDBACK FORM MODULE -->
+    <!-- COMPULSORY FEEDBACK CHECKPOINT -->
     <div class="compulsory-feedback-card" id="compulsoryFeedbackContainer">
       <div class="feedback-title" style="font-weight:600; font-size:13px; color: var(--ocean-dark);">📋 Layout Step Verification Required</div>
-      <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">State 2 feature enhancements or design adjustments for this view to clear checkpoints.</p>
+      <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">State 2 system improvements or layout ideas to advance steps.</p>
       <input type="text" id="improvement1" placeholder="Improvement / Feature Target Idea 1..." style="margin-bottom: 8px;">
       <input type="text" id="improvement2" placeholder="Improvement / Feature Target Idea 2...">
     </div>
 
-    <!-- OUTPUT CONSOLE DISPLAY PANEL -->
+    <!-- OUTPUT SCREEN -->
     <div id="outputPanel" style="display:none; padding: 24px; background: #fff;">
       <h2 style="font-family:'Fraunces', serif; color: var(--ocean-dark);">✨ Your Optimized AI Trip Blueprint</h2>
       <div id="outputBody"></div>
@@ -240,9 +231,12 @@
 </div>
 
 <script>
-// ── MASTER CONFIGURATION BLOCK ───────────────────────────────────────────────
+// ── FIXED GLOBAL CALL DECLARATION ───────────────────────────────────────────
 const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlicHNxbGxnaXRudHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NTM1NDQsImV4cCI6MjA5OTMyOTU0NH0.V8FT2cDAJMcfv1mtgCGWZck5wxswAlj7tyW-KbaJ8bM"; // The single initialization declaration instance
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlicHNxbGxnaXRudHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NTM1NDQsImV4cCI6MjA5OTMyOTU0NH0.V8FT2cDAJMcfv1mtgCGWZck5wxswAlj7tyW-KbaJ8bM"; 
+
+// Explicit context initialization using window mapping to bypass reference locks
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let activeUserToken = null;
 
 let state = { 
@@ -303,11 +297,10 @@ function generateDailyVibeSelectors() {
       <div class="daily-vibe-label">${dayName} (${dateStr}):</div>
       <select class="vibe-day-select" data-date="${dateStr}">
         <option value="Offbeat & Hidden Gems">🌿 Hidden Gems Focus</option>
-        <option value="Adventure & Trekking">🏔️ Adventure & Trekking</option>
-        <option value="Local Food obsessed">🍛 Local Food & Cafes</option>
-        <option value="Slow travel & Wellness">🧘 Slow Travel & Wellness</option>
-        <option value="Shopping & Markets">🛍️ Shopping & Markets</option>
-        <option value="History & Heritage">🏛️ History & Heritage</option>
+        <option value="Adventure & Trekking">🏔️ Adventure Seek</option>
+        <option value="Local Food obsessed">🍛 Local Culinary/Cafes</option>
+        <option value="Slow travel & Wellness">🧘 Relaxation/Wellness</option>
+        <option value="History & Heritage">🏛️ History/Heritage</option>
       </select>
     `;
     container.appendChild(row);
@@ -342,7 +335,6 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
     if (!state.budgetVal || !state.budgetScope) { err.classList.add('show'); return; }
   }
 
-  // Mandatory Feedback Pipeline Enforcer
   const imp1 = document.getElementById('improvement1').value.trim();
   const imp2 = document.getElementById('improvement2').value.trim();
   if (!imp1 || !imp2) {
@@ -389,7 +381,7 @@ function buildSummary() {
     👥 Companions: <strong>${state.crew} Setup</strong> (Total Count: ${state.groupSize} Travelers)<br>
     📅 Timeline Matrix: <strong>${getDayName(state.startDate)}, ${state.startDate}</strong> to <strong>${getDayName(state.endDate)}, ${state.endDate}</strong> (${state.days} Active Days)<br>
     🚗 Transit Allocation: <strong>${state.transport}</strong> via <strong>${state.vehicleMode}</strong><br>
-    💰 Dynamic Budget Scope Allocation:<br>
+    💰 Budget Scope Allocation:<br>
     &nbsp;&nbsp;· Calculated Per-Person Target: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR</strong><br>
     &nbsp;&nbsp;· Consolidated Total Group Budget: <strong>₹${totalCalculatedCost.toLocaleString('en-IN')} INR</strong>
   `;
