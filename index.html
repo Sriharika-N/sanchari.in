@@ -273,12 +273,20 @@ function validateDates() {
   if (startVal && endVal) {
     const s = new Date(startVal), e = new Date(endVal);
     if (e < s) {
-      errBox.classList.add('show'); nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; return false;
+      errBox.classList.add('show'); 
+      nextBtn.disabled = true; 
+      nextBtn.style.opacity = '0.4'; 
+      return false;
     }
     state.days = Math.round((e - s) / 86400000) + 1;
     generateDailyVibeSelectors();
   }
-  errBox.classList.remove('show'); nextBtn.disabled = false; nextBtn.style.opacity = '1'; return true;
+  
+  // 🌟 THE FIX: Forcefully hide the error alert box and reactivate button when valid
+  errBox.classList.remove('show'); 
+  nextBtn.disabled = false; 
+  nextBtn.style.opacity = '1'; 
+  return true;
 }
 
 function generateDailyVibeSelectors() {
