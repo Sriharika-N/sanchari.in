@@ -51,12 +51,10 @@
   .auth-modal { background: white; border-radius: 20px; max-width: 400px; width: 90%; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
   .auth-toggle-link { color: var(--coral); font-weight: 600; cursor: pointer; text-decoration: underline; font-size: 13px; }
 
-  /* 🌟 AUTH TABS FOR CLEAN SIGNIN VS LOGIN SEPARATION */
   .auth-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
   .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); }
   .auth-tab.active { color: var(--coral); border-bottom: 2px solid var(--coral); }
   
-  /* 🌟 CLUSTER LAYOUT FOR DISCOVERY ELEMENTS */
   .discovery-hub { display: flex; flex-direction: column; gap: 8px; background: var(--sand); padding: 12px; border-radius: 8px; margin-top: 8px; }
   .discovery-item { background: var(--white); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: space-between; }
   .discovery-item:hover { border-color: var(--coral); background: var(--coral-light); color: var(--coral); }
@@ -70,7 +68,6 @@
   <button id="authHeaderBtn" class="btn" style="background: var(--coral); color: white; padding: 6px 16px; font-size: 13px;" onclick="openAuthModal()">🔑 Account Access</button>
 </nav>
 
-<!-- 🌟 UPDATED SEPARATE SIGNIN & LOGIN HUB -->
 <div class="auth-overlay" id="authOverlay">
   <div class="auth-modal">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
@@ -114,18 +111,29 @@
       <div class="step-tab active">🗺️ Dest</div>
       <div class="step-tab">👥 Crew</div>
       <div class="step-tab">📅 Dates</div>
-      <div class="step-tab">🚗 Transit</div>
+      <div class="step-tab =">🚗 Transit</div>
       <div class="step-tab">✨ Vibes</div>
       <div class="step-tab">💰 Budget</div>
       <div class="step-tab">🚀 Review</div>
     </div>
 
-    <!-- STEP 1: DESTINATIONS -->
+    <!-- STEP 1: DESTINATIONS WITH INTEGRATED THEMATIC ENGINE -->
     <div class="step-panel active" id="step1">
       <div class="step-heading">Where are we exploring? 🗺️</div>
-      <p class="step-sub">Select multiple destinations to build your itinerary blueprint.</p>
+      <p class="step-sub">Select your primary travel destination hub below.</p>
+      
+      <!-- 🌟 THEMATIC CATEGORY GENERATOR BUTTON BLOCKS -->
       <div class="form-group">
-        <label>Select Destinations:</label>
+        <label>💡 Explore by Travel Theme (Auto-Generates Destination):</label>
+        <div class="chips" style="margin-bottom: 12px;">
+          <div class="chip" style="border-color:var(--gold); color:var(--ocean-dark);" onclick="selectThematicRandomEngine('mountains')">🏔️ The Himalayas / Mountains</div>
+          <div class="chip" style="border-color:var(--gold); color:var(--ocean-dark);" onclick="selectThematicRandomEngine('beaches')">🏖️ Sun-Kissed Beaches</div>
+          <div class="chip" style="border-color:var(--gold); color:var(--ocean-dark);" onclick="selectThematicRandomEngine('heritage')">🗿 Historic Heritage Sights</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Or Choose Manually:</label>
         <div class="chips" id="destChips">
           <div class="chip" data-val="Coorg, Karnataka">Coorg, KA ☕</div>
           <div class="chip" data-val="Munnar, Kerala">Munnar, KL 🍵</div>
@@ -134,9 +142,7 @@
           <div class="chip" data-val="Spiti Valley, HP">Spiti Valley, HP 🏔️</div>
         </div>
       </div>
-      <div class="form-group" style="margin-top:-5px; margin-bottom:15px;">
-        <button class="btn btn-ghost" style="padding: 5px 10px; font-size:11px; color:var(--gold); border-color:var(--gold);" onclick="selectRandomDestinationEngine()">🎲 Generate Destination Randomly</button>
-      </div>
+      
       <div class="form-group">
         <label>Or enter custom location</label>
         <input type="text" id="customDest" placeholder="e.g. Ooty, Wayanad...">
@@ -173,14 +179,13 @@
       <div class="error-box" id="err2">Please select a companion style configuration.</div>
     </div>
 
-    <!-- STEP 3: DATES & DYNAMIC TRAVEL DAYS SUGGESTER -->
+    <!-- STEP 3: DATES & TRANSIT TIME ALLOCATION -->
     <div class="step-panel" id="step3">
       <div class="step-heading">When is the adventure? 📅</div>
       <p class="step-sub">Provide your absolute timeline boundaries and allocate travel buffers cleanly.</p>
       <div class="form-group"><label>Departure Start Date</label><input type="date" id="startDate" onchange="validateDates()"></div>
       <div class="form-group"><label>Final Return End Date</label><input type="date" id="endDate" onchange="validateDates()"></div>
       
-      <!-- 🌟 SYSTEM RECOMMENDATION MODULE -->
       <div id="distanceSuggestionBox" style="background:var(--sand); padding:12px; border-radius:8px; font-size:13px; margin-bottom:15px; display:none; color:var(--ocean-dark);"></div>
 
       <div class="form-group">
@@ -201,7 +206,7 @@
       <div class="error-box" id="err3">Please choose valid dates.</div>
     </div>
 
-    <!-- STEP 4: TRANSPORT MODES WITH MILEAGE & FARES -->
+    <!-- STEP 4: TRANSPORT MODES -->
     <div class="step-panel" id="step4">
       <div class="step-heading">Transit & Road Trip Preferences 🚗💨</div>
       <p class="step-sub">Configure how you'll move between hubs and log travel overheads.</p>
@@ -214,7 +219,6 @@
         </div>
       </div>
       
-      <!-- 🌟 FLIGHT COSTS INTERFACE -->
       <div class="form-group" id="flightInputGroup" style="display:none;">
         <label>Estimated Roundtrip Flight Cost per Ticket (INR)</label>
         <input type="number" id="flightTicketCost" value="0" min="0">
@@ -229,7 +233,6 @@
         </div>
       </div>
 
-      <!-- 🌟 PETROL & MILEAGE TRACKING INTERFACE -->
       <div id="mileageInputGroup" style="display:none;">
         <div class="form-group">
           <label>Estimated Fuel Price per Litre (INR)</label>
@@ -312,6 +315,14 @@
         <h2 style="font-family:'Fraunces', serif; color: var(--ocean-dark);">✨ Your Custom Live Itinerary Blueprint</h2>
         <button class="btn btn-ghost" style="padding: 6px 14px; font-size:12px; color:var(--coral); border-color:var(--coral);" onclick="modifyItinerary()">✏️ Modify & Adjust</button>
       </div>
+
+      <!-- EXPLORE REGIONAL SIGHTS DISCOVERY HUB PANEL -->
+      <div style="background:var(--sand); padding:16px; border-radius:12px; margin-bottom:20px;">
+        <h4 style="font-family:'Fraunces', serif; color:var(--ocean-dark); font-size:15px; margin-bottom:4px;">🔍 Explore Regional Showcase Spotlights</h4>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Click any item below to inject its local knowledge profile right into today's itinerary display framework.</p>
+        <div class="discovery-hub" id="itineraryExploreShowcaseHub"></div>
+      </div>
+
       <div id="outputBody"></div>
     </div>
 
@@ -334,30 +345,43 @@ let state = {
 let currentStep = 1;
 const TOTAL_STEPS = 7;
 
+// Complete contextual content databanks mapping out specific themes accurately
 const travelKnowledgeBase = {
   "coorg": {
     famous: ["Abbey Falls Scenic Estate Walk", "Namdroling Golden Temple", "Madikeri Historic Fort Grounds", "Raja's Seat Hanging Gardens"],
     gems: ["Chelavara Falls Ridge Trek", "Kote Betta Mountain Trail", "Sanapur Whispering Streams", "Nishani Motte Hidden Offbeat Outpost"],
-    breakfast: ["Local filter coffee paired with Akki Roti", "Fresh plantation-side spice tea spreads", "Traditional Malnad steamed kadambuttu frames"],
-    eats: ["Coorg Cuisine Restaurant for authentic Pandi Curry", "Tiger Tiger Cafe specialty local plates", "Bylakuppe Tibetan street food shacks"]
+    breakfast: ["Local filter coffee paired with Akki Roti", "Fresh plantation-side spice tea spreads"],
+    eats: ["Coorg Cuisine Restaurant for authentic Pandi Curry", "Tiger Tiger Cafe specialty local plates"]
   },
   "munnar": {
     famous: ["Eravikulam High Plateau Valley", "Mattupetty Lake Boating Gates", "Top Station Horizon Peak", "Tea Museum Heritage Walk"],
     gems: ["Lockhart Gap Panoramic Ridge Way", "Attukad Waterfalls Secluded Glade", "Anamudi Foothill Secret Trails", "Pothamedu Hidden Clouds Viewpoint"],
-    breakfast: ["Freshly picked Munnar leaf blends with local idlis", "Highland cardamon tea with appam variants", "Highland home-style breakfast buffers"],
-    eats: ["Rapsy Restaurant regional specialty dishes", "Guru's Malabar spice parotta counters", "High Range Traditional Local Dine Outpost"]
+    breakfast: ["Freshly picked Munnar leaf blends with local idlis", "Highland cardamon tea with appam variants"],
+    eats: ["Rapsy Restaurant regional specialty dishes", "Guru's Malabar spice parotta counters"]
   },
   "gokarna": {
     famous: ["Om Beach Rocky Waterfront Trail", "Mahabaleshwar Temple Courtyard", "Kudle Beach Main Surfer Strip", "Half Moon Beach Ridge Overlook"],
     gems: ["Paradise Beach Secluded Jungle Spot", "Belekan Beach Offbeat Bay Trail", "Nirvana Coastal Meadow Path", "God's Own Beach Cliffside Overlook"],
-    breakfast: ["Beachside shack continental items & banana buns", "Traditional South Kannada style dosa plates", "Fresh tender coconut matrices by the sea"],
-    eats: ["Prema Restaurant legendary local ice cream & meals", "Namaste Cafe absolute oceanfront seafood dinner", "Chez Christophe local slow-baked pizzas"]
+    breakfast: ["Beachside shack continental items & banana buns", "Traditional South Kannada style dosa plates"],
+    eats: ["Prema Restaurant legendary local ice cream & meals", "Namaste Cafe absolute oceanfront seafood dinner"]
+  },
+  "hampi": {
+    famous: ["Virupaksha Temple Sacred Courtyard", "Vittala Temple Stone Chariot Monument", "Hemakuta Hill Historic Complex View"],
+    gems: ["Sanapur Lake Offbeat Coracle Boat Run", "Anegundi Ancient Heritage Village Walk"],
+    breakfast: ["Local crisp ghee roast dosas from rural setups", "Traditional filter decoctions with idlis"],
+    eats: ["Mango Tree Restaurant river-facing dishes", "Local organic banana flower curries hub"]
+  },
+  "spiti valley": {
+    famous: ["Key Monastery Mountain Cliffside Retreat", "Chandratal High-Altitude Emerald Lake", "Dhankar Monastery Fort Lookout"],
+    gems: ["Langza Mountain Ridge Fossil Beds", "Mud Village Pin Valley Mountain Outpost"],
+    breakfast: ["Warm butter tea paired with local Tsampa breads", "Highland barley porridges with honey matrices"],
+    eats: ["The Sol Cafe local hot seabuckthorn juices", "Authentic steaming Tibetan momo street shacks"]
   },
   "default": {
     famous: ["Central Heritage Landmark Exploration", "Panoramic Valley Lookout Point", "Ancient Historical Quarter Run", "Main City Botanical Garden"],
     gems: ["Hidden Eco Forest Trail Pathway", "Offbeat River Stream Overlook", "Rustic Artisanal Heritage District Walk", "Secluded Sunset Cliff Outpost"],
-    breakfast: ["Traditional artisanal regional breakfast platter", "Freshly prepared local market morning spread", "Home-style farm breakfast matrix"],
-    eats: ["Acclaimed traditional regional cuisine diner", "Vibrant local food street alleyways", "Hidden slow-cooked heritage family recipes hub"]
+    breakfast: ["Traditional artisanal regional breakfast platter", "Freshly prepared local market morning spread"],
+    eats: ["Acclaimed traditional regional cuisine diner", "Vibrant local food street alleyways"]
   }
 };
 
@@ -373,7 +397,6 @@ window.addEventListener('load', async () => {
 function openAuthModal() { document.getElementById('authOverlay').style.display = 'flex'; }
 function closeAuthModal() { document.getElementById('authOverlay').style.display = 'none'; }
 
-/* 🌟 TOGGLE TAB INTERFACES BETWEEN SIGNIN AND LOGIN DEFINITIVELY */
 function setAuthInterfaceMode(mode) {
   currentAuthMode = mode;
   const errMsg = document.getElementById('authErrorMsg');
@@ -427,7 +450,6 @@ async function handleCredentialAuth() {
   }
 
   if (currentAuthMode === 'signup' || currentAuthMode === 'signin') {
-    // New Signup Flow: Fires validation link triggers seamlessly to their inbox
     const { data, error } = await travelPlannerSupabaseClient.auth.signUp({ email, password });
     if (error) {
       if(error.message.toLowerCase().includes("already registered") || error.status === 422) {
@@ -437,7 +459,6 @@ async function handleCredentialAuth() {
       } else { errMsg.textContent = error.message; errMsg.classList.add('show'); }
     } else { alert("Verification link dispatched! Verify your account via the activation token inside your inbox."); closeAuthModal(); }
   } else if (currentAuthMode === 'login') {
-    // Direct Login Flow: Matches credentials strictly
     const { data, error } = await travelPlannerSupabaseClient.auth.signInWithPassword({ email, password });
     if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); }
     else {
@@ -454,32 +475,45 @@ async function handleCredentialAuth() {
   }
 }
 
-/* 🌟 SELECTION ENGINE MECHANIC FOR RANDOMIZATION BLUEPRINTS */
-function selectRandomDestinationEngine() {
+/* 🌟 DYNAMIC TRAVEL THEMATIC GENERATOR SHIFT ENGINE */
+function selectThematicRandomEngine(categoryType) {
   const allChips = document.querySelectorAll('#destChips .chip');
   allChips.forEach(c => c.classList.remove('selected'));
   state.destinations = [];
+
+  let chosenDestinationValue = "";
   
-  const randomCount = Math.floor(Math.random() * 2) + 1; // pick 1 or 2 hubs randomly
-  const indexes = [];
-  while(indexes.length < randomCount) {
-    const r = Math.floor(Math.random() * allChips.length);
-    if(!indexes.includes(r)) indexes.push(r);
+  if (categoryType === 'mountains') {
+    // Selects Mountain nodes contextually
+    const mountainPool = ["Spiti Valley, HP", "Munnar, Kerala"];
+    chosenDestinationValue = mountainPool[Math.floor(Math.random() * mountainPool.length)];
+    document.getElementById('startCity').value = "Delhi";
+    state.startCity = "Delhi";
+  } else if (categoryType === 'beaches') {
+    // Selects Beach nodes contextually
+    const beachPool = ["Gokarna, Karnataka", "Coorg, Karnataka"];
+    chosenDestinationValue = beachPool[Math.floor(Math.random() * beachPool.length)];
+    document.getElementById('startCity').value = "Bangalore";
+    state.startCity = "Bangalore";
+  } else {
+    // Default Heritage nodes contextually
+    chosenDestinationValue = "Hampi, Karnataka";
+    document.getElementById('startCity').value = "Bangalore";
+    state.startCity = "Bangalore";
   }
-  
-  indexes.forEach(idx => {
-    allChips[idx].classList.add('selected');
-    state.destinations.push(allChips[idx].dataset.val);
+
+  // Highlight matching items inside UI panels perfectly
+  allChips.forEach(chip => {
+    if (chip.dataset.val === chosenDestinationValue) {
+      chip.classList.add('selected');
+      state.destinations.push(chosenDestinationValue);
+    }
   });
-  
-  document.getElementById('startCity').value = "Bangalore";
-  state.startCity = "Bangalore";
-  
-  alert(`🎲 Random Destination Matrix Generated: ${state.destinations.join(', ')} (Departing from Bangalore)`);
+
+  alert(`🎲 Theme Randomizer matched Category [${categoryType.toUpperCase()}]: Assigned Destination: ${chosenDestinationValue} starting out from ${state.startCity}!`);
   validateDates();
 }
 
-/* 🌟 DYNAMIC APPROXIMATE DISTANCE AND TRANSIT ALLOCATION SUGGESTER */
 function runGeographicalDistanceSuggester() {
   const suggestionBox = document.getElementById('distanceSuggestionBox');
   if (!state.destinations.length) {
@@ -487,7 +521,7 @@ function runGeographicalDistanceSuggester() {
     return;
   }
   
-  let totalDistanceBase = 280; // Standard default baseline metric
+  let totalDistanceBase = 280; 
   const combinedString = state.destinations.join(" ").toLowerCase();
   
   if (combinedString.includes("coorg")) totalDistanceBase = 260;
@@ -498,7 +532,6 @@ function runGeographicalDistanceSuggester() {
   
   state.calculatedDistanceKM = totalDistanceBase;
   
-  // Suggest buffer parameters metrics contextually
   let suggestedBuffers = 2;
   if (totalDistanceBase < 300) suggestedBuffers = 1;
   if (totalDistanceBase > 800) suggestedBuffers = 4;
@@ -506,7 +539,6 @@ function runGeographicalDistanceSuggester() {
   suggestionBox.style.display = 'block';
   suggestionBox.innerHTML = `🏁 <strong>Approximate Connection Distance:</strong> ~${totalDistanceBase} KM away from primary vector hubs.<br>💡 <strong>System Suggestion:</strong> We recommend configuring exactly <strong>${suggestedBuffers} Travel Transit Day(s)</strong> for this route setup.`;
   
-  // Auto-set the selection element baseline value to fit suggestion parameters smoothly
   document.getElementById('transitDaysCount').value = suggestedBuffers;
   state.transitDaysAllocation = suggestedBuffers;
 }
@@ -629,7 +661,6 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   
   if (stepNum === 4) {
     if (!state.transport || !state.vehicleMode) { err.classList.add('show'); return; }
-    // Save metric logs internally seamlessly without disrupting framework structure
     state.flightTicketCost = parseInt(document.getElementById('flightTicketCost').value) || 0;
     state.fuelPrice = parseInt(document.getElementById('fuelPrice').value) || 102;
     state.vehicleMileage = parseInt(document.getElementById('vehicleMileage').value) || 15;
@@ -664,10 +695,10 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
 
   try {
     await travelPlannerSupabaseClient.from('journey_feedback').insert({
-      step_number: stepNum, step_name: stepName, feedback_rating: 'v9_extended_features',
+      step_number: stepNum, step_name: stepName, feedback_rating: 'v10_thematic_categories',
       user_comments: betaFeedbackText
     });
-  } catch(e) { console.warn("Log captured locally safely."); }
+  } catch(e) { console.warn("Log captured safely."); }
 
   document.getElementById('singleBetaFeedbackInput').value = '';
   document.getElementById(`step${stepNum}`).classList.remove('active');
@@ -712,7 +743,7 @@ function buildSummary() {
   `;
 }
 
-/* 🌟 DYNAMIC CONTENT ACTION INJECTOR HUB FOR DISCOVERY CLICKS */
+/* 🌟 ACTIVE INTERACTIVE SUB-ITINERARY ACTION PANEL INJECTOR */
 function injectExploreTargetIntoItinerary(targetType, contentValue, targetDayIndex) {
   const container = document.getElementById(`injectedExploreBox-day-${targetDayIndex}`);
   if (!container) return;
@@ -721,11 +752,11 @@ function injectExploreTargetIntoItinerary(targetType, contentValue, targetDayInd
   if (targetType === 'cuisine') {
     container.innerHTML = `🍲 <strong>Injected Local Culinary Goal:</strong> Explore regional food styles highlighting: <em>${contentValue}</em>.`;
   } else if (targetType === 'famous') {
-    container.innerHTML = `📸 <strong>Injected Iconic Sightseeing Check:</strong> Drop by the signature landmark landmark target: <em>${contentValue}</em>.`;
+    container.innerHTML = `📸 <strong>Injected Iconic Sightseeing Check:</strong> Drop by the signature landmark target: <em>${contentValue}</em>.`;
   } else {
     container.innerHTML = `🌿 <strong>Injected Remote Trail Exploration:</strong> Venture down offbeat path tracks to discover: <em>${contentValue}</em>.`;
   }
-  alert(`✨ ${targetType.toUpperCase()} content embedded seamlessly into active day card!`);
+  alert(`✨ ${targetType.toUpperCase()} profile context dynamically included into active Day card display window!`);
 }
 
 async function triggerBuiltInGeneration() {
@@ -733,7 +764,6 @@ async function triggerBuiltInGeneration() {
   statusEl.style.color = "green";
   statusEl.textContent = "Processing layout configurations and archiving to database registry...";
 
-  // Calculate customized fuel metrics deductions natively
   let loggedFuelOverheadPerHead = 0;
   if (state.transport === "Full Road Trip" && state.vehicleMode !== "No Private Vehicle") {
     const calculatedTotalFuel = Math.round((state.calculatedDistanceKM * 2 / state.vehicleMileage) * state.fuelPrice);
@@ -743,8 +773,6 @@ async function triggerBuiltInGeneration() {
   }
 
   const perHeadBudget = state.budgetScope === 'Per-Person Scope' ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
-  
-  // Deduct fuel/flight transit overhead costs from active fluid day spending variables pool cleanly
   const adjustedSpendablePool = Math.max(2000, perHeadBudget - loggedFuelOverheadPerHead);
   
   const dailyFoodBase = Math.round((adjustedSpendablePool * 0.35) / state.days); 
@@ -770,7 +798,6 @@ async function triggerBuiltInGeneration() {
     const morningBreakfastVibe = baseLookup.breakfast[index % baseLookup.breakfast.length];
     const eveningCulinaryVibe = baseLookup.eats[(index + 2) % baseLookup.eats.length];
 
-    // Build reusable interactive showcase buttons dynamically for Day 1 matrix references
     if (index === 0) {
       commonHubExploreItems = `
         <div class="discovery-item" onclick="injectExploreTargetIntoItinerary('famous', '${primaryFamousSight}', 0)">
@@ -847,7 +874,6 @@ async function triggerBuiltInGeneration() {
               🎯 <strong>Custom Traveler Blueprint Goal:</strong> <em>"${day.thingsToDo}"</em>
             </div>
             
-            <!-- 🌟 THE DETAILED DYNAMIC LIVE INJECTION VIEW SLOT CONTAINER -->
             <div id="injectedExploreBox-day-${index}" style="display:none; padding:8px; background:var(--success-bg); border-left:3px solid var(--success); border-radius:6px; font-size:13px; margin-bottom:10px; color:var(--success);"></div>
 
             <ul style="padding-left:18px; font-size:13px; color:var(--ocean-mid); display:flex; flex-direction:column; gap:4px;">
@@ -912,7 +938,6 @@ async function triggerBuiltInGeneration() {
   const outPanel = document.getElementById('outputPanel');
   const outBody = document.getElementById('outputBody');
   
-  // Render explore list options alongside main layout dynamically
   document.getElementById('itineraryExploreShowcaseHub').innerHTML = commonHubExploreItems;
   
   outPanel.style.display = 'block';
@@ -959,7 +984,6 @@ setupExclusiveChips('crewChips', 'crew', (val) => {
   document.getElementById('budgetInputLabel').textContent = val === 'Solo' ? 'Target Budget Allocation Amount (INR)' : 'Target Budget Allocation Amount per Person (INR)';
 });
 
-/* 🌟 DYNAMICALLY HIDE AND REVEAL FLIGHT VS PETROL SECTOR INPUT MATRIX BLOCKS */
 setupExclusiveChips('transportChips', 'transport', (val) => {
   document.getElementById('flightInputGroup').style.display = val === 'Flight Connected' ? 'block' : 'none';
   const isRoadTrip = val === 'Full Road Trip';
