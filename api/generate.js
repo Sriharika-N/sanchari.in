@@ -10,7 +10,9 @@ export default async function handler(req, res) {
   const { payload, prompt } = req.body;
 
   try {
+    // Pointing to the active 2.5 engine
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
+    
     const geminiRes = await fetch(geminiUrl, {
       method: 'POST',
       headers: {
@@ -19,18 +21,30 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: "application/json", temperature: 0.4 }
+        // Simplified configuration to prevent strict 400 validation rejections
+        generationConfig: { 
+          temperature: 0.4 
+        }
       })
     });
 
-    if (!geminiRes.ok) throw new Error(`Gemini engine error status: ${geminiRes.status}`);
-    const data = await geminiRes.json();
+    if (!geminiRes.ok) {
+      const errText = await geminiRes.text();
+      throw new Error(`Gemini Engine Refusal (${geminiRes.status}): ${errText}`);
+    }
     
+    const data = await geminiRes.json();
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const cleanedText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const parsedPlan = JSON.parse(cleanedText);
+    
+    // Robust extraction regex to isolate JSON if the model returns markdown ticks
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error("Failed to isolate a valid JSON block from the model response.");
+    }
+    
+    const parsedPlan = JSON.parse(jsonMatch[0]);
 
-    // Write directly into your Supabase database instance
+    // Commit history entry directly to your database instance
     await fetch(`${SUPABASE_URL}/rest/v1/trip_history`, {
       method: 'POST',
       headers: {
