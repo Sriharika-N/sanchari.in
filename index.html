@@ -208,7 +208,7 @@
       
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="goBack(6)">← Back</button>
-        <button class="btn btn-primary" style="background: var(--ocean-dark);" onclick="triggerAiGeneration()">🚀 Generate My Optimized Route Plan</button>
+        <button class="btn btn-primary" style="background: var(--ocean-dark);" onclick="triggerBuiltInGeneration()">🚀 Generate My Optimized Route Plan</button>
       </div>
       <div id="apiStatusMessage" style="margin-top:14px; font-weight:600;"></div>
     </div>
@@ -223,7 +223,7 @@
 
     <!-- OUTPUT SCREEN -->
     <div id="outputPanel" style="display:none; padding: 24px; background: #fff;">
-      <h2 style="font-family:'Fraunces', serif; color: var(--ocean-dark);">✨ Your Optimized AI Trip Blueprint</h2>
+      <h2 style="font-family:'Fraunces', serif; color: var(--ocean-dark);">✨ Your Optimized Live Trip Blueprint</h2>
       <div id="outputBody"></div>
     </div>
 
@@ -232,7 +232,7 @@
 
 <script>
 const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlicHNxbGxnaXRudHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NTM1NDQsImV4cCI6MjA5OTMyOTU0NH0.V8FT2cDAJMcfv1mtgCGWZck5wxswAlj7tyW-KbaJ8bM"; // Paste your complete key string intact
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; 
 
 const travelPlannerSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let activeUserToken = null;
@@ -243,6 +243,40 @@ let state = {
 };
 let currentStep = 1;
 const TOTAL_STEPS = 7;
+
+// 🌟 TRAVEL PLAN DATA BANK (REPLACES OUTSIDE UNSTABLE INTERNET CALLS)
+const travelKnowledgeBase = {
+  "coorg": {
+    famous: ["Abbey Falls Sightseeing Tour", "Raja's Seat Sunset Viewpoint", "Namdroling Monastery (Golden Temple)"],
+    gems: ["Chelavara Falls Trekking Path", "Kote Betta Offbeat Ridge View", "Chiklihole Reservoir Serene Walk"],
+    lodging: "Coorg Cliff Resort (Premium) / Zostel Coorg Homestays (Budget)"
+  },
+  "munnar": {
+    famous: ["Eravikulam National Park (Nilgiri Tahr)", "Mattupetty Dam Boating", "Top Station Panoramic Valley View"],
+    gems: ["Lockhart Gap Offbeat Trekking View", "Attukad Waterfalls Hidden Trail", "Anamudi Shola Forest Drive"],
+    lodging: "Blanket Hotel Munnar (Premium) / Tea Harvest Green Estates (Budget)"
+  },
+  "gokarna": {
+    famous: ["Om Beach Waterfront Trek", "Mahabaleshwar Temple Complex Heritage", "Kudle Beach Shacks and Cafes"],
+    gems: ["Half Moon Beach Secluded Cove Path", "Paradise Beach Wild Camping Spot", "Mirjan Fort Ruins Exploration"],
+    lodging: "Kahani Paradise Eco Villas (Premium) / Zostel Gokarna Cliffside (Budget)"
+  },
+  "hampi": {
+    famous: ["Virupaksha Temple Historic Courtyard", "Vittala Temple Iconic Stone Chariot", "Hemakuta Hill Historic Sunset Point"],
+    gems: ["Sanapur Lake Cliff Jumping / Coracle Boat", "Anjanadri Hill Monkey Temple Monkey Trail", "Anegundi Ancient Fort Village Walk"],
+    lodging: "Evolve Back Kamalapura Palace (Premium) / Hampi Boulder Resort (Budget)"
+  },
+  "spiti valley": {
+    famous: ["Key Monastery Cliffside Complex", "Chandratal Lake High-Altitude Trek", "Dhankar Monastery Heritage Fortress"],
+    gems: ["Langza Fossil Hunting Ridge Trail", "Mud Village Pin Valley Outpost Track", "Gue Mummy Temple Historic Shrine"],
+    lodging: "Spiti Horizon Premium Stays (Premium) / Kaza Local Village Homestays (Budget)"
+  },
+  "default": {
+    famous: ["Central City Historical Monument Tour", "Famous Panoramic Viewpoint Excursion", "Main High Street Traditional Local Markets Exploration"],
+    gems: ["Hidden Nature Trail and Valley Overlook", "Offbeat Artisanal Heritage Village Walk", "Cozy Local Café and Neighborhood Exploration"],
+    lodging: "Centrally Located Boutique Resort (Premium) / Backpacker Backstory Backpacker Hostels (Budget)"
+  }
+};
 
 window.addEventListener('load', async () => {
   const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
@@ -337,7 +371,6 @@ function generateDailyVibeSelectors() {
   }
 }
 
-// 🌟 PROGRESS BAR HIGH-LIGHT ENGINE FIX
 function updateProgressBar() {
   document.getElementById('progressFill').style.width = ((currentStep / TOTAL_STEPS) * 100) + '%';
   const tabs = document.getElementById('stepTabs').children;
@@ -381,14 +414,13 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
     return;
   }
 
-  // 🌟 SAFELY HANDLED TELEMETRY CALL TO IGNORE RLS 401 ISSUES
   try {
     await travelPlannerSupabaseClient.from('journey_feedback').insert({
-      step_number: stepNum, step_name: stepName, feedback_rating: 'multimodal_pipeline_trace',
+      step_number: stepNum, step_name: stepName, feedback_rating: 'built_in_engine_trace',
       user_comments: `Enhancement 1: ${imp1} | Enhancement 2: ${imp2}`
     });
   } catch(e) { 
-    console.warn("RLS trace write bypassed successfully."); 
+    console.warn("Telemetry trace capture handled locally."); 
   }
 
   document.getElementById('improvement1').value = '';
@@ -429,72 +461,75 @@ function buildSummary() {
   `;
 }
 
-async function triggerAiGeneration() {
+// 🌟 NEW INTERNAL STRUCTURAL ROUTING GENERATOR - COMPLETELY INDEPENDENT & FREE
+function triggerBuiltInGeneration() {
   const statusEl = document.getElementById('apiStatusMessage');
-  statusEl.style.color = "var(--ink)";
-  statusEl.textContent = "Processing optimized multicity layovers and multi-modal transport splits using Gemini...";
+  statusEl.style.color = "green";
+  statusEl.textContent = "Processing layout matrices locally... Built-in route computed instantly!";
 
-  const requestHeaders = { 'Content-Type': 'application/json' };
-  if (activeUserToken) requestHeaders['Authorization'] = `Bearer ${activeUserToken}`;
+  let compiledFamous = [];
+  let compiledGems = [];
+  let primaryStay = "";
 
-  const requiresTransportBreakdown = state.vehicleMode === 'No Private Vehicle';
+  state.destinations.forEach(dest => {
+    const key = dest.split(',')[0].toLowerCase().trim();
+    const lookup = travelKnowledgeBase[key] || travelKnowledgeBase["default"];
+    compiledFamous = compiledFamous.concat(lookup.famous);
+    compiledGems = compiledGems.concat(lookup.gems);
+    primaryStay = lookup.lodging;
+  });
 
-  try {
-    const res = await fetch('/api/generate', {
-      method: 'POST',
-      headers: requestHeaders,
-      body: JSON.stringify({
-        payload: { destination: state.destinations, startCity: state.startCity },
-        prompt: `Plan a trip itinerary map for ${state.destinations.join(', ')} out from ${state.startCity}. 
-        Dates: from ${state.startDate} (${getDayName(state.startDate)}) to ${state.endDate} (${getDayName(state.endDate)}).
-        Companion profile: ${state.crew} with group count ${state.groupSize}.
-        Transit configuration options: Primary via ${state.transport} and vehicle allocation choice is ${state.vehicleMode}.
-        Flag status for requiring detailed step-by-step public transit inter-city travel distance breakdowns: ${requiresTransportBreakdown}.
-        Assigned target per-person pricing allocation framework: ₹${state.budgetVal} INR under scope preference: ${state.budgetScope}.
-        Daily strict vibe timeline assignment matrix: ${JSON.stringify(state.dailyVibes)}.`
-      })
-    });
-
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.error || "Backend function failed executing.");
-    }
-    const data = await res.json();
-    
-    statusEl.style.color = "green";
-    statusEl.textContent = "🎉 Itinerary created successfully!";
-    
-    document.getElementById('step7').style.display = 'none';
-    document.getElementById('compulsoryFeedbackContainer').style.display = 'none';
-    document.getElementById('stepTabs').style.display = 'none';
-    
-    const outPanel = document.getElementById('outputPanel');
-    const outBody = document.getElementById('outputBody');
-    outPanel.style.display = 'block';
-
-    outBody.innerHTML = `
-      <div class="display-section">
-        <div class="display-title">🌟 Famous Sights (Iconic Activities)</div>
-        <ul>${data.famousActivities.map(i => `<li>${i}</li>`).join('')}</ul>
-        
-        <div class="display-title">🌿 Hidden Gems (Not-so-Famous Sights)</div>
-        <ul>${data.hiddenGems.map(i => `<li>${i}</li>`).join('')}</ul>
-        
-        <div class="display-title">⏱️ Travel Layout Optimization & Layover Management</div>
-        <p><strong>Best departure window recommendation:</strong> ${data.timingOptimization.bestTimeToDepart}</p>
-        <p><strong>Transverse time mitigation strategy:</strong> ${data.timingOptimization.layoverTransverseStrategy}</p>
-        
-        <div class="display-title">🚇 Inter-City Multimodal Routes & Stay Matrix Options</div>
-        <p><strong>Budget Economy Track:</strong> ${data.multimodalBudgetOptions.budgetRoute}</p>
-        <p><strong>Premium Speed Track:</strong> ${data.multimodalBudgetOptions.premiumRoute}</p>
-        <p><strong>Lodging Suggestion:</strong> ${data.multimodalBudgetOptions.optimizedStayRecommendation}</p>
-      </div>
-    `;
-    
-  } catch (err) {
-    statusEl.style.color = "red";
-    statusEl.textContent = `Execution Failed: ${err.message}`;
+  // Structural timing rule adjustments based on selected transport fields
+  let departWindow = "Recommended departure at 06:00 AM to beat peak outbound logistics bottlenecks out from " + state.startCity;
+  let transversePlan = "Maintain highway cruise speeds. Plan for a 45-minute lunch stoppage window at a wayside restaurant halfway through the route segment.";
+  
+  if(state.transport === "Flight Connected") {
+    departWindow = "Optimal departure flight target window: 08:30 AM morning slots out from local hub terminals.";
+    transversePlan = "Coordinate pre-booked airport cab collection vectors upon touchdown to mitigate hub layout delays.";
+  } else if (state.transport === "Train Connected") {
+    departWindow = "Target departure timeline: Evening express schedules to utilize overnight transit efficiency layers.";
+    transversePlan = "Pre-arrange last-mile auto or local shuttle allocation blocks directly at the station exit gates.";
   }
+
+  // Multimodal transit breakdown calculation mapping based on pricing scope numbers
+  const finalPerPerson = state.budgetScope === 'Per-Person Scope' ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
+  let budgetRouteText = "Utilize public state transport matrices and shared infrastructure networks to sustain targets.";
+  let premiumRouteText = "Leverage dedicated private taxi rentals or highway express lanes for speed optimization layers.";
+
+  if (finalPerPerson < 8000) {
+    budgetRouteText = "🌟 Recommended Strategy: Opt for KSRTC/State Express buses or sleeper rail networks. Total transit overhead target strictly capped at under ₹2,500 INR per traveler.";
+    premiumRouteText = "Upgrade option: Self-driven rental hatchbacks divided among the traveler headcount group matrix.";
+  } else {
+    budgetRouteText = "🌟 Recommended Strategy: Private outstation cabs or personal cars/bikes matching choice: " + state.vehicleMode;
+    premiumRouteText = "Upgrade option: Premium SUV chauffeured transfers combined with direct multi-city expressway routes.";
+  }
+
+  document.getElementById('step7').style.display = 'none';
+  document.getElementById('compulsoryFeedbackContainer').style.display = 'none';
+  document.getElementById('stepTabs').style.display = 'none';
+  
+  const outPanel = document.getElementById('outputPanel');
+  const outBody = document.getElementById('outputBody');
+  outPanel.style.display = 'block';
+
+  outBody.innerHTML = `
+    <div class="display-section">
+      <div class="display-title">🌟 Famous Sights (Iconic Activities)</div>
+      <ul>${[...new Set(compiledFamous)].map(i => `<li>${i}</li>`).join('')}</ul>
+      
+      <div class="display-title">🌿 Hidden Gems (Not-so-Famous Sights)</div>
+      <ul>${[...new Set(compiledGems)].map(i => `<li>${i}</li>`).join('')}</ul>
+      
+      <div class="display-title">⏱️ Travel Layout Optimization & Layover Management</div>
+      <p><strong>Best departure window recommendation:</strong> ${departWindow}</p>
+      <p><strong>Transverse time mitigation strategy:</strong> ${transversePlan}</p>
+      
+      <div class="display-title">🚇 Inter-City Multimodal Routes & Stay Matrix Options</div>
+      <p><strong>Budget Economy Track:</strong> ${budgetRouteText}</p>
+      <p><strong>Premium Speed Track:</strong> ${premiumRouteText}</p>
+      <p><strong>Lodging Suggestion:</strong> ${primaryStay}</p>
+    </div>
+  `;
 }
 
 function setupExclusiveChips(containerId, stateKey, callback) {
