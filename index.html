@@ -3,1139 +3,242 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Travel Planner — Plan your perfect trip</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<!-- Supabase Auth Client Library Bundle CDN -->
+<title>AI Travel Planner — Step Journey</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --ink: #0d1117;
-    --paper: #faf8f4;
-    --sand: #f0ebe1;
-    --ocean: #1a3a5c;
-    --ocean-dark: #0f2340;
-    --ocean-mid: #2a5580;
-    --coral: #e8633a;
-    --coral-light: #fdf0eb;
-    --gold: #c9a44a;
-    --muted: #6b7280;
-    --border: #e5e0d8;
-    --white: #ffffff;
-    --success: #2d6647;
-    --success-bg: #e8f5ee;
-    --warn-bg: #fef9e7;
-    --warn: #92610b;
+    --ink: #0d1117; --paper: #faf8f4; --sand: #f0ebe1; --ocean: #1a3a5c;
+    --ocean-dark: #0f2340; --ocean-mid: #2a5580; --coral: #e8633a;
+    --coral-light: #fdf0eb; --gold: #c9a44a; --muted: #6b7280; --border: #e5e0d8; --white: #ffffff;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--paper); color: var(--ink); font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6; min-height: 100vh; }
-
-  /* NAV */
-  nav { background: var(--ocean-dark); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
-  .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-  .nav-logo { width: 32px; height: 32px; background: var(--coral); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-  .nav-name { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; color: var(--white); letter-spacing: -0.02em; }
-  .nav-badge { background: var(--coral); color: var(--white); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 20px; }
-  .nav-powered { font-size: 11px; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 6px; }
-  .nav-powered span { color: var(--gold); font-weight: 500; }
-
-  /* HERO */
-  .hero { background: linear-gradient(135deg, var(--ocean-dark) 0%, var(--ocean) 60%, var(--ocean-mid) 100%); padding: 56px 24px 72px; text-align: center; position: relative; overflow: hidden; }
-  .hero::before { content: ''; position: absolute; top: -60px; right: -60px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(232,99,58,0.15) 0%, transparent 70%); pointer-events: none; }
-  .hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 6px 16px; font-size: 12px; color: var(--gold); font-weight: 500; letter-spacing: 0.04em; margin-bottom: 20px; }
-  .hero h1 { font-family: 'Fraunces', serif; font-size: clamp(28px, 5vw, 50px); font-weight: 600; color: var(--white); line-height: 1.1; letter-spacing: -0.03em; margin-bottom: 14px; }
-  .hero h1 em { font-style: italic; color: var(--coral); }
-  .hero-sub { font-size: 16px; color: rgba(255,255,255,0.7); max-width: 480px; margin: 0 auto 36px; line-height: 1.6; }
-  .hero-stats { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; }
-  .hero-stat-num { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; color: var(--gold); }
-  .hero-stat-label { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
-
-  /* MAIN */
-  .main { max-width: 780px; margin: -28px auto 60px; padding: 0 16px; position: relative; z-index: 10; }
-  .card { background: var(--white); border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 20px 60px rgba(0,0,0,0.1); overflow: hidden; }
-
-  /* PROGRESS */
-  .progress-bar { height: 3px; background: var(--border); }
-  .progress-fill { height: 100%; background: var(--coral); transition: width 0.4s ease; }
-
-  /* STEP TABS */
-  .step-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--sand); overflow-x: auto; }
-  .step-tab { flex: 1; min-width: 70px; padding: 12px 8px; text-align: center; font-size: 11px; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; cursor: default; white-space: nowrap; transition: all 0.2s; user-select: none; }
-  .step-tab.active { color: var(--ocean); border-bottom-color: var(--coral); background: var(--white); font-weight: 600; }
-  .step-tab.done { color: var(--success); }
-  .step-tab-icon { display: block; font-size: 15px; margin-bottom: 2px; }
-
-  /* STEP PANELS */
-  .step-panel { display: none; padding: 28px 24px; animation: fadeIn 0.3s ease; }
+  body { background: var(--paper); color: var(--ink); font-family: 'Inter', sans-serif; font-size: 15px; min-height: 100vh; }
+  nav { background: var(--ocean-dark); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; font-weight:600; }
+  .main { max-width: 780px; margin: 40px auto; padding: 0 16px; }
+  .card { background: var(--white); border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid var(--border); }
+  .progress-bar { height: 4px; background: var(--border); }
+  .progress-fill { height: 100%; background: var(--coral); transition: width 0.3s; }
+  .step-panel { display: none; padding: 30px 24px; }
   .step-panel.active { display: block; }
-  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
-
-  .step-heading { font-family: 'Fraunces', serif; font-size: 21px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 4px; letter-spacing: -0.02em; }
-  .step-sub { font-size: 13px; color: var(--muted); margin-bottom: 22px; }
-
-  /* FORM */
-  label { display: block; font-size: 12px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
-  input[type="text"], input[type="date"], input[type="time"], input[type="number"], select, textarea {
-    width: 100%; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: 10px;
-    font-family: 'Inter', sans-serif; font-size: 14px; color: var(--ink); background: var(--white);
-    transition: border-color 0.2s, box-shadow 0.2s; outline: none; appearance: none;
-  }
-  input:focus, select:focus, textarea:focus { border-color: var(--ocean); box-shadow: 0 0 0 3px rgba(26,58,92,0.08); }
-  textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
-  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 18px; }
-  .form-group { margin-bottom: 18px; }
-
-  /* CHIPS */
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip { padding: 7px 14px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all 0.15s; user-select: none; background: var(--white); }
-  .chip:hover { border-color: var(--ocean); color: var(--ocean); background: rgba(26,58,92,0.04); }
-  .chip.selected { border-color: var(--coral); color: var(--coral); background: var(--coral-light); font-weight: 600; }
-
-  /* MOOD CARDS */
-  .mood-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
-  .mood-grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
-  .mood-card { padding: 14px 10px; border: 1.5px solid var(--border); border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.15s; user-select: none; background: var(--white); }
-  .mood-card:hover { border-color: var(--ocean); background: rgba(26,58,92,0.03); transform: translateY(-1px); }
-  .mood-card.selected { border-color: var(--coral); background: var(--coral-light); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(232,99,58,0.15); }
-  .mood-emoji { font-size: 22px; margin-bottom: 5px; display: block; }
-  .mood-label { font-size: 12px; font-weight: 700; color: var(--ocean-dark); }
-  .mood-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
-
-  /* DAY AVAILABILITY */
-  .day-avail-grid { display: grid; gap: 8px; margin-top: 8px; }
-  .day-avail-row { display: flex; align-items: center; gap: 10px; background: var(--sand); border-radius: 10px; padding: 10px 14px; }
-  .day-avail-date { font-size: 12px; font-weight: 700; color: var(--ocean-dark); min-width: 90px; }
-  .day-avail-chips { display: flex; gap: 6px; flex-wrap: wrap; }
-  .avail-chip { padding: 4px 10px; border: 1.5px solid var(--border); border-radius: 16px; font-size: 11px; font-weight: 600; cursor: pointer; background: var(--white); transition: all 0.15s; }
-  .avail-chip:hover { border-color: var(--ocean); }
-  .avail-chip.travel { border-color: var(--coral); background: var(--coral-light); color: var(--coral); }
-  .avail-chip.work { border-color: #1a56db; background: #e8f0fe; color: #1a56db; }
-  .avail-chip.off { border-color: var(--muted); background: var(--sand); color: var(--muted); }
-
-  /* VEHICLE CONFIG */
-  .vehicle-box { background: var(--sand); border-radius: 12px; padding: 16px; margin-top: 12px; display: none; }
-  .vehicle-box.show { display: block; }
-  .vehicle-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-  .vehicle-label { font-size: 11px; font-weight: 700; color: var(--ocean-dark); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
-
-  /* INFO BOX */
-  .info-box { background: var(--sand); border: 1.5px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; font-size: 13px; color: var(--ink); line-height: 1.6; }
-  .info-box strong { color: var(--ocean-dark); }
-  .info-highlight { background: var(--coral-light); border: 1.5px solid rgba(232,99,58,0.25); border-radius: 10px; padding: 12px 16px; margin-bottom: 18px; font-size: 13px; color: var(--ink); }
-
-  /* TRAVEL TIME BADGE */
-  .travel-time-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--ocean-dark); color: var(--white); border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; margin-top: 10px; }
-
-  /* BUTTONS */
-  .btn-row { display: flex; gap: 10px; margin-top: 24px; align-items: center; }
-  .btn { padding: 11px 22px; border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-  .btn-primary { background: var(--coral); color: var(--white); flex: 1; justify-content: center; }
-  .btn-primary:hover { background: #d4562f; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(232,99,58,0.35); }
-  .btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--border); padding: 11px 18px; }
-  .btn-ghost:hover { border-color: var(--ocean); color: var(--ocean); }
-  .btn-generate { background: linear-gradient(135deg, var(--ocean-dark) 0%, var(--ocean-mid) 100%); color: var(--white); flex: 1; justify-content: center; font-size: 15px; padding: 14px 24px; border-radius: 12px; }
-  .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15,35,64,0.4); }
-
-  /* LOADING */
-  #loadingPanel { padding: 48px 24px; text-align: center; }
-  .loader-icon { width: 64px; height: 64px; margin: 0 auto 20px; position: relative; }
-  .loader-ring { position: absolute; inset: 0; border-radius: 50%; border: 3px solid transparent; border-top-color: var(--coral); animation: spin 1s linear infinite; }
-  .loader-ring:nth-child(2) { inset: 8px; border-top-color: var(--ocean); animation-duration: 1.4s; animation-direction: reverse; }
-  .loader-emoji { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 6px; }
-  .loading-msg { font-size: 13px; color: var(--muted); height: 20px; }
-  .loading-dots { display: flex; justify-content: center; gap: 6px; margin-top: 20px; }
-  .loading-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); animation: pulse 1.4s ease-in-out infinite; }
-  .loading-dot:nth-child(2) { animation-delay: 0.2s; }
-  .loading-dot:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes pulse { 0%,80%,100% { background:var(--border); transform:scale(1); } 40% { background:var(--coral); transform:scale(1.3); } }
-
-  /* OUTPUT */
-  #outputPanel { padding: 0; }
-  .output-header { background: linear-gradient(135deg, var(--ocean-dark) 0%, var(--ocean) 100%); padding: 24px; color: var(--white); }
-  .output-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 8px; }
-  .output-meta { display: flex; flex-wrap: wrap; gap: 8px; }
-  .output-chip { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.12); border-radius: 14px; padding: 4px 10px; font-size: 11px; color: rgba(255,255,255,0.85); }
-
-  .output-body { padding: 20px 24px; }
-
-  /* BOOKING SECTION */
-  .booking-section { margin-bottom: 24px; }
-  .booking-title { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-  .booking-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
-  .booking-card { border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; background: var(--white); transition: all 0.15s; }
-  .booking-card:hover { border-color: var(--ocean); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-  .booking-card-icon { font-size: 24px; margin-bottom: 6px; }
-  .booking-card-name { font-size: 13px; font-weight: 700; color: var(--ocean-dark); margin-bottom: 2px; }
-  .booking-card-desc { font-size: 11px; color: var(--muted); margin-bottom: 10px; line-height: 1.4; }
-  .booking-btn { display: block; width: 100%; padding: 8px 12px; background: var(--ocean); color: var(--white); border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; text-decoration: none; transition: background 0.15s; }
-  .booking-btn:hover { background: var(--ocean-mid); }
-  .booking-btn.flight { background: #1a56db; }
-  .booking-btn.flight:hover { background: #1548c0; }
-  .booking-btn.train { background: var(--success); }
-  .booking-btn.train:hover { background: #245538; }
-  .booking-btn.bus { background: #7c3aed; }
-  .booking-btn.bus:hover { background: #6d28d9; }
-  .booking-btn.stay { background: var(--coral); }
-  .booking-btn.stay:hover { background: #d4562f; }
-
-  /* BOOKING INPUT */
-  .booking-input-section { background: var(--sand); border-radius: 12px; padding: 16px; margin-top: 16px; }
-  .booking-input-title { font-size: 13px; font-weight: 700; color: var(--ocean-dark); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
-  .booking-input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .booking-input-item { background: var(--white); border-radius: 8px; padding: 10px 12px; border: 1.5px solid var(--border); }
-  .booking-input-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 4px; }
-  .booking-input-val { font-size: 13px; color: var(--ink); font-weight: 500; }
-  .booking-input-val input { border: none; padding: 0; font-size: 13px; font-weight: 500; color: var(--ink); background: transparent; }
-  .booking-input-val input:focus { outline: none; }
-
-  /* DAY CARDS */
-  .day-card { margin-bottom: 16px; border: 1.5px solid var(--border); border-radius: 14px; overflow: hidden; }
-  .day-header { background: var(--sand); padding: 12px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
-  .day-num { background: var(--ocean); color: var(--white); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
-  .day-avail-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
-  .badge-travel { background: var(--coral-light); color: var(--coral); }
-  .badge-work { background: #e8f0fe; color: #1a56db; }
-  .badge-off { background: var(--sand); color: var(--muted); border: 1px solid var(--border); }
-  .day-title { font-weight: 600; color: var(--ocean-dark); font-size: 13px; }
-  .day-toggle { margin-left: auto; color: var(--muted); font-size: 14px; transition: transform 0.2s; }
-  .day-card.open .day-toggle { transform: rotate(180deg); }
-  .day-body { display: none; padding: 14px 16px; }
-  .day-card.open .day-body { display: block; }
-
-  .time-block { margin-bottom: 14px; }
-  .time-label { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--coral); margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
-  .activity { background: var(--paper); border-radius: 10px; padding: 11px 13px; margin-bottom: 7px; border-left: 3px solid var(--border); transition: border-color 0.2s; }
-  .activity:hover { border-left-color: var(--coral); }
-  .activity-name { font-weight: 600; font-size: 13px; color: var(--ink); margin-bottom: 3px; }
-  .activity-desc { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 5px; }
-  .activity-meta { display: flex; flex-wrap: wrap; gap: 6px; }
-  .activity-tag { font-size: 10px; padding: 2px 7px; border-radius: 5px; font-weight: 500; }
-  .tag-time { background: #e8f0fe; color: #1a56db; }
-  .tag-cost { background: var(--success-bg); color: var(--success); }
-  .tag-transport { background: var(--warn-bg); color: var(--warn); }
-  .tag-tip { background: #fdf4ff; color: #7c3aed; }
-
-  /* BUDGET CARD */
-  .budget-card { background: linear-gradient(135deg, var(--ocean-dark) 0%, var(--ocean) 100%); border-radius: 14px; padding: 18px; margin-top: 18px; color: var(--white); }
-  .budget-title { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-  .budget-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-  .budget-item { background: rgba(255,255,255,0.08); border-radius: 8px; padding: 9px 11px; }
-  .budget-item-label { font-size: 10px; color: rgba(255,255,255,0.6); margin-bottom: 2px; }
-  .budget-item-val { font-size: 15px; font-weight: 600; }
-  .budget-total { background: var(--coral); border-radius: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
-  .budget-total-label { font-size: 12px; font-weight: 600; }
-  .budget-total-val { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; }
-
-  /* TIPS */
-  .tips-card { background: var(--coral-light); border: 1.5px solid rgba(232,99,58,0.2); border-radius: 12px; padding: 16px 18px; margin-top: 14px; }
-  .tips-title { font-weight: 700; font-size: 12px; color: var(--coral); margin-bottom: 8px; display: flex; align-items: center; gap: 5px; letter-spacing: 0.04em; text-transform: uppercase; }
-  .tips-list { list-style: none; }
-  .tips-list li { font-size: 12px; color: var(--ink); padding: 3px 0; display: flex; gap: 7px; }
-  .tips-list li::before { content: '→'; color: var(--coral); flex-shrink: 0; }
-
-  /* ACTIONS */
-  .output-actions { display: flex; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
-  .btn-action { padding: 9px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--border); background: var(--white); color: var(--ocean-dark); transition: all 0.15s; display: flex; align-items: center; gap: 5px; }
-  .btn-action:hover { border-color: var(--ocean); background: rgba(26,58,92,0.04); }
-  .btn-action-primary { background: var(--coral); border-color: var(--coral); color: var(--white); }
-  .btn-action-primary:hover { background: #d4562f; border-color: #d4562f; }
-
-  /* ERROR */
-  .error-box { background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 10px; padding: 12px 16px; margin-top: 14px; display: none; font-size: 12px; color: #991b1b; line-height: 1.5; }
+  .step-heading { font-family: 'Fraunces', serif; font-size: 24px; color: var(--ocean-dark); margin-bottom: 6px; }
+  .form-group { margin-bottom: 20px; }
+  label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; text-transform: uppercase; }
+  input, select, textarea { width: 100%; padding: 12px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; }
+  input:focus, select:focus, textarea:focus { border-color: var(--ocean); }
+  .btn { padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; }
+  .btn-primary { background: var(--coral); color: white; width: 100%; justify-content: center; }
+  .btn-secondary { background: var(--sand); color: var(--ocean-dark); }
+  .feedback-box { background: var(--coral-light); border: 1px dashed var(--coral); border-radius: 12px; padding: 16px; margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+  .feedback-buttons { display: flex; gap: 10px; }
+  .btn-feedback { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: white; }
+  .btn-feedback.selected { background: var(--coral); color: white; border-color: var(--coral); }
+  .error-box { background: #fef2f2; color: #991b1b; padding: 12px; border-radius: 8px; margin-top: 10px; display: none; font-size: 13px; }
   .error-box.show { display: block; }
-
-  /* SECTION DIVIDER */
-  .section-divider { display: flex; align-items: center; gap: 10px; margin: 20px 0; }
-  .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-  .section-divider-text { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
-
-  /* FOOTER */
-  footer { background: var(--ocean-dark); text-align: center; padding: 20px; font-size: 11px; color: rgba(255,255,255,0.4); }
-  footer strong { color: rgba(255,255,255,0.7); }
-
-  @media (max-width: 580px) {
-    .form-row, .form-row-3 { grid-template-columns: 1fr; }
-    .mood-grid { grid-template-columns: repeat(2,1fr); }
-    .budget-grid, .booking-grid, .booking-input-grid, .vehicle-row { grid-template-columns: 1fr; }
-    .hero { padding: 40px 16px 56px; }
-    .step-panel { padding: 20px 16px; }
-    .output-body { padding: 16px; }
-    .output-header { padding: 20px 16px; }
-  }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
-  <a class="nav-brand" href="#">
-    <div class="nav-logo">✈️</div>
-    <span class="nav-name">AI Travel Planner</span>
-    <span class="nav-badge">Beta</span>
-  </a>
-  <div class="nav-powered">Powered by <span>AI Hub Backend</span> ✦</div>
+  <a class="nav-brand" href="#">✈️ AI Travel Planner</a>
+  <button id="googleAuthBtn" class="btn" style="background: var(--coral); color: white; padding: 6px 16px; font-size: 13px;" onclick="loginWithGoogle()">🔑 Sign In with Gmail</button>
 </nav>
 
-<!-- HERO -->
-<div class="hero">
-  <div class="hero-eyebrow">✦ End-to-end trip planning, powered by AI</div>
-  <h1>Your perfect trip,<br><em>planned in minutes.</em></h1>
-  <p class="hero-sub">Tell the AI where you want to go. Get a complete day-by-day plan with real costs, local transport, and booking links — all in one place.</p>
-  <div class="hero-stats">
-    <div class="hero-stat"><div class="hero-stat-num">0</div><div class="hero-stat-label">Tabs to switch</div></div>
-    <div class="hero-stat"><div class="hero-stat-num">10</div><div class="hero-stat-label">Destinations</div></div>
-    <div class="hero-stat"><div class="hero-stat-num">100%</div><div class="hero-stat-label">Free to plan</div></div>
-  </div>
-</div>
-
-<!-- MAIN -->
 <div class="main">
-
-<!-- EMAIL/GOOGLE AUTH PORTAL OVERLAY -->
-<div id="authSection" class="info-box" style="background: var(--white); border-radius: 16px; border: 1.5px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin-bottom: 24px; padding: 20px;">
-  <strong style="color: var(--ocean-dark); font-size: 16px; display: block; margin-bottom: 6px;">✈️ Open Traveler History Dashboard</strong>
-  <p style="font-size: 12px; margin-bottom: 16px; color: var(--muted);">Log in via your Google profile or dynamic magic email confirmation link to track and access all your planned itineraries across devices.</p>
-  
-  <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
-    <input type="text" id="emailInput" placeholder="Enter your email address..." style="flex: 2; min-width: 200px;">
-    <button class="btn" style="background: var(--ocean); color: var(--white); padding: 10px 18px; font-size: 13px;" onclick="loginWithEmailMagicLink()">Send Magic Link</button>
-  </div>
-  
-  <button class="btn" style="background: var(--white); color: var(--ink); border: 1.5px solid var(--border); width: 100%; justify-content: center; font-size: 13px; font-weight: 600;" onclick="loginWithGoogle()">
-    <span style="font-size:16px; margin-right: 8px;">🌐</span> Sign In with Google
-  </button>
-</div>
-
-<div class="card">
-  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:16%"></div></div>
-
-  <!-- STEP TABS -->
-  <div class="step-tabs" id="stepTabs">
-    <div class="step-tab active" data-step="1"><span class="step-tab-icon">🗺️</span>Destination</div>
-    <div class="step-tab" data-step="2"><span class="step-tab-icon">📅</span>Dates</div>
-    <div class="step-tab" data-step="3"><span class="step-tab-icon">👥</span>Crew</div>
-    <div class="step-tab" data-step="4"><span class="step-tab-icon">🚗</span>Travel</div>
-    <div class="step-tab" data-step="5"><span class="step-tab-icon">✨</span>Vibe</div>
-    <div class="step-tab" data-step="6"><span class="step-tab-icon">💰</span>Budget</div>
-    <div class="step-tab" data-step="7"><span class="step-tab-icon">🚀</span>Review</div>
+  <!-- Authentication Alert Banner -->
+  <div id="loginWarning" style="background: #fff9e6; border: 1px solid #ffe0b3; border-radius: 12px; padding: 14px; margin-bottom: 20px; font-size: 13px; color: #664d03;">
+    ⚠️ <strong>Note:</strong> Sign in with Gmail to save your finalized travel itineraries automatically to your tracking dashboard.
   </div>
 
-  <!-- ── STEP 1: DESTINATION ── -->
-  <div class="step-panel active" id="step1">
-    <div class="step-heading">Where are you headed? 🗺️</div>
-    <p class="step-sub">Choose from our curated July–October destinations</p>
+  <div class="card">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 33%"></div></div>
 
-    <div class="form-group">
-      <label>Destination</label>
-      <select id="destination">
-        <option value="">— Choose a destination —</option>
-        <option value="Coorg, Karnataka">Coorg, Karnataka — Misty hills, coffee estates</option>
-        <option value="Spiti Valley, Himachal Pradesh">Spiti Valley, Himachal Pradesh — High altitude desert</option>
-        <option value="Meghalaya">Meghalaya — Living root bridges, waterfalls</option>
-        <option value="Munnar, Kerala">Munnar, Kerala — Tea gardens, cool weather</option>
-        <option value="Chopta + Tungnath, Uttarakhand">Chopta + Tungnath, Uttarakhand — Highest Shiva temple trek</option>
-        <option value="Gokarna, Karnataka">Gokarna, Karnataka — Beaches + backpacker vibes</option>
-        <option value="Hampi, Karnataka">Hampi, Karnataka — Ancient ruins, boulder landscape</option>
-        <option value="Dzukou Valley, Nagaland">Dzukou Valley, Nagaland — Hidden valley of flowers</option>
-        <option value="Tawang, Arunachal Pradesh">Tawang, Arunachal Pradesh — Buddhist monasteries</option>
-        <option value="Kasol + Kheerganga, Himachal Pradesh">Kasol + Kheerganga, HP — Parvati Valley trek</option>
-      </select>
+    <!-- STEP 1 -->
+    <div class="step-panel active" id="step1">
+      <div class="step-heading">Where are we going? 🗺️</div>
+      <div class="form-group">
+        <label>Select Target Destination</label>
+        <select id="destination">
+          <option value="">-- Select --</option>
+          <option value="Coorg, Karnataka">Coorg, Karnataka</option>
+          <option value="Munnar, Kerala">Munnar, Kerala</option>
+          <option value="Gokarna, Karnataka">Gokarna, Karnataka</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Starting Location</label>
+        <input type="text" id="startCity" placeholder="e.g. Bangalore">
+      </div>
+      <button class="btn btn-primary" onclick="submitStepAndProgress(1, 2, 'Destination Select')">Next Step — Add Dates →</button>
+      <div class="error-box" id="err1">Please fill in both fields before moving forward.</div>
     </div>
 
-    <div class="form-group">
-      <label>Your starting city</label>
-      <input type="text" id="startCity" placeholder="e.g. Bangalore, Mumbai, Delhi...">
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="goStep(2)">Next — Pick your dates →</button>
-    </div>
-    <div class="error-box" id="err1">Please select a destination and enter your starting city.</div>
-  </div>
-
-  <!-- ── STEP 2: DATES + AVAILABILITY ── -->
-  <div class="step-panel" id="step2">
-    <div class="step-heading">When are you going? 📅</div>
-    <p class="step-sub">Set your dates and tell us your availability for each day</p>
-
-    <div class="form-row">
-      <div class="form-group" style="margin-bottom:0">
+    <!-- STEP 2 -->
+    <div class="step-panel" id="step2">
+      <div class="step-heading">Trip Dates 📅</div>
+      <div class="form-group">
         <label>Start Date</label>
-        <input type="date" id="startDate" onchange="updateDates()">
+        <input type="date" id="startDate">
       </div>
-      <div class="form-group" style="margin-bottom:0">
+      <div class="form-group">
         <label>End Date</label>
-        <input type="date" id="endDate" onchange="updateDates()">
+        <input type="date" id="endDate">
       </div>
-    </div>
-
-    <div id="tripDurationBadge" style="display:none; margin: 14px 0;">
-      <div class="info-box">
-        📆 <strong id="durationText"></strong> &nbsp;·&nbsp; 🌙 <strong id="nightsText"></strong>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-secondary" onclick="goBack(1)">← Back</button>
+        <button class="btn btn-primary" onclick="submitStepAndProgress(2, 3, 'Date Configuration')">Next Step — Review & Run →</button>
       </div>
+      <div class="error-box" id="err2">Please select valid start and end dates.</div>
     </div>
 
-    <div id="availSection" style="display:none">
-      <div class="section-divider"><span class="section-divider-text">Your availability per day</span></div>
-      <p style="font-size:12px; color:var(--muted); margin-bottom:10px">Let the AI know how each day looks — it plans activities accordingly</p>
-      <div class="day-avail-grid" id="availGrid"></div>
-    </div>
-
-    <div class="btn-row" style="margin-top:20px">
-      <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
-      <button class="btn btn-primary" onclick="goStep(3)">Next — Your crew →</button>
-    </div>
-    <div class="error-box" id="err2">Please select both start and end dates.</div>
-  </div>
-
-  <!-- ── STEP 3: CREW ── -->
-  <div class="step-panel" id="step3">
-    <div class="step-heading">Who's joining? 👥</div>
-    <p class="step-sub">Your crew shapes the entire plan — pace, activities, accommodation</p>
-
-    <div class="form-group">
-      <label>Traveling as</label>
-      <div class="mood-grid" id="crewCards">
-        <div class="mood-card" data-val="Solo traveler"><span class="mood-emoji">🧍</span><div class="mood-label">Solo</div><div class="mood-desc">Just me</div></div>
-        <div class="mood-card" data-val="Couple"><span class="mood-emoji">💑</span><div class="mood-label">Couple</div><div class="mood-desc">Me + partner</div></div>
-        <div class="mood-card" data-val="Friend group"><span class="mood-emoji">👯</span><div class="mood-label">Friends</div><div class="mood-desc">The gang</div></div>
-        <div class="mood-card" data-val="Family"><span class="mood-emoji">👨‍👩‍👧</span><div class="mood-label">Family</div><div class="mood-desc">Family trip</div></div>
-        <div class="mood-card" data-val="Work + leisure"><span class="mood-emoji">💼</span><div class="mood-label">Bleisure</div><div class="mood-desc">Work + fun</div></div>
-        <div class="mood-card" data-val="Backpacker group"><span class="mood-emoji">🎒</span><div class="mood-label">Backpackers</div><div class="mood-desc">Adventure crew</div></div>
+    <!-- STEP 3: FINAL REVIEW -->
+    <div class="step-panel" id="step3">
+      <div class="step-heading">Review & Generate 🚀</div>
+      <div id="finalSummary" style="background: var(--sand); padding: 16px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; line-height: 1.6;"></div>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-secondary" onclick="goBack(2)">← Back</button>
+        <button class="btn btn-primary" style="background: var(--ocean-dark);" onclick="triggerAiGeneration()">🚀 Generate Final Trip Plan</button>
       </div>
-    </div>
-
-    <div id="groupSizeWrap" style="display:none" class="form-group">
-      <label>Number of people <span id="groupSizeVal" style="color:var(--coral); font-size:14px; text-transform:none; letter-spacing:0">4</span></label>
-      <input type="range" id="groupSize" min="2" max="20" value="4" style="width:100%; margin-top:6px"
-        oninput="document.getElementById('groupSizeVal').textContent=this.value; state.groupSize=parseInt(this.value); updateVehicleNeeds()">
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px"><span>2</span><span>20</span></div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
-      <button class="btn btn-primary" onclick="goStep(4)">Next — How are you getting there? →</button>
-    </div>
-    <div class="error-box" id="err3">Please select your crew type.</div>
-  </div>
-
-  <!-- ── STEP 4: TRANSPORT ── -->
-  <div class="step-panel" id="step4">
-    <div class="step-heading">Getting there & around 🚗</div>
-    <p class="step-sub">Help the AI calculate travel time and fuel costs accurately</p>
-
-    <div class="form-group">
-      <label>Departure time from <span id="startCityLabel2" style="color:var(--coral);text-transform:none;font-size:13px"></span></label>
-      <input type="time" id="departureTime" value="06:00">
-    </div>
-
-    <div class="form-group">
-      <label>Mode of transport to destination</label>
-      <div class="mood-grid" id="transportCards">
-        <div class="mood-card" data-val="Flight" data-hours="2"><span class="mood-emoji">✈️</span><div class="mood-label">Flight</div><div class="mood-desc">~2 hrs avg</div></div>
-        <div class="mood-card" data-val="Train" data-hours="8"><span class="mood-emoji">🚂</span><div class="mood-label">Train</div><div class="mood-desc">~6–12 hrs</div></div>
-        <div class="mood-card" data-val="Bus" data-hours="10"><span class="mood-emoji">🚌</span><div class="mood-label">Bus</div><div class="mood-desc">~8–14 hrs</div></div>
-        <div class="mood-card" data-val="Own vehicle - Car" data-hours="7"><span class="mood-emoji">🚗</span><div class="mood-label">Own Car</div><div class="mood-desc">Road trip</div></div>
-        <div class="mood-card" data-val="Own vehicle - Bike" data-hours="7"><span class="mood-emoji">🏍️</span><div class="mood-label">Own Bike</div><div class="mood-desc">Bike trip</div></div>
-        <div class="mood-card" data-val="Undecided" data-hours="0"><span class="mood-emoji">🤔</span><div class="mood-label">Undecided</div><div class="mood-desc">AI suggests</div></div>
-      </div>
-    </div>
-
-    <div id="travelTimeBadge" style="display:none; margin-bottom:18px">
-      <div class="travel-time-badge" id="travelTimeText">⏱️ Estimated travel time</div>
-    </div>
-
-    <!-- OWN VEHICLE CONFIG -->
-    <div class="vehicle-box" id="vehicleBox">
-      <p style="font-size:12px;font-weight:700;color:var(--ocean-dark);margin-bottom:12px">🚗 Vehicle Configuration</p>
-      <div class="vehicle-row">
-        <div>
-          <div class="vehicle-label">Number of vehicles</div>
-          <input type="number" id="numVehicles" min="1" max="10" value="1" placeholder="1" oninput="calcFuel()">
-        </div>
-        <div>
-          <div class="vehicle-label">Approx. mileage (km/L)</div>
-          <input type="number" id="mileage" min="5" max="80" value="20" placeholder="20" oninput="calcFuel()">
-          <div style="font-size:10px;color:var(--muted);margin-top:3px">Car avg: 15–20 km/L · Bike avg: 35–50 km/L</div>
-        </div>
-        <div>
-          <div class="vehicle-label">Fuel price (₹/L)</div>
-          <input type="number" id="fuelPrice" min="80" max="130" value="105" placeholder="105" oninput="calcFuel()">
-          <div style="font-size:10px;color:var(--muted);margin-top:3px">Petrol avg: ₹105/L</div>
-        </div>
-      </div>
-      <div id="fuelEstimate" style="background:rgba(26,58,92,0.06);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--ocean-dark);line-height:1.6"></div>
-    </div>
-
-    <div class="form-group" style="margin-top:18px">
-      <label>Getting around at the destination</label>
-      <div class="chips" id="localTransportChips">
-        <div class="chip" data-val="Rent a bike/scooter">🛵 Rent bike/scooter</div>
-        <div class="chip" data-val="Rent a car">🚗 Rent car</div>
-        <div class="chip" data-val="Local transport (bus/auto/cab)">🚌 Local transport</div>
-        <div class="chip" data-val="Mix of everything">🎲 Mix of everything</div>
-        <div class="chip" data-val="Own vehicle throughout">🔑 Own vehicle throughout</div>
-      </div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-ghost" onclick="goStep(3)">← Back</button>
-      <button class="btn btn-primary" onclick="goStep(5)">Next — Your vibe →</button>
-    </div>
-    <div class="error-box" id="err4">Please select a transport mode.</div>
-  </div>
-
-  <!-- ── STEP 5: VIBE ── -->
-  <div class="step-panel" id="step5">
-    <div class="step-heading">What's your travel vibe? ✨</div>
-    <p class="step-sub">Select everything that resonates — the AI uses this to personalise your plan</p>
-
-    <div class="form-group">
-      <label>Travel style (select all that apply)</label>
-      <div class="chips" id="vibeChips">
-        <div class="chip" data-val="Adventure & trekking">🏔️ Adventure & trekking</div>
-        <div class="chip" data-val="Offbeat & hidden gems">🌿 Offbeat & hidden gems</div>
-        <div class="chip" data-val="Local food obsessed">🍛 Local food obsessed</div>
-        <div class="chip" data-val="Photography & aesthetics">📸 Photography & aesthetics</div>
-        <div class="chip" data-val="Slow travel & wellness">🧘 Slow travel & wellness</div>
-        <div class="chip" data-val="Party & nightlife">🎉 Party & nightlife</div>
-        <div class="chip" data-val="Culture & heritage">🏛️ Culture & heritage</div>
-        <div class="chip" data-val="Shopping & markets">🛒 Shopping & markets</div>
-        <div class="chip" data-val="Relaxation & beaches">🏖️ Relaxation & beaches</div>
-        <div class="chip" data-val="Wildlife & nature">🦁 Wildlife & nature</div>
-        <div class="chip" data-val="Working remotely while traveling">💻 Work from anywhere</div>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>One thing the AI should know about you as a traveler</label>
-      <textarea id="travelNote" placeholder="e.g. I hate touristy crowds. I'm vegetarian. I need good wifi. I love early morning starts. We have a toddler. I want at least one waterfall..."></textarea>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-ghost" onclick="goStep(4)">← Back</button>
-      <button class="btn btn-primary" onclick="goStep(6)">Next — Budget →</button>
-    </div>
-    <div class="error-box" id="err5">Please select at least one travel vibe.</div>
-  </div>
-
-  <!-- ── STEP 6: BUDGET ── -->
-  <div class="step-panel" id="step6">
-    <div class="step-heading">What's your budget? 💰</div>
-    <p class="step-sub">The AI builds your plan around this — no surprises on arrival</p>
-
-    <div class="form-group">
-      <label>Budget per person (excluding transport to destination)</label>
-      <div class="mood-grid-2" id="budgetCards">
-        <div class="mood-card" data-val="Budget (under ₹5,000)"><span class="mood-emoji">💚</span><div class="mood-label">Budget</div><div class="mood-desc">Under ₹5,000</div></div>
-        <div class="mood-card" data-val="Mid-range (₹5,000–₹15,000)"><span class="mood-emoji">💛</span><div class="mood-label">Mid-range</div><div class="mood-desc">₹5,000–₹15,000</div></div>
-        <div class="mood-card" data-val="Premium (₹15,000–₹30,000)"><span class="mood-emoji">🧡</span><div class="mood-label">Premium</div><div class="mood-desc">₹15,000–₹30,000</div></div>
-        <div class="mood-card" data-val="Luxury (above ₹30,000)"><span class="mood-emoji">❤️</span><div class="mood-label">Luxury</div><div class="mood-desc">Above ₹30,000</div></div>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>Anything else the AI should factor in?</label>
-      <textarea id="extraNote" placeholder="e.g. We want to splurge on one nice dinner. Include transport in budget. Kids aged 6 and 10. We need AC accommodation..."></textarea>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-ghost" onclick="goStep(5)">← Back</button>
-      <button class="btn btn-primary" onclick="goStep(7)">Next — Review & Plan →</button>
-    </div>
-    <div class="error-box" id="err6">Please select a budget range.</div>
-  </div>
-
-  <!-- ── STEP 7: REVIEW ── -->
-  <div class="step-panel" id="step7">
-    <div class="step-heading">Ready to plan? 🚀</div>
-    <p class="step-sub">Review your trip details before the AI builds your plan</p>
-
-    <div id="tripSummary" style="background:var(--sand);border-radius:12px;padding:16px;margin-bottom:18px;font-size:13px;line-height:2;color:var(--ink)"></div>
-
-    <div class="info-highlight">
-      <strong style="color:var(--coral)">⚡ What the AI will give you:</strong><br>
-      A complete day-by-day itinerary · Local transport between every stop · Real cost estimates in ₹ · Booking links for flights, trains, buses & stays · Fuel cost calculation · Hidden gems + insider tips · Weather notes · Full budget breakdown
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-ghost" onclick="goStep(6)">← Back</button>
-      <button class="btn btn-generate" onclick="generateItinerary()">
-        🚀 Generate My Trip Plan
-      </button>
-    </div>
-    <div class="error-box" id="err7"></div>
-  </div>
-
-  <!-- LOADING -->
-  <div id="loadingPanel" style="display:none">
-    <div class="loader-icon">
-      <div class="loader-ring"></div>
-      <div class="loader-ring"></div>
-      <div class="loader-emoji">✈️</div>
-    </div>
-    <div class="loading-title">Your AI assistant is planning your trip</div>
-    <div class="loading-msg" id="loadingMsg">Warming up...</div>
-    <div class="loading-dots">
-      <div class="loading-dot"></div>
-      <div class="loading-dot"></div>
-      <div class="loading-dot"></div>
+      <div id="apiStatusMessage" style="margin-top:15px; font-weight:500;"></div>
     </div>
   </div>
 
-  <!-- OUTPUT -->
-  <div id="outputPanel" style="display:none">
-    <div class="output-header">
-      <div class="output-title" id="outputTitle">Your Trip Plan</div>
-      <div class="output-meta" id="outputMeta"></div>
+  <!-- FEEDBACK TRACE MODULE -->
+  <div class="feedback-box" id="feedbackModule">
+    <span style="font-size: 13px; font-weight: 600; color: var(--ocean-dark);">💬 Help us improve this step layout:</span>
+    <div class="feedback-buttons">
+      <button class="btn-feedback" id="fbGood" onclick="selectFeedbackRating('good')">👍 Looks Great</button>
+      <button class="btn-feedback" id="fbBad" onclick="selectFeedbackRating('bad')">👎 Confusing Layout</button>
     </div>
-    <div class="output-body" id="outputBody"></div>
+    <textarea id="feedbackComment" placeholder="Optional comments on what we can fix in the next version..." style="height: 60px; font-size: 12px;"></textarea>
   </div>
-
-</div><!-- /card -->
-</div><!-- /main -->
-
-<footer>
-  <strong>AI Travel Planner</strong> — Plan it. Execute it. Live it. &nbsp;·&nbsp; Beta v1.0
-</footer>
+</div>
 
 <script>
-// ── SUPABASE CREDENTIAL INITIALIZATION ───────────────────────────────────────
-// Provide your exact Supabase operational values here
-const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co/rest/v1/"; 
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlicHNxbGxnaXRudHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NTM1NDQsImV4cCI6MjA5OTMyOTU0NH0.V8FT2cDAJMcfv1mtgCGWZck5wxswAlj7tyW-KbaJ8bM"; 
+// ── INITIALIZE CONFIGURATION KEYS ───────────────────────────────────────────
+const SUPABASE_URL = "https://your-project-id.supabase.co"; // Replace with your exact Supabase URL
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // Replace with your exact anon key
 
 const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let activeUserToken = null;
+let activeSessionToken = null;
+let currentSelectedRating = null;
+let state = { destination: '', startCity: '', startDate: '', endDate: '' };
 
-// ── STATE ────────────────────────────────────────────────────────────────────
-let state = {
-  destination:'', startCity:'', startDate:'', endDate:'', days:0, nights:0,
-  availability:{}, departureTime:'06:00',
-  transport:'', transportHours:0, localTransport:'',
-  numVehicles:1, mileage:20, fuelPrice:105,
-  crew:'', groupSize:1, vibes:[], travelNote:'',
-  budget:'', extraNote:''
-};
-let currentStep = 1;
-const TOTAL_STEPS = 7;
-
-// ── AUTHENTICATION PROTOCOLS ──────────────────────────────────────────────────
+// Auth Setup
 async function loginWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: window.location.origin }
   });
-  if (error) alert("Google Authentication Protocol Error: " + error.message);
+  if (error) alert("Gmail Single-Sign-On Failure: " + error.message);
 }
 
-async function loginWithEmailMagicLink() {
-  const emailField = document.getElementById('emailInput').value.trim();
-  if (!emailField) return alert("Please present a structured, valid email address string.");
-
-  const { data, error } = await supabase.auth.signInWithOtp({
-    email: emailField,
-    options: { emailRedirectTo: window.location.origin }
-  });
-
-  if (error) {
-    alert("Magic Link Dispatch Failure: " + error.message);
-  } else {
-    alert("Secure transmission confirmed! Check your inbox for your active validation routing hyperlink.");
-  }
-}
-
-// Session Validation Hook on Initialization
 window.addEventListener('load', async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (session) {
-    activeUserToken = session.access_token;
-    document.getElementById('authSection').style.display = 'none';
-    console.log("Session token handshaking confirmed for token user identity reference.");
+    activeSessionToken = session.access_token;
+    document.getElementById('googleAuthBtn').textContent = "🟢 Logged In";
+    document.getElementById('loginWarning').style.display = 'none';
   }
 });
 
-// ── STEP NAV ─────────────────────────────────────────────────────────────────
-function goStep(n) {
-  if (n > currentStep && !validateStep(currentStep)) return;
-  document.getElementById(`step${currentStep}`).classList.remove('active');
-  document.querySelectorAll('.step-tab').forEach((t,i) => {
-    t.classList.remove('active','done');
-    if (i+1 < n) t.classList.add('done');
-  });
-  currentStep = n;
-  document.getElementById(`step${n}`).classList.add('active');
-  document.querySelectorAll('.step-tab')[n-1].classList.add('active');
-  document.getElementById('progressFill').style.width = ((n/TOTAL_STEPS)*100)+'%';
-  if (n===7) buildSummary();
-  window.scrollTo({top:120,behavior:'smooth'});
+function selectFeedbackRating(rating) {
+  currentSelectedRating = rating;
+  document.getElementById('fbGood').classList.toggle('selected', rating === 'good');
+  document.getElementById('fbBad').classList.toggle('selected', rating === 'bad');
 }
 
-function validateStep(n) {
-  const err = document.getElementById(`err${n}`);
-  err.classList.remove('show');
-  if (n===1) {
-    if (!document.getElementById('destination').value || !document.getElementById('startCity').value.trim()) {
-      err.classList.add('show'); return false;
+// Track Feedback and Advance Interface Screen
+async function submitStepAndProgress(currentStepNum, nextStepNum, currentStepName) {
+  document.getElementById(`err${currentStepNum}`).classList.remove('show');
+  
+  if (currentStepNum === 1) {
+    state.destination = document.getElementById('destination').value;
+    state.startCity = document.getElementById('startCity').value.trim();
+    if (!state.destination || !state.startCity) {
+      document.getElementById('err1').classList.add('show'); return;
     }
   }
-  if (n===2) {
-    if (!state.startDate || !state.endDate) { err.classList.add('show'); return false; }
-  }
-  if (n===3 && !state.crew) { err.classList.add('show'); return false; }
-  if (n===4 && !state.transport) { err.classList.add('show'); return false; }
-  if (n===5 && state.vibes.length===0) { err.classList.add('show'); return false; }
-  if (n===6 && !state.budget) { err.classList.add('show'); return false; }
-  return true;
-}
-
-// ── DATES + AVAILABILITY ──────────────────────────────────────────────────────
-function updateDates() {
-  state.startDate = document.getElementById('startDate').value;
-  state.endDate   = document.getElementById('endDate').value;
-  if (!state.startDate || !state.endDate) return;
-  const s = new Date(state.startDate), e = new Date(state.endDate);
-  if (e <= s) { document.getElementById('endDate').value = ''; return; }
-
-  const diffMs = e - s;
-  state.days  = Math.round(diffMs / 86400000) + 1;
-  state.nights = state.days - 1;
-
-  document.getElementById('durationText').textContent = `${state.days} Day${state.days>1?'s':''} Trip`;
-  document.getElementById('nightsText').textContent   = `${state.nights} Night${state.nights>1?'s':''}`;
-  document.getElementById('tripDurationBadge').style.display = 'block';
-  document.getElementById('availSection').style.display = 'block';
-
-  const grid = document.getElementById('availGrid');
-  grid.innerHTML = '';
-  state.availability = {};
-  for (let i=0; i<state.days; i++) {
-    const d = new Date(s); d.setDate(s.getDate()+i);
-    const key = d.toISOString().split('T')[0];
-    state.availability[key] = 'traveling';
-    const label = d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-    grid.innerHTML += `
-    <div class="day-avail-row">
-      <div class="day-avail-date">📅 ${label}</div>
-      <div class="day-avail-chips">
-        <div class="avail-chip travel selected" onclick="setAvail('${key}','traveling',this)">🚀 Traveling</div>
-        <div class="avail-chip work" onclick="setAvail('${key}','working',this)">💻 Working remotely</div>
-        <div class="avail-chip off" onclick="setAvail('${key}','off',this)">🏠 Not going</div>
-      </div>
-    </div>`;
-  }
-  calcFuel();
-}
-
-function setAvail(key, val, el) {
-  state.availability[key] = val;
-  const row = el.closest('.day-avail-row');
-  row.querySelectorAll('.avail-chip').forEach(c => {
-    c.classList.remove('travel','work','off');
-  });
-  el.classList.add(val === 'traveling' ? 'travel' : val === 'working' ? 'work' : 'off');
-}
-
-// ── CARD SELECTION SETUP ──────────────────────────────────────────────────────
-function setupCards(id, key, multi) {
-  document.getElementById(id).querySelectorAll('.mood-card').forEach(card => {
-    card.addEventListener('click', () => {
-      if (!multi) {
-        document.getElementById(id).querySelectorAll('.mood-card').forEach(c=>c.classList.remove('selected'));
-        card.classList.add('selected');
-        state[key] = card.dataset.val;
-        if (key==='crew') {
-          const show = ['Friend group','Family','Backpacker group'].includes(state.crew);
-          document.getElementById('groupSizeWrap').style.display = show?'block':'none';
-          if (!show) state.groupSize = state.crew==='Solo traveler'?1:2;
-          updateVehicleNeeds();
-        }
-        if (key==='transport') {
-          state.transportHours = parseInt(card.dataset.hours||0);
-          const isOwn = state.transport.includes('Own vehicle');
-          document.getElementById('vehicleBox').classList.toggle('show', isOwn);
-          const dept = document.getElementById('departureTime').value || '06:00';
-          const [h,m] = dept.split(':').map(Number);
-          const arrivalH = h + state.transportHours;
-          const arrD = new Date(2000,0,1,arrivalH%24, m);
-          const arrStr = arrD.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
-          const badge = document.getElementById('travelTimeBadge');
-          const text  = document.getElementById('travelTimeText');
-          if (state.transportHours > 0) {
-            badge.style.display = 'block';
-            text.textContent = `⏱️ ~${state.transportHours} hrs travel · Estimated arrival at destination: ${arrStr}`;
-          } else {
-            badge.style.display = 'none';
-          }
-          if (isOwn) calcFuel();
-        }
-      }
-    });
-  });
-}
-
-function updateVehicleNeeds() {
-  const g = state.groupSize || 1;
-  const isOwn = state.transport && state.transport.includes('Own vehicle');
-  if (!isOwn) return;
-  const isBike = state.transport.includes('Bike');
-  const cap = isBike ? 2 : 5;
-  const suggested = Math.ceil(g / cap);
-  document.getElementById('numVehicles').value = suggested;
-  state.numVehicles = suggested;
-  calcFuel();
-}
-
-// ── FUEL CALC ─────────────────────────────────────────────────────────────────
-function calcFuel() {
-  const dest = document.getElementById('destination').value;
-  const distMap = {
-    'Coorg, Karnataka': 260, 'Spiti Valley, Himachal Pradesh': 450,
-    'Meghalaya': 650, 'Munnar, Kerala': 480, 'Chopta + Tungnath, Uttarakhand': 420,
-    'Gokarna, Karnataka': 480, 'Hampi, Karnataka': 350, 'Dzukou Valley, Nagaland': 800,
-    'Tawang, Arunachal Pradesh': 900, 'Kasol + Kheerganga, Himachal Pradesh': 520
-  };
-  const distKm = distMap[dest] || 400;
-  const vehicles = parseInt(document.getElementById('numVehicles').value) || 1;
-  const mileage   = parseFloat(document.getElementById('mileage').value) || 20;
-  const price    = parseFloat(document.getElementById('fuelPrice').value) || 105;
-  const litresOne = distKm / mileage;
-  const totalLitres = litresOne * vehicles * 2;
-  const totalCost = Math.round(totalLitres * price);
-  const perPerson = Math.round(totalCost / (state.groupSize || 1));
-  state.numVehicles = vehicles; state.mileage = mileage; state.fuelPrice = price;
-  state.fuelCost = totalCost; state.fuelPerPerson = perPerson;
-  state.distKm = distKm;
-  document.getElementById('fuelEstimate').innerHTML =
-    `📍 Approx. distance: <strong>${distKm} km</strong> one way &nbsp;·&nbsp; `+
-    `⛽ Fuel needed: <strong>~${Math.round(totalLitres)} L</strong> (round trip, ${vehicles} vehicle${vehicles>1?'s':''}) &nbsp;·&nbsp; `+
-    `💰 Fuel cost: <strong>₹${totalCost.toLocaleString('en-IN')}</strong> total · <strong>₹${perPerson.toLocaleString('en-IN')}</strong> per person`;
-}
-
-// ── CHIPS MANAGEMENT ─────────────────────────────────────────────────────────
-function setupChips(id, key) {
-  document.getElementById(id).querySelectorAll('.chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      chip.classList.toggle('selected');
-      const v = chip.dataset.val;
-      if (chip.classList.contains('selected')) state[key].push(v);
-      else state[key] = state[key].filter(x=>x!==v);
-    });
-  });
-}
-function setupSingleChip(id, key) {
-  document.getElementById(id).querySelectorAll('.chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.getElementById(id).querySelectorAll('.chip').forEach(c=>c.classList.remove('selected'));
-      chip.classList.add('selected');
-      state[key] = chip.dataset.val;
-    });
-  });
-}
-
-// ── BUILD SUMMARY ─────────────────────────────────────────────────────────────
-function buildSummary() {
-  state.destination  = document.getElementById('destination').value;
-  state.startCity    = document.getElementById('startCity').value;
-  state.travelNote   = document.getElementById('travelNote').value;
-  state.extraNote    = document.getElementById('extraNote').value;
-  state.departureTime= document.getElementById('departureTime').value;
-  const fmt = d => new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
-  const availSummary = Object.values(state.availability);
-  const travelDays   = availSummary.filter(v=>v==='traveling').length;
-  const workDays     = availSummary.filter(v=>v==='working').length;
-  const offDays      = availSummary.filter(v=>v==='off').length;
-
-  document.getElementById('tripSummary').innerHTML = `
-    📍 <strong>${state.destination}</strong> from <strong>${state.startCity}</strong><br>
-    📅 ${fmt(state.startDate)} → ${fmt(state.endDate)} · <strong>${state.days} days, ${state.nights} nights</strong><br>
-    ${travelDays||workDays||offDays ? `📆 ${travelDays} travel day${travelDays!==1?'s':''} · ${workDays} work day${workDays!==1?'s':''} · ${offDays} off day${offDays!==1?'s':''}<br>`:''}
-    ⏰ Departing at <strong>${state.departureTime}</strong> · <strong>${state.transport}</strong>${state.transportHours>0?` (~${state.transportHours} hrs)`:''}
-    ${state.transport && state.transport.includes('Own vehicle')?`<br>🚗 ${state.numVehicles} vehicle${state.numVehicles>1?'s':''} · ${state.mileage} km/L · Est. fuel ₹${(state.fuelCost||0).toLocaleString('en-IN')} (₹${(state.fuelPerPerson||0).toLocaleString('en-IN')}/person)`:''}
-    <br>👥 ${state.crew}${state.groupSize>1?` (${state.groupSize} people)`:''}<br>
-    🛵 ${state.localTransport || 'Flexible at destination'}<br>
-    ✨ ${state.vibes.join(', ') || 'Open to anything'}<br>
-    💰 ${state.budget}<br>
-    ${state.travelNote?`💬 "${state.travelNote}"`:''}
-  `;
-}
-
-// ── GENERATE ITINERARY BY CALLING VERCEL SERVERLESS BACKEND ───────────────────
-async function generateItinerary() {
-  document.getElementById(`step${currentStep}`).classList.remove('active');
-  document.getElementById('stepTabs').style.display = 'none';
-  document.querySelector('.progress-bar').style.display = 'none';
-  document.getElementById('loadingPanel').style.display = 'block';
-
-  const availContext = Object.entries(state.availability).map(([date,status]) => {
-    const d = new Date(date).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-    return `${d}: ${status==='traveling'?'Full travel day':'Working remotely (light activities only)'}`;
-  }).join('\n');
-
-  const fuelNote = state.transport && state.transport.includes('Own vehicle')
-    ? `Transport: ${state.numVehicles} private vehicle, estimated fuel cost ₹${state.fuelCost||0} total.`
-    : '';
-
-  const prompt = `You are a travel assistant. Plan a ${state.days}-day trip to ${state.destination} starting from ${state.startCity}.
-  Dates: ${state.startDate} to ${state.endDate}.
-  Crew setup: ${state.crew} (${state.groupSize} members).
-  Budget parameters: ${state.budget}.
-  Vibes: ${state.vibes.join(', ')}.
-  Availability settings:\n${availContext}\n${fuelNote}
-
-  Respond with an exclusive structured JSON document. Follow this strict schema:
-  {
-    "trip_title": "Title with micro tagline",
-    "travel_day_1_note": "Logistics note",
-    "weather_note": "Climatic context information",
-    "packing_tips": ["Tip 1", "Tip 2"],
-    "days": [
-      {
-        "day_number": 1,
-        "date": "YYYY-MM-DD",
-        "availability_type": "traveling",
-        "theme": "Theme statement",
-        "morning": [{"name": "Place", "description": "Details", "time": "9 AM", "cost_inr": 0, "transport_from_prev": "Walk", "transport_cost_inr": 0, "ai_tip": "Insider insight"}],
-        "afternoon": [],
-        "evening": []
-      }
-    ],
-    "budget_summary": {
-      "stay_per_night_inr": 2000,
-      "food_per_day_inr": 1000,
-      "local_transport_total_inr": 500,
-      "entry_tickets_total_inr": 200,
-      "rentals_total_inr": 0,
-      "fuel_cost_total_inr": 0,
-      "total_per_person_inr": 5000
+  if (currentStepNum === 2) {
+    state.startDate = document.getElementById('startDate').value;
+    state.endDate = document.getElementById('endDate').value;
+    if (!state.startDate || !state.endDate) {
+      document.getElementById('err2').classList.add('show'); return;
     }
-  }`;
+  }
 
-  const messages = ['Checking local weather conditions... 🌤️', 'Finding curated offbeat gems... 📍', 'Calculating relative transit routes... ⏱️', 'Assembling custom budget targets... 💰'];
-  let currentMsgIdx = 0;
-  const intervalId = setInterval(()=>{ 
-    document.getElementById('loadingMsg').textContent=messages[currentMsgIdx++ % messages.length]; 
-  }, 1800);
+  // Push gathered step feedback parameters to Supabase network instance
+  if (currentSelectedRating) {
+    const comments = document.getElementById('feedbackComment').value.trim();
+    try {
+      await supabase.from('journey_feedback').insert({
+        step_number: currentStepNum,
+        step_name: currentStepName,
+        feedback_rating: currentSelectedRating,
+        user_comments: comments || null
+      });
+    } catch(e) { console.error("Feedback database push error caught:", e); }
+  }
 
-  // Package optional active header authorization keys
+  // Clear tracking values for the incoming interface panel
+  currentSelectedRating = null;
+  document.getElementById('fbGood').classList.remove('selected');
+  document.getElementById('fbBad').classList.remove('selected');
+  document.getElementById('feedbackComment').value = '';
+
+  // Shift Active Layout View
+  document.getElementById(`step${currentStepNum}`).classList.remove('active');
+  document.getElementById(`step${nextStepNum}`).classList.add('active');
+  document.getElementById('progressFill').style.width = ((nextStepNum / 3) * 100) + '%';
+
+  if (nextStepNum === 3) {
+    document.getElementById('finalSummary').innerHTML = `
+      <strong>📍 Destination:</strong> ${state.destination}<br>
+      <strong>🚗 Starting City:</strong> ${state.startCity}<br>
+      <strong>📅 Parameters:</strong> ${state.startDate} to ${state.endDate}
+    `;
+  }
+}
+
+function goBack(prevStep) {
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`step${prevStep}`).classList.add('active');
+  document.getElementById('progressFill').style.width = ((prevStep / 3) * 100) + '%';
+}
+
+// Submit To Vercel Serverless Component Route
+async function triggerAiGeneration() {
+  const statusEl = document.getElementById('apiStatusMessage');
+  statusEl.style.color = "var(--ink)";
+  statusEl.textContent = "Compiling generation directives via Gemini engine infrastructure...";
+
   const requestHeaders = { 'Content-Type': 'application/json' };
-  if (activeUserToken) {
-    requestHeaders['Authorization'] = `Bearer ${activeUserToken}`;
+  if (activeSessionToken) {
+    requestHeaders['Authorization'] = `Bearer ${activeSessionToken}`;
   }
 
   try {
-    const response = await fetch('/api/generate', {
+    const res = await fetch('/api/generate', {
       method: 'POST',
       headers: requestHeaders,
       body: JSON.stringify({
         payload: { destination: state.destination, startCity: state.startCity },
-        prompt: prompt
+        prompt: `Compile a complete structured travel itinerary format layout tracking array asset block for ${state.destination} departing out from ${state.startCity}.`
       })
     });
+
+    if (!res.ok) throw new Error("Serverless API endpoint returned execution code failure status.");
+    const data = await res.json();
     
-    if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.error || 'Backend infrastructure failure');
-    }
-    
-    const parsedPlan = await response.json();
-    clearInterval(intervalId);
-    renderOutput(parsedPlan);
-  } catch(err) {
-    clearInterval(intervalId);
-    document.getElementById('loadingPanel').style.display = 'none';
-    document.getElementById('stepTabs').style.display = 'flex';
-    document.querySelector('.progress-bar').style.display = 'block';
-    document.getElementById(`step${currentStep}`).classList.add('active');
-    const e = document.getElementById('err7');
-    e.textContent = `Error: ${err.message}. Check your Vercel deployment variable dashboard settings.`;
-    e.classList.add('show');
+    statusEl.style.color = "green";
+    statusEl.textContent = "🎉 Operation complete! Custom trip plan built and stored in Supabase trip_history table nodes.";
+    console.log("Returned Data Payload Structure Object:", data);
+  } catch (err) {
+    statusEl.style.color = "red";
+    statusEl.textContent = `API Route Error Encountered: ${err.message}`;
   }
 }
-
-// ── RENDER ENGINE FOR TRIP OUTPUT ─────────────────────────────────────────────
-function renderOutput(plan) {
-  document.getElementById('loadingPanel').style.display = 'none';
-  const op = document.getElementById('outputPanel');
-  op.style.display = 'block';
-
-  const fmt = d => new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short'});
-  document.getElementById('outputTitle').textContent = plan.trip_title || `${state.days}-Day Trip to ${state.destination}`;
-  document.getElementById('outputMeta').innerHTML = `
-    <div class="output-chip">📅 ${fmt(state.startDate)} → ${fmt(state.endDate)}</div>
-    <div class="output-chip">🌙 ${state.nights} nights</div>
-    <div class="output-chip">👥 ${state.crew}${state.groupSize>1?` × ${state.groupSize}`:''}</div>
-    <div class="output-chip">💰 ${state.budget}</div>
-    <div class="output-chip">${state.transport || 'Flexible Transportation'}</div>
-  `;
-
-  let html = '';
-
-  if (plan.travel_day_1_note) {
-    html += `<div class="info-box" style="margin-bottom:16px">🚀 <strong>Logistics Departure Notice:</strong> ${plan.travel_day_1_note}</div>`;
-  }
-
-  html += buildBookingSection();
-
-  html += `
-  <div class="booking-input-section">
-    <div class="booking-input-title">📋 Live Booking Confirmation Desk <span style="font-weight:400;color:var(--muted);font-size:11px">— state monitoring tracker</span></div>
-    <div class="booking-input-grid">
-      <div class="booking-input-item">
-        <div class="booking-input-label">✈️ Transit PNR Identifier</div>
-        <div class="booking-input-val"><input type="text" placeholder="Record Locator..." style="width:100%"></div>
-      </div>
-      <div class="booking-input-item">
-        <div class="booking-input-label">🏨 Reserved Accommodation Space</div>
-        <div class="booking-input-val"><input type="text" placeholder="Property destination name..."></div>
-      </div>
-      <div class="booking-input-item">
-        <div class="booking-input-label">👥 Checked Manifest Passengers</div>
-        <div class="booking-input-val"><input type="text" placeholder="Verified names..."></div>
-      </div>
-      <div class="booking-input-item">
-        <div class="booking-input-label">💰 Ledger Sum Finalized</div>
-        <div class="booking-input-val"><input type="text" placeholder="₹0.00"></div>
-      </div>
-    </div>
-  </div>`;
-
-  html += `<div class="section-divider" style="margin:20px 0"><span class="section-divider-text">Your Day-by-Day Itinerary</span></div>`;
-
-  plan.days.forEach((day,i) => {
-    const avType = day.availability_type || 'traveling';
-    const badgeClass = avType==='traveling'?'badge-travel':avType==='working'?'badge-work':'badge-off';
-    const badgeText  = avType==='traveling'?'🚀 Travel day':avType==='working'?'💻 Work day':'🏠 Rest day';
-    html += `
-    <div class="day-card ${i===0?'open':''}" onclick="toggleDay(this)">
-      <div class="day-header">
-        <div class="day-num">${day.day_number}</div>
-        <div>
-          <div class="day-title">${day.theme || `Day ${day.day_number}`}</div>
-        </div>
-        <span class="day-avail-badge ${badgeClass}">${badgeText}</span>
-        <div class="day-toggle">▾</div>
-      </div>
-      <div class="day-body">
-        ${avType==='off'?'<div class="info-box">🏠 Rest day — structural optimization free space.</div>'
-          : renderTimeBlock('☀️ Morning Agenda',day.morning) + renderTimeBlock('🌤️ Afternoon Tracks',day.afternoon) + renderTimeBlock('🌙 Evening Matrix',day.evening)}
-      </div>
-    </div>`;
-  });
-
-  const b = plan.budget_summary;
-  if (b) {
-    const isOwn = state.transport && state.transport.includes('Own vehicle');
-    html += `
-    <div class="budget-card">
-      <div class="budget-title">💰 Expense Analysis (Per Capita Projection)</div>
-      <div class="budget-grid">
-        <div class="budget-item"><div class="budget-item-label">🏨 Accommodation Units</div><div class="budget-item-val">₹${(b.stay_per_night_inr||0).toLocaleString('en-IN')}</div></div>
-        <div class="budget-item"><div class="budget-item-label">🍛 Daily Food Allowance</div><div class="budget-item-val">₹${(b.food_per_day_inr||0).toLocaleString('en-IN')}</div></div>
-        <div class="budget-item"><div class="budget-item-label">🚗 Regional Routing Transit</div><div class="budget-item-val">₹${(b.local_transport_total_inr||0).toLocaleString('en-IN')}</div></div>
-        <div class="budget-item"><div class="budget-item-label">🎟️ Entry Admissions</div><div class="budget-item-val">₹${(b.entry_tickets_total_inr||0).toLocaleString('en-IN')}</div></div>
-        ${isOwn&&state.fuelPerPerson?`<div class="budget-item"><div class="budget-item-label">⛽ Apportioned Fuel Allocation</div><div class="budget-item-val">₹${state.fuelPerPerson.toLocaleString('en-IN')}</div></div>`:''}
-      </div>
-      <div class="budget-total">
-        <div class="budget-total-label">Projected Estimated Aggregation Target</div>
-        <div class="budget-total-val">₹${(b.total_per_person_inr||0).toLocaleString('en-IN')}</div>
-      </div>
-    </div>`;
-  }
-
-  if (plan.weather_note || (plan.packing_tips&&plan.packing_tips.length)) {
-    html += `
-    <div class="tips-card">
-      <div class="tips-title">🌤️ Contextual Guidelines & Operational Gear Configuration</div>
-      ${plan.weather_note?`<p style="font-size:12px;color:var(--ink);margin-bottom:8px">${plan.weather_note}</p>`:''}
-      <ul class="tips-list">${(plan.packing_tips||[]).map(t=>`<li>${t}</li>`).join('')}</ul>
-    </div>`;
-  }
-
-  html += `
-  <div class="output-actions">
-    <button class="btn-action btn-action-primary" onclick="window.print()">🖨️ Export Plan Documentation</button>
-    <button class="btn-action" onclick="shareWhatsApp()">💬 Dispatch Sync via WhatsApp</button>
-    <button class="btn-action" onclick="copyLink()">🔗 Copy Session Hyperlink</button>
-    <button class="btn-action" onclick="location.reload()">🔄 Initialize Alternate Framework</button>
-  </div>`;
-
-  document.getElementById('outputBody').innerHTML = html;
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-function buildBookingSection() {
-  const destRaw = state.destination || '';
-  const cleanDest = destRaw.split(',')[0].toLowerCase().trim();
-  const d1 = state.startDate ? state.startDate.replace(/-/g,'') : '';
-  const d2 = state.endDate ? state.endDate.replace(/-/g,'') : '';
-
-  const links = {
-    flight: `https://www.makemytrip.com/flights/search?tripType=O&itinerary=${encodeURIComponent(state.startCity)}-${encodeURIComponent(cleanDest)}-${state.startDate}&paxType=A-${state.groupSize||1}_C-0_I-0`,
-    train: `https://www.irctc.co.in/nget/train-search`,
-    bus: `https://www.redbus.in/bus-tickets/${encodeURIComponent(state.startCity.toLowerCase())}-to-${encodeURIComponent(cleanDest)}`,
-    stay_mmt: `https://www.makemytrip.com/hotels/${encodeURIComponent(cleanDest)}-hotels.html?checkin=${d1}&checkout=${d2}&roomCount=1&adultsCount=${state.groupSize||1}`,
-    homestay: `https://www.airbnb.co.in/s/${encodeURIComponent(destRaw)}/homes?checkin=${state.startDate}&checkout=${state.endDate}&adults=${state.groupSize||1}`,
-  };
-
-  const isOwnVehicle = state.transport && state.transport.includes('Own vehicle');
-
-  return `
-  <div class="booking-section">
-    <div class="booking-title">🔗 Deep-Link Booking Matrices</div>
-    <div class="booking-grid">
-      ${!isOwnVehicle?`<div class="booking-card"><div class="booking-card-icon">✈️</div><div class="booking-card-name">Aviation Routes</div><a href="${links.flight}" target="_blank" class="booking-btn flight">MMT Engine Lookup →</a></div>`:''}
-      ${!isOwnVehicle?`<div class="booking-card"><div class="booking-card-icon">🚂</div><div class="booking-card-name">Rail Networks</div><a href="${links.train}" target="_blank" class="booking-btn train">IRCTC Terminal Access →</a></div>`:''}
-      ${state.transport==='Bus'?`<div class="booking-card"><div class="booking-card-icon">🚌</div><div class="booking-card-name">Express Bus Fleet</div><a href="${links.bus}" target="_blank" class="booking-btn bus">RedBus Query Engine →</a></div>`:''}
-      <div class="booking-card"><div class="booking-card-icon">🏨</div><div class="booking-card-name">Hotel Inventories</div><a href="${links.stay_mmt}" target="_blank" class="booking-btn stay">MMT Stays Access →</a></div>
-      <div class="booking-card"><div class="booking-card-icon">🏡</div><div class="booking-card-name">Distributed Spaces</div><a href="${links.homestay}" target="_blank" class="booking-btn stay">Airbnb Node Routing →</a></div>
-    </div>
-  </div>`;
-}
-
-function renderTimeBlock(label, acts) {
-  if (!acts || acts.length===0) return '';
-  return `
-  <div class="time-block">
-    <div class="time-label">${label}</div>
-    ${acts.map(a=>`
-    <div class="activity">
-      <div class="activity-name">${a.name}</div>
-      <div class="activity-desc">${a.description}</div>
-      <div class="activity-meta">
-        ${a.time?`<span class="activity-tag tag-time">⏰ ${a.time}</span>`:''}
-        ${a.cost_inr!==undefined?`<span class="activity-tag tag-cost">₹${a.cost_inr.toLocaleString('en-IN')}</span>`:''}
-        ${a.transport_from_prev?`<span class="activity-tag tag-transport">🚗 ${a.transport_from_prev}</span>`:''}
-        ${a.ai_tip?`<span class="activity-tag tag-tip">💡 ${a.ai_tip}</span>`:''}
-      </div>
-    </div>`).join('')}
-  </div>`;
-}
-
-function toggleDay(card) { card.classList.toggle('open'); }
-function copyLink() { navigator.clipboard.writeText(window.location.href).then(()=>alert('Tracking identity string copied to clipboard! 🔗')); }
-function shareWhatsApp() { window.open(`https://wa.me/?text=${encodeURIComponent('Synchronizing dynamic itinerary data asset workspace: '+window.location.href)}`, '_blank'); }
-
-// ── INITIALIZATION PROTOCOLS ──────────────────────────────────────────────────
-setupCards('crewCards', 'crew', false);
-setupCards('transportCards', 'transport', false);
-setupCards('budgetCards', 'budget', false);
-setupChips('vibeChips', 'vibes');
-setupSingleChip('localTransportChips', 'localTransport');
-
-document.getElementById('startCity').addEventListener('input', e => {
-  document.getElementById('startCityLabel2').textContent = e.target.value;
-});
-
-const formattedTodayDate = new Date().toISOString().split('T')[0];
-document.getElementById('startDate').min = formattedTodayDate;
-document.getElementById('endDate').min = formattedTodayDate;
-document.getElementById('startDate').addEventListener('change', e => {
-  document.getElementById('endDate').min = e.target.value;
-  updateDates();
-});
 </script>
 </body>
 </html>
