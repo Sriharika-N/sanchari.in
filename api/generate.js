@@ -3,23 +3,21 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_KEY = process.env.SUPABASE_KEY;
 
-  if (!GEMINI_API_KEY || !SUPABASE_URL || !SUPABASE_KEY) {
-    return res.status(500).json({ error: "Missing required backend infrastructure keys in Vercel configuration." });
+  if (!OPENAI_API_KEY || !SUPABASE_URL || !SUPABASE_KEY) {
+    return res.status(500).json({ error: "Missing required backend infrastructure keys (OpenAI/Supabase) in Vercel." });
   }
 
   const { payload, prompt } = req.body;
 
   try {
-    // 🌟 UNIVERSALLY SUPPORTED FREE TIER ENDPOINT IDENTIFIER
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent`;
+    const openaiUrl = 'https://api.openai.com/v1/chat/completions';
     
     const enhancedPrompt = `${prompt}
-    Format your response strictly as a single JSON object. Do not wrap the response in markdown code blocks like \`\`\`json or include any text outside the raw JSON structure. 
-    
+    Format your response strictly as a single JSON object. 
     The JSON object must contain exactly these keys:
     {
       "famousActivities": ["activity 1", "activity 2"],
@@ -35,36 +33,34 @@ export default async function handler(req, res) {
       }
     }`;
 
-    const geminiRes = await fetch(geminiUrl, {
+    const openaiRes = await fetch(openaiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-goog-api-key': GEMINI_API_KEY
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: enhancedPrompt }] }]
+        model: 'gpt-4o-mini',
+        response_format: { type: "json_object" }, // Forces ChatGPT to return clean JSON structure natively
+        messages: [
+          { role: 'system', content: 'You are a professional travel routing engine that outputs strict raw JSON travel plans.' },
+          { role: 'user', content: enhancedPrompt }
+        ]
       })
     });
 
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      return res.status(502).json({ error: `Gemini Engine Refusal: ${errText}` });
+    if (!openaiRes.ok) {
+      const errText = await openaiRes.text();
+      return res.status(502).json({ error: `ChatGPT Engine Refusal: ${errText}` });
     }
     
-    const data = await geminiRes.json();
-    let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    
-    rawText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
-    
-    let parsedPlan;
-    try {
-      parsedPlan = JSON.parse(rawText);
-    } catch (parseErr) {
-      return res.status(422).json({ error: "Failed to parse raw text response stream from AI engine into structural JSON formatting." });
-    }
+    const data = await openaiRes.json();
+    const rawText = data.choices?.[0]?.message?.content || '{}';
+    const parsedPlan = JSON.parse(rawText.trim());
 
     const authHeader = req.headers['authorization'] || `Bearer ${SUPABASE_KEY}`;
 
+    // Log history seamlessly into your existing Supabase structure
     try {
       await fetch(`${SUPABASE_URL}/rest/v1/trip_history`, {
         method: 'POST',
