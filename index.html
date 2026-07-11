@@ -3,220 +3,501 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Travel Planner — Step Journey</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<title>AI Travel Planner — Plan your perfect trip</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Supabase Auth Client Library Bundle CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --ink: #0d1117; --paper: #faf8f4; --sand: #f0ebe1; --ocean: #1a3a5c;
-    --ocean-dark: #0f2340; --ocean-mid: #2a5580; --coral: #e8633a;
-    --coral-light: #fdf0eb; --gold: #c9a44a; --muted: #6b7280; --border: #e5e0d8; --white: #ffffff;
+    --ink: #0d1117;
+    --paper: #faf8f4;
+    --sand: #f0ebe1;
+    --ocean: #1a3a5c;
+    --ocean-dark: #0f2340;
+    --ocean-mid: #2a5580;
+    --coral: #e8633a;
+    --coral-light: #fdf0eb;
+    --gold: #c9a44a;
+    --muted: #6b7280;
+    --border: #e5e0d8;
+    --white: #ffffff;
+    --success: #2d6647;
+    --success-bg: #e8f5ee;
+    --warn-bg: #fef9e7;
+    --warn: #92610b;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--paper); color: var(--ink); font-family: 'Inter', sans-serif; font-size: 15px; min-height: 100vh; }
-  nav { background: var(--ocean-dark); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; }
-  .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; font-weight:600; }
-  .main { max-width: 780px; margin: 40px auto; padding: 0 16px; }
-  .card { background: var(--white); border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid var(--border); }
+  body { background: var(--paper); color: var(--ink); font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6; min-height: 100vh; }
+
+  /* NAV */
+  nav { background: var(--ocean-dark); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
+  .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .nav-logo { width: 32px; height: 32px; background: var(--coral); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .nav-name { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; color: var(--white); letter-spacing: -0.02em; }
+  .nav-badge { background: var(--coral); color: var(--white); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 20px; }
+  .nav-powered { font-size: 11px; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 6px; }
+  .nav-powered span { color: var(--gold); font-weight: 500; }
+
+  /* HERO */
+  .hero { background: linear-gradient(135deg, var(--ocean-dark) 0%, var(--ocean) 60%, var(--ocean-mid) 100%); padding: 56px 24px 72px; text-align: center; position: relative; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; top: -60px; right: -60px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(232,99,58,0.15) 0%, transparent 70%); pointer-events: none; }
+  .hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 6px 16px; font-size: 12px; color: var(--gold); font-weight: 500; letter-spacing: 0.04em; margin-bottom: 20px; }
+  .hero h1 { font-family: 'Fraunces', serif; font-size: clamp(28px, 5vw, 50px); font-weight: 600; color: var(--white); line-height: 1.1; letter-spacing: -0.03em; margin-bottom: 14px; }
+  .hero h1 em { font-style: italic; color: var(--coral); }
+  .hero-sub { font-size: 16px; color: rgba(255,255,255,0.7); max-width: 480px; margin: 0 auto 36px; line-height: 1.6; }
+  .hero-stats { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; }
+  .hero-stat-num { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; color: var(--gold); }
+  .hero-stat-label { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+
+  /* MAIN */
+  .main { max-width: 780px; margin: -28px auto 60px; padding: 0 16px; position: relative; z-index: 10; }
+  .card { background: var(--white); border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 20px 60px rgba(0,0,0,0.1); overflow: hidden; border: 1px solid var(--border); }
+
+  /* PROGRESS */
   .progress-bar { height: 4px; background: var(--border); }
-  .progress-fill { height: 100%; background: var(--coral); transition: width 0.3s; }
-  .step-panel { display: none; padding: 30px 24px; }
+  .progress-fill { height: 100%; background: var(--coral); transition: width 0.4s ease; width: 14%; }
+
+  /* STEP TABS */
+  .step-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--sand); overflow-x: auto; }
+  .step-tab { flex: 1; min-width: 70px; padding: 12px 8px; text-align: center; font-size: 11px; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; cursor: default; white-space: nowrap; transition: all 0.2s; user-select: none; }
+  .step-tab.active { color: var(--ocean); border-bottom-color: var(--coral); background: var(--white); font-weight: 600; }
+  .step-tab.done { color: var(--success); }
+  .step-tab-icon { display: block; font-size: 15px; margin-bottom: 2px; }
+
+  /* STEP PANELS */
+  .step-panel { display: none; padding: 28px 24px; animation: fadeIn 0.3s ease; }
   .step-panel.active { display: block; }
-  .step-heading { font-family: 'Fraunces', serif; font-size: 24px; color: var(--ocean-dark); margin-bottom: 6px; }
-  .form-group { margin-bottom: 20px; }
-  label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; text-transform: uppercase; }
-  input, select, textarea { width: 100%; padding: 12px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; }
-  input:focus, select:focus, textarea:focus { border-color: var(--ocean); }
-  .btn { padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; }
-  .btn-primary { background: var(--coral); color: white; width: 100%; justify-content: center; }
-  .btn-secondary { background: var(--sand); color: var(--ocean-dark); }
-  .feedback-box { background: var(--coral-light); border: 1px dashed var(--coral); border-radius: 12px; padding: 16px; margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
-  .feedback-buttons { display: flex; gap: 10px; }
-  .btn-feedback { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: white; }
-  .btn-feedback.selected { background: var(--coral); color: white; border-color: var(--coral); }
-  .error-box { background: #fef2f2; color: #991b1b; padding: 12px; border-radius: 8px; margin-top: 10px; display: none; font-size: 13px; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+  .step-heading { font-family: 'Fraunces', serif; font-size: 21px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 4px; letter-spacing: -0.02em; }
+  .step-sub { font-size: 13px; color: var(--muted); margin-bottom: 22px; }
+
+  /* FORM */
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
+  input[type="text"], input[type="date"], input[type="time"], input[type="number"], select, textarea {
+    width: 100%; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: 10px;
+    font-family: 'Inter', sans-serif; font-size: 14px; color: var(--ink); background: var(--white);
+    transition: border-color 0.2s, box-shadow 0.2s; outline: none; appearance: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--ocean); box-shadow: 0 0 0 3px rgba(26,58,92,0.08); }
+  textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+  .form-group { margin-bottom: 18px; }
+
+  /* CHIPS */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { padding: 7px 14px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all 0.15s; user-select: none; background: var(--white); }
+  .chip:hover { border-color: var(--ocean); color: var(--ocean); background: rgba(26,58,92,0.04); }
+  .chip.selected { border-color: var(--coral); color: var(--coral); background: var(--coral-light); font-weight: 600; }
+
+  /* MOOD CARDS */
+  .mood-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+  .mood-grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+  .mood-card { padding: 14px 10px; border: 1.5px solid var(--border); border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.15s; user-select: none; background: var(--white); }
+  .mood-card:hover { border-color: var(--ocean); background: rgba(26,58,92,0.03); transform: translateY(-1px); }
+  .mood-card.selected { border-color: var(--coral); background: var(--coral-light); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(232,99,58,0.15); }
+  .mood-emoji { font-size: 22px; margin-bottom: 5px; display: block; }
+  .mood-label { font-size: 12px; font-weight: 700; color: var(--ocean-dark); }
+  .mood-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* DAY AVAILABILITY */
+  .day-avail-grid { display: grid; gap: 8px; margin-top: 8px; }
+  .day-avail-row { display: flex; align-items: center; gap: 10px; background: var(--sand); border-radius: 10px; padding: 10px 14px; }
+  .day-avail-date { font-size: 12px; font-weight: 700; color: var(--ocean-dark); min-width: 90px; }
+  .day-avail-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .avail-chip { padding: 4px 10px; border: 1.5px solid var(--border); border-radius: 16px; font-size: 11px; font-weight: 600; cursor: pointer; background: var(--white); transition: all 0.15s; }
+  .avail-chip:hover { border-color: var(--ocean); }
+  .avail-chip.travel { border-color: var(--coral); background: var(--coral-light); color: var(--coral); }
+  .avail-chip.work { border-color: #1a56db; background: #e8f0fe; color: #1a56db; }
+  .avail-chip.off { border-color: var(--muted); background: var(--sand); color: var(--muted); }
+
+  /* VEHICLE CONFIG */
+  .vehicle-box { background: var(--sand); border-radius: 12px; padding: 16px; margin-top: 12px; display: none; }
+  .vehicle-box.show { display: block; }
+  .vehicle-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .vehicle-label { font-size: 11px; font-weight: 700; color: var(--ocean-dark); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  /* COMPULSORY FEEDBACK WIDGET PANE */
+  .compulsory-feedback-card { background: var(--coral-light); border: 1.5px solid var(--coral); border-radius: 14px; padding: 16px; margin-top: 24px; }
+  .feedback-title { font-size: 13px; font-weight: 700; color: var(--ocean-dark); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+
+  /* BUTTONS */
+  .btn-row { display: flex; gap: 10px; margin-top: 24px; align-items: center; }
+  .btn { padding: 11px 22px; border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+  .btn-primary { background: var(--coral); color: var(--white); flex: 1; justify-content: center; }
+  .btn-primary:hover { background: #d4562f; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(232,99,58,0.35); }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--border); padding: 11px 18px; }
+  .btn-ghost:hover { border-color: var(--ocean); color: var(--ocean); }
+  .btn-generate { background: linear-gradient(135deg, var(--ocean-dark) 0%, var(--ocean-mid) 100%); color: var(--white); flex: 1; justify-content: center; font-size: 15px; padding: 14px 24px; border-radius: 12px; }
+  
+  /* OUTPUT PANELS */
+  #loadingPanel { padding: 48px 24px; text-align: center; }
+  #outputPanel { padding: 0; }
+  .output-header { background: linear-gradient(135deg, var(--ocean-dark) 0%, var(--ocean) 100%); padding: 24px; color: var(--white); }
+  .output-body { padding: 20px 24px; }
+
+  .info-box { background: var(--sand); border: 1.5px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; font-size: 13px; color: var(--ink); }
+  .error-box { background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 10px; padding: 12px 16px; margin-top: 14px; display: none; font-size: 12px; color: #991b1b; }
   .error-box.show { display: block; }
+
+  footer { background: var(--ocean-dark); text-align: center; padding: 20px; font-size: 11px; color: rgba(255,255,255,0.4); }
+
+  @media (max-width: 580px) {
+    .form-row, .form-row-3, .mood-grid, .mood-grid-2 { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav>
-  <a class="nav-brand" href="#">✈️ AI Travel Planner</a>
-  <button id="googleAuthBtn" class="btn" style="background: var(--coral); color: white; padding: 6px 16px; font-size: 13px;" onclick="loginWithGoogle()">🔑 Sign In with Gmail</button>
+  <a class="nav-brand" href="#" style="text-decoration: none;">
+    <div class="nav-logo">✈️</div>
+    <span class="nav-name">AI Travel Planner</span>
+  </a>
+  <button id="googleAuthBtn" class="btn" style="background: var(--coral); color: var(--white); padding: 6px 16px; font-size: 13px;" onclick="loginWithGoogle()">🔑 Sign In with Gmail</button>
 </nav>
 
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">✦ End-to-end trip planning, powered by AI</div>
+  <h1>Your perfect trip,<br><em>planned in minutes.</em></h1>
+  <p class="hero-sub">Enter where you want to go. Get a complete day-by-day customized plan with real-time tracking.</p>
+</div>
+
+<!-- MAIN -->
 <div class="main">
-  <!-- Authentication Alert Banner -->
-  <div id="loginWarning" style="background: #fff9e6; border: 1px solid #ffe0b3; border-radius: 12px; padding: 14px; margin-bottom: 20px; font-size: 13px; color: #664d03;">
-    ⚠️ <strong>Note:</strong> Sign in with Gmail to save your finalized travel itineraries automatically to your tracking dashboard.
-  </div>
 
   <div class="card">
-    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 33%"></div></div>
+    <!-- PROGRESS BAR TRACKER -->
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
 
-    <!-- STEP 1 -->
-    <div class="step-panel active" id="step1">
-      <div class="step-heading">Where are we going? 🗺️</div>
-      <div class="form-group">
-        <label>Select Target Destination</label>
-        <select id="destination">
-          <option value="">-- Select --</option>
-          <option value="Coorg, Karnataka">Coorg, Karnataka</option>
-          <option value="Munnar, Kerala">Munnar, Kerala</option>
-          <option value="Gokarna, Karnataka">Gokarna, Karnataka</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Starting Location</label>
-        <input type="text" id="startCity" placeholder="e.g. Bangalore">
-      </div>
-      <button class="btn btn-primary" onclick="submitStepAndProgress(1, 2, 'Destination Select')">Next Step — Add Dates →</button>
-      <div class="error-box" id="err1">Please fill in both fields before moving forward.</div>
+    <!-- STEP TABS -->
+    <div class="step-tabs" id="stepTabs">
+      <div class="step-tab active" data-step="1"><span class="step-tab-icon">🗺️</span>Destination</div>
+      <div class="step-tab" data-step="2"><span class="step-tab-icon">📅</span>Dates</div>
+      <div class="step-tab" data-step="3"><span class="step-tab-icon">👥</span>Crew</div>
+      <div class="step-tab" data-step="4"><span class="step-tab-icon">🚗</span>Travel</div>
+      <div class="step-tab" data-step="5"><span class="step-tab-icon">✨</span>Vibe</div>
+      <div class="step-tab" data-step="6"><span class="step-tab-icon">💰</span>Budget</div>
+      <div class="step-tab" data-step="7"><span class="step-tab-icon">🚀</span>Review</div>
     </div>
 
-    <!-- STEP 2 -->
+    <!-- ── STEP 1: DESTINATION ── -->
+    <div class="step-panel active" id="step1">
+      <div class="step-heading">Where are you headed? 🗺️</div>
+      <p class="step-sub">Choose from our expanded catalog or write your own custom destination</p>
+
+      <div class="form-group">
+        <label>Destination Catalog Selection</label>
+        <select id="destination" onchange="handleDestinationDropdownChange(this.value)">
+          <option value="">— Choose a destination —</option>
+          <option value="Coorg, Karnataka">Coorg, Karnataka — Misty hills, coffee estates</option>
+          <option value="Munnar, Kerala">Munnar, Kerala — Tea gardens, cool weather</option>
+          <option value="Gokarna, Karnataka">Gokarna, Karnataka — Beaches + backpacker vibes</option>
+          <option value="Spiti Valley, Himachal Pradesh">Spiti Valley, Himachal Pradesh — High altitude desert</option>
+          <option value="Meghalaya">Meghalaya — Living root bridges, waterfalls</option>
+          <option value="Chopta + Tungnath, Uttarakhand">Chopta + Tungnath, Uttarakhand — Highest Shiva temple trek</option>
+          <option value="Hampi, Karnataka">Hampi, Karnataka — Ancient ruins, boulder landscape</option>
+          <option value="Dzukou Valley, Nagaland">Dzukou Valley, Nagaland — Hidden valley of flowers</option>
+          <option value="Tawang, Arunachal Pradesh">Tawang, Arunachal Pradesh — Buddhist monasteries</option>
+          <option value="Kasol + Kheerganga, Himachal Pradesh">Kasol + Kheerganga, HP — Parvati Valley trek</option>
+          <option value="CUSTOM_INPUT">👉 Or enter your own custom location below...</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="customDestinationWrap" style="display:none;">
+        <label style="color: var(--coral);">Type Custom Destination Name</label>
+        <input type="text" id="customDestinationInput" placeholder="Enter town, city, state, or country...">
+      </div>
+
+      <div class="form-group">
+        <label>Your starting city</label>
+        <input type="text" id="startCity" placeholder="e.g. Bangalore, Mumbai, Delhi...">
+      </div>
+
+      <button class="btn btn-primary" onclick="submitStepAndProgress(1, 2, 'Destination Select')">Next — Pick your dates →</button>
+      <div class="error-box" id="err1">Please present a valid target destination and starting city location.</div>
+    </div>
+
+    <!-- ── STEP 2: DATES ── -->
     <div class="step-panel" id="step2">
-      <div class="step-heading">Trip Dates 📅</div>
-      <div class="form-group">
-        <label>Start Date</label>
-        <input type="date" id="startDate">
+      <div class="step-heading">When are you going? 📅</div>
+      <p class="step-sub">Set your dates and review timeline availability</p>
+      <div class="form-row">
+        <div class="form-group"><label>Start Date</label><input type="date" id="startDate" onchange="updateDates()"></div>
+        <div class="form-group"><label>End Date</label><input type="date" id="endDate" onchange="updateDates()"></div>
       </div>
-      <div class="form-group">
-        <label>End Date</label>
-        <input type="date" id="endDate">
+      <div id="tripDurationBadge" style="display:none;" class="info-box">
+        📆 <span id="durationText"></span> &nbsp;·&nbsp; 🌙 <span id="nightsText"></span>
       </div>
-      <div style="display: flex; gap: 10px;">
-        <button class="btn btn-secondary" onclick="goBack(1)">← Back</button>
-        <button class="btn btn-primary" onclick="submitStepAndProgress(2, 3, 'Date Configuration')">Next Step — Review & Run →</button>
+      <div id="availSection" style="display:none;" class="form-group">
+        <label>Your availability per day</label>
+        <div class="day-avail-grid" id="availGrid"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goBack(1)">← Back</button>
+        <button class="btn btn-primary" onclick="submitStepAndProgress(2, 3, 'Date Configuration')">Next — Your crew →</button>
       </div>
       <div class="error-box" id="err2">Please select valid start and end dates.</div>
     </div>
 
-    <!-- STEP 3: FINAL REVIEW -->
+    <!-- ── STEP 3: CREW ── -->
     <div class="step-panel" id="step3">
-      <div class="step-heading">Review & Generate 🚀</div>
-      <div id="finalSummary" style="background: var(--sand); padding: 16px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; line-height: 1.6;"></div>
-      <div style="display: flex; gap: 10px;">
-        <button class="btn btn-secondary" onclick="goBack(2)">← Back</button>
-        <button class="btn btn-primary" style="background: var(--ocean-dark);" onclick="triggerAiGeneration()">🚀 Generate Final Trip Plan</button>
+      <div class="step-heading">Who's joining? 👥</div>
+      <div class="form-group">
+        <div class="mood-grid" id="crewCards">
+          <div class="mood-card" data-val="Solo traveler"><span class="mood-emoji">🧍</span><div class="mood-label">Solo</div></div>
+          <div class="mood-card" data-val="Couple"><span class="mood-emoji">💑</span><div class="mood-label">Couple</div></div>
+          <div class="mood-card" data-val="Friend group"><span class="mood-emoji">👯</span><div class="mood-label">Friends</div></div>
+          <div class="mood-card" data-val="Family"><span class="mood-emoji">👨‍👩‍👧</span><div class="mood-label">Family</div></div>
+          <div class="mood-card" data-val="Work + leisure"><span class="mood-emoji">💼</span><div class="mood-label">Bleisure</div></div>
+          <div class="mood-card" data-val="Backpacker group"><span class="mood-emoji">🎒</span><div class="mood-label">Backpackers</div></div>
+        </div>
       </div>
-      <div id="apiStatusMessage" style="margin-top:15px; font-weight:500;"></div>
+      <div id="groupSizeWrap" style="display:none;" class="form-group">
+        <label>Number of people: <span id="groupSizeVal" style="color:var(--coral);">4</span></label>
+        <input type="range" id="groupSize" min="2" max="20" value="4" oninput="document.getElementById('groupSizeVal').textContent=this.value; state.groupSize=parseInt(this.value);">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goBack(2)">← Back</button>
+        <button class="btn btn-primary" onclick="submitStepAndProgress(3, 4, 'Crew Setup')">Next — Travel Mode →</button>
+      </div>
+      <div class="error-box" id="err3">Please choose your active crew profile block.</div>
     </div>
-  </div>
 
-  <!-- FEEDBACK TRACE MODULE -->
-  <div class="feedback-box" id="feedbackModule">
-    <span style="font-size: 13px; font-weight: 600; color: var(--ocean-dark);">💬 Help us improve this step layout:</span>
-    <div class="feedback-buttons">
-      <button class="btn-feedback" id="fbGood" onclick="selectFeedbackRating('good')">👍 Looks Great</button>
-      <button class="btn-feedback" id="fbBad" onclick="selectFeedbackRating('bad')">👎 Confusing Layout</button>
+    <!-- ── STEP 4: TRANSPORT ── -->
+    <div class="step-panel" id="step4">
+      <div class="step-heading">Getting there & around 🚗</div>
+      <div class="form-group">
+        <div class="mood-grid" id="transportCards">
+          <div class="mood-card" data-val="Flight"><span class="mood-emoji">✈️</span><div class="mood-label">Flight</div></div>
+          <div class="mood-card" data-val="Train"><span class="mood-emoji">🚂</span><div class="mood-label">Train</div></div>
+          <div class="mood-card" data-val="Bus"><span class="mood-emoji">🚌</span><div class="mood-label">Bus</div></div>
+          <div class="mood-card" data-val="Own vehicle - Car"><span class="mood-emoji">🚗</span><div class="mood-label">Own Car</div></div>
+          <div class="mood-card" data-val="Own vehicle - Bike"><span class="mood-emoji">🏍️</span><div class="mood-label">Own Bike</div></div>
+          <div class="mood-card" data-val="Undecided"><span class="mood-emoji">🤔</span><div class="mood-label">Undecided</div></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Getting around locally</label>
+        <div class="chips" id="localTransportChips">
+          <div class="chip" data-val="Rent a bike/scooter">🛵 Rent bike/scooter</div>
+          <div class="chip" data-val="Rent a car">🚗 Rent car</div>
+          <div class="chip" data-val="Local transport (bus/auto/cab)">🚌 Local transport</div>
+          <div class="chip" data-val="Own vehicle throughout">🔑 Own vehicle</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goBack(3)">← Back</button>
+        <button class="btn btn-primary" onclick="submitStepAndProgress(4, 5, 'Transport Select')">Next — Travel Vibe →</button>
+      </div>
+      <div class="error-box" id="err4">Please declare an intended transportation method option.</div>
     </div>
-    <textarea id="feedbackComment" placeholder="Optional comments on what we can fix in the next version..." style="height: 60px; font-size: 12px;"></textarea>
+
+    <!-- ── STEP 5: VIBE ── -->
+    <div class="step-panel" id="step5">
+      <div class="step-heading">What's your travel vibe? ✨</div>
+      <div class="form-group">
+        <label>Select All Styles That Apply</label>
+        <div class="chips" id="vibeChips">
+          <div class="chip" data-val="Adventure & trekking">🏔️ Adventure & trekking</div>
+          <div class="chip" data-val="Offbeat & hidden gems">🌿 Offbeat & hidden gems</div>
+          <div class="chip" data-val="Local food obsessed">🍛 Local food obsessed</div>
+          <div class="chip" data-val="Slow travel & wellness">🧘 Slow travel & wellness</div>
+          <div class="chip" data-val="Relaxation & beaches">🏖️ Relaxation & beaches</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goBack(4)">← Back</button>
+        <button class="btn btn-primary" onclick="submitStepAndProgress(5, 6, 'Vibe Selection')">Next — Budget Profile →</button>
+      </div>
+      <div class="error-box" id="err5">Please select at least one core travel vibe chip.</div>
+    </div>
+
+    <!-- ── STEP 6: BUDGET ── -->
+    <div class="step-panel" id="step6">
+      <div class="step-heading">What's your budget? 💰</div>
+      <div class="form-group">
+        <div class="mood-grid-2" id="budgetCards">
+          <div class="mood-card" data-val="Budget (under ₹5,000)"><span class="mood-emoji">💚</span><div class="mood-label">Budget</div></div>
+          <div class="mood-card" data-val="Mid-range (₹5,000–₹15,000)"><span class="mood-emoji">💛</span><div class="mood-label">Mid-range</div></div>
+          <div class="mood-card" data-val="Premium (₹15,000–₹30,000)"><span class="mood-emoji">🧡</span><div class="mood-label">Premium</div></div>
+          <div class="mood-card" data-val="Luxury (above ₹30,000)"><span class="mood-emoji">❤️</span><div class="mood-label">Luxury</div></div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goBack(5)">← Back</button>
+        <button class="btn btn-primary" onclick="submitStepAndProgress(6, 7, 'Budget Mapping')">Next — Review & Plan →</button>
+      </div>
+      <div class="error-box" id="err6">Please finalize a selected tier budget parameters window.</div>
+    </div>
+
+    <!-- ── STEP 7: REVIEW ── -->
+    <div class="step-panel" id="step7">
+      <div class="step-heading">Ready to plan? 🚀</div>
+      <div id="tripSummary" class="info-box" style="line-height: 1.8;"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goBack(6)">← Back</button>
+        <button class="btn btn-generate" onclick="generateItinerary()">🚀 Generate My Trip Plan</button>
+      </div>
+      <div class="error-box" id="err7"></div>
+    </div>
+
+    <!-- COMPULSORY FEEDBACK WIDGET FOR STEP PANELS -->
+    <div class="compulsory-feedback-card" id="compulsoryFeedbackContainer">
+      <div class="feedback-title">📋 Step Feedback Manifest Required</div>
+      <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">Please state at least 2 system feature enhancements or design improvements to unfreeze navigation controls.</p>
+      <input type="text" id="improvement1" placeholder="Improvement / Feature Requirement 1..." style="margin-bottom: 8px;">
+      <input type="text" id="improvement2" placeholder="Improvement / Feature Requirement 2...">
+    </div>
+
+    <!-- LOADING & OUTPUT MODULE PANELS -->
+    <div id="loadingPanel" style="display:none;"><div class="loading-title" style="font-weight:600;">Building customized operational route layouts...</div></div>
+    <div id="outputPanel" style="display:none;"><div class="output-header"><h3 id="outputTitle">Your Plan</h3></div><div class="output-body" id="outputBody"></div></div>
+
   </div>
 </div>
 
+<footer><strong>AI Travel Planner</strong> · Beta Framework Pipeline</footer>
+
 <script>
-// ── INITIALIZE CONFIGURATION KEYS ───────────────────────────────────────────
-const SUPABASE_URL = "https://your-project-id.supabase.co"; // Replace with your exact Supabase URL
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // Replace with your exact anon key
+// ── SUPABASE CREDENTIAL INITIALIZATION ───────────────────────────────────────
+const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co/rest/v1/"; 
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlicHNxbGxnaXRudHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NTM1NDQsImV4cCI6MjA5OTMyOTU0NH0.V8FT2cDAJMcfv1mtgCGWZck5wxswAlj7tyW-KbaJ8bM"; 
 
 const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let activeSessionToken = null;
-let currentSelectedRating = null;
-let state = { destination: '', startCity: '', startDate: '', endDate: '' };
+let activeUserToken = null;
 
-// Auth Setup
+let state = {
+  destination:'', startCity:'', startDate:'', endDate:'', days:0, nights:0,
+  availability:{}, transport:'', localTransport:'', crew:'', groupSize:1, vibes:[], budget:''
+};
+let currentStep = 1;
+const TOTAL_STEPS = 7;
+
+function handleDestinationDropdownChange(value) {
+  document.getElementById('customDestinationWrap').style.display = (value === 'CUSTOM_INPUT') ? 'block' : 'none';
+}
+
 async function loginWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: window.location.origin }
   });
-  if (error) alert("Gmail Single-Sign-On Failure: " + error.message);
+  if (error) alert("Gmail Login Link Failure: " + error.message);
 }
 
 window.addEventListener('load', async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (session) {
-    activeSessionToken = session.access_token;
-    document.getElementById('googleAuthBtn').textContent = "🟢 Logged In";
-    document.getElementById('loginWarning').style.display = 'none';
+    activeUserToken = session.access_token;
+    document.getElementById('googleAuthBtn').textContent = "🟢 Account Authenticated";
   }
+  updateProgressBar();
 });
 
-function selectFeedbackRating(rating) {
-  currentSelectedRating = rating;
-  document.getElementById('fbGood').classList.toggle('selected', rating === 'good');
-  document.getElementById('fbBad').classList.toggle('selected', rating === 'bad');
+function updateProgressBar() {
+  document.getElementById('progressFill').style.width = ((currentStep / TOTAL_STEPS) * 100) + '%';
 }
 
-// Track Feedback and Advance Interface Screen
-async function submitStepAndProgress(currentStepNum, nextStepNum, currentStepName) {
-  document.getElementById(`err${currentStepNum}`).classList.remove('show');
-  
-  if (currentStepNum === 1) {
-    state.destination = document.getElementById('destination').value;
+function updateDates() {
+  state.startDate = document.getElementById('startDate').value;
+  state.endDate = document.getElementById('endDate').value;
+  if (!state.startDate || !state.endDate) return;
+  const s = new Date(state.startDate), e = new Date(state.endDate);
+  if (e <= s) return;
+  state.days = Math.round((e - s) / 86400000) + 1;
+  state.nights = state.days - 1;
+  document.getElementById('durationText').textContent = `${state.days} Days`;
+  document.getElementById('nightsText').textContent = `${state.nights} Nights`;
+  document.getElementById('tripDurationBadge').style.display = 'block';
+}
+
+// ── COMPULSORY STEP VALIDATION WITH FEEDBACK ENFORCEMENT ───────────────────
+async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
+  const err = document.getElementById(`err${stepNum}`);
+  err.classList.remove('show');
+
+  // Input Parameter Extractions
+  if (stepNum === 1) {
+    const selectedDest = document.getElementById('destination').value;
+    state.destination = (selectedDest === 'CUSTOM_INPUT') ? document.getElementById('customDestinationInput').value.trim() : selectedDest;
     state.startCity = document.getElementById('startCity').value.trim();
-    if (!state.destination || !state.startCity) {
-      document.getElementById('err1').classList.add('show'); return;
-    }
+    if (!state.destination || !state.startCity) { err.classList.add('show'); return; }
   }
-  if (currentStepNum === 2) {
-    state.startDate = document.getElementById('startDate').value;
-    state.endDate = document.getElementById('endDate').value;
-    if (!state.startDate || !state.endDate) {
-      document.getElementById('err2').classList.add('show'); return;
-    }
-  }
+  if (stepNum === 2 && (!state.startDate || !state.endDate)) { err.classList.add('show'); return; }
+  if (stepNum === 3 && !state.crew) { err.classList.add('show'); return; }
+  if (stepNum === 4 && !state.transport) { err.classList.add('show'); return; }
+  if (stepNum === 5 && state.vibes.length === 0) { err.classList.add('show'); return; }
+  if (stepNum === 6 && !state.budget) { err.classList.add('show'); return; }
 
-  // Push gathered step feedback parameters to Supabase network instance
-  if (currentSelectedRating) {
-    const comments = document.getElementById('feedbackComment').value.trim();
-    try {
-      await supabase.from('journey_feedback').insert({
-        step_number: currentStepNum,
-        step_name: currentStepName,
-        feedback_rating: currentSelectedRating,
-        user_comments: comments || null
-      });
-    } catch(e) { console.error("Feedback database push error caught:", e); }
+  // Enforce Compulsory 2-Improvement Feedback Rules
+  const imp1 = document.getElementById('improvement1').value.trim();
+  const imp2 = document.getElementById('improvement2').value.trim();
+  if (!imp1 || !imp2) {
+    alert("Compulsory Validation Notice: Please provide at least 2 improvements or feature ideas for this step layout to advance.");
+    return;
   }
 
-  // Clear tracking values for the incoming interface panel
-  currentSelectedRating = null;
-  document.getElementById('fbGood').classList.remove('selected');
-  document.getElementById('fbBad').classList.remove('selected');
-  document.getElementById('feedbackComment').value = '';
+  // Push Compulsory Feedback array assets to Supabase platform ledger
+  try {
+    await supabase.from('journey_feedback').insert({
+      step_number: stepNum,
+      step_name: stepName,
+      feedback_rating: 'mandatory_step_trace',
+      user_comments: `Feature Require 1: ${imp1} | Feature Require 2: ${imp2}`
+    });
+  } catch(e) { console.error("Trace logging write error caught:", e); }
 
-  // Shift Active Layout View
-  document.getElementById(`step${currentStepNum}`).classList.remove('active');
+  // Flush inputs for incoming wizard tracking card
+  document.getElementById('improvement1').value = '';
+  document.getElementById('improvement2').value = '';
+
+  // Handle panel navigation indexing adjustments
+  document.getElementById(`step${stepNum}`).classList.remove('active');
+  document.querySelectorAll('.step-tab')[stepNum - 1].classList.remove('active');
+  document.querySelectorAll('.step-tab')[stepNum - 1].classList.add('done');
+
+  currentStep = nextStepNum;
   document.getElementById(`step${nextStepNum}`).classList.add('active');
-  document.getElementById('progressFill').style.width = ((nextStepNum / 3) * 100) + '%';
-
-  if (nextStepNum === 3) {
-    document.getElementById('finalSummary').innerHTML = `
-      <strong>📍 Destination:</strong> ${state.destination}<br>
-      <strong>🚗 Starting City:</strong> ${state.startCity}<br>
-      <strong>📅 Parameters:</strong> ${state.startDate} to ${state.endDate}
-    `;
-  }
+  document.querySelectorAll('.step-tab')[nextStepNum - 1].classList.add('active');
+  
+  updateProgressBar();
+  if (nextStepNum === 7) buildSummary();
+  window.scrollTo({top: 120, behavior: 'smooth'});
 }
 
 function goBack(prevStep) {
-  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`step${currentStep}`).classList.remove('active');
+  document.querySelectorAll('.step-tab')[currentStep - 1].classList.remove('active');
+  
+  currentStep = prevStep;
   document.getElementById(`step${prevStep}`).classList.add('active');
-  document.getElementById('progressFill').style.width = ((prevStep / 3) * 100) + '%';
+  document.querySelectorAll('.step-tab')[prevStep - 1].classList.add('active');
+  updateProgressBar();
 }
 
-// Submit To Vercel Serverless Component Route
-async function triggerAiGeneration() {
-  const statusEl = document.getElementById('apiStatusMessage');
-  statusEl.style.color = "var(--ink)";
-  statusEl.textContent = "Compiling generation directives via Gemini engine infrastructure...";
+function buildSummary() {
+  document.getElementById('tripSummary').innerHTML = `
+    📍 Target Destination: <strong>${state.destination}</strong> out from <strong>${state.startCity}</strong><br>
+    📅 Window Matrix: <strong>${state.startDate} to ${state.endDate}</strong> (${state.days} days)<br>
+    👥 Travel Profile: <strong>${state.crew}</strong> (Group Size: ${state.groupSize})<br>
+    🚗 Transport Configuration: <strong>${state.transport}</strong> (Local: ${state.localTransport || 'Flexible'})<br>
+    ✨ Core Vibes: <strong>${state.vibes.join(', ')}</strong><br>
+    💰 Financial Tier Assignment: <strong>${state.budget}</strong>
+  `;
+}
+
+async function generateItinerary() {
+  document.getElementById('step7').classList.remove('active');
+  document.getElementById('compulsoryFeedbackContainer').style.display = 'none';
+  document.getElementById('stepTabs').style.display = 'none';
+  document.getElementById('loadingPanel').style.display = 'block';
 
   const requestHeaders = { 'Content-Type': 'application/json' };
-  if (activeSessionToken) {
-    requestHeaders['Authorization'] = `Bearer ${activeSessionToken}`;
-  }
+  if (activeUserToken) requestHeaders['Authorization'] = `Bearer ${activeUserToken}`;
 
   try {
     const res = await fetch('/api/generate', {
@@ -224,21 +505,63 @@ async function triggerAiGeneration() {
       headers: requestHeaders,
       body: JSON.stringify({
         payload: { destination: state.destination, startCity: state.startCity },
-        prompt: `Compile a complete structured travel itinerary format layout tracking array asset block for ${state.destination} departing out from ${state.startCity}.`
+        prompt: `Create a clean text layout itinerary sheet file for a trip to ${state.destination} out from ${state.startCity}.`
       })
     });
-
-    if (!res.ok) throw new Error("Serverless API endpoint returned execution code failure status.");
+    if (!res.ok) throw new Error("Backend system failed parsing response stream components.");
     const data = await res.json();
     
-    statusEl.style.color = "green";
-    statusEl.textContent = "🎉 Operation complete! Custom trip plan built and stored in Supabase trip_history table nodes.";
-    console.log("Returned Data Payload Structure Object:", data);
-  } catch (err) {
-    statusEl.style.color = "red";
-    statusEl.textContent = `API Route Error Encountered: ${err.message}`;
+    document.getElementById('loadingPanel').style.display = 'none';
+    document.getElementById('outputPanel').style.display = 'block';
+    document.getElementById('outputBody').innerHTML = `<pre style="font-family:inherit; white-space:pre-wrap;">${JSON.stringify(data, null, 2)}</pre>`;
+  } catch(err) {
+    document.getElementById('loadingPanel').style.display = 'none';
+    document.getElementById('step7').classList.add('active');
+    const e = document.getElementById('err7');
+    e.textContent = `Error compiling asset track: ${err.message}`;
+    e.classList.add('show');
   }
 }
+
+// ── SETUP ELEMENT SELECTION LISTENERS ───────────────────────────────────────
+function attachCardListeners(gridId, stateKey) {
+  document.getElementById(gridId).querySelectorAll('.mood-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.getElementById(gridId).querySelectorAll('.mood-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      state[stateKey] = card.dataset.val;
+      if (stateKey === 'crew') {
+        const isGroup = ['Friend group','Family','Backpacker group'].includes(state.crew);
+        document.getElementById('groupSizeWrap').style.display = isGroup ? 'block' : 'none';
+        if (!isGroup) state.groupSize = (state.crew === 'Solo traveler') ? 1 : 2;
+      }
+    });
+  });
+}
+
+function attachChipsListeners(containerId, stateKey, isMulti) {
+  document.getElementById(containerId).querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      if (!isMulti) {
+        document.getElementById(containerId).querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        state[stateKey] = chip.dataset.val;
+      } else {
+        chip.classList.toggle('selected');
+        const val = chip.dataset.val;
+        if (chip.classList.contains('selected')) state[stateKey].push(val);
+        else state[stateKey] = state[stateKey].filter(v => v !== val);
+      }
+    });
+  });
+}
+
+attachCardListeners('crewCards', 'crew');
+attachCardListeners('transportCards', 'transport');
+attachCardListeners('budgetCards', 'budget');
+attachChipsListeners('localTransportChips', 'localTransport', false);
+attachChipsListeners('vibeChips', 'vibes', true);
+
 </script>
 </body>
 </html>
