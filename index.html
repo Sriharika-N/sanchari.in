@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Travel Planner — Plan your perfect trip</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Supabase Auth Client Library Bundle CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --ink: #0d1117;
@@ -225,7 +227,6 @@
   .budget-total { background: var(--coral); border-radius: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
   .budget-total-label { font-size: 12px; font-weight: 600; }
   .budget-total-val { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; }
-  .fuel-note { background: rgba(255,255,255,0.08); border-radius: 8px; padding: 9px 11px; margin-top: 8px; font-size: 11px; color: rgba(255,255,255,0.75); line-height: 1.5; }
 
   /* TIPS */
   .tips-card { background: var(--coral-light); border: 1.5px solid rgba(232,99,58,0.2); border-radius: 12px; padding: 16px 18px; margin-top: 14px; }
@@ -291,8 +292,23 @@
 
 <!-- MAIN -->
 <div class="main">
-<div class="card">
 
+<!-- EMAIL/GOOGLE AUTH PORTAL OVERLAY -->
+<div id="authSection" class="info-box" style="background: var(--white); border-radius: 16px; border: 1.5px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin-bottom: 24px; padding: 20px;">
+  <strong style="color: var(--ocean-dark); font-size: 16px; display: block; margin-bottom: 6px;">✈️ Open Traveler History Dashboard</strong>
+  <p style="font-size: 12px; margin-bottom: 16px; color: var(--muted);">Log in via your Google profile or dynamic magic email confirmation link to track and access all your planned itineraries across devices.</p>
+  
+  <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+    <input type="text" id="emailInput" placeholder="Enter your email address..." style="flex: 2; min-width: 200px;">
+    <button class="btn" style="background: var(--ocean); color: var(--white); padding: 10px 18px; font-size: 13px;" onclick="loginWithEmailMagicLink()">Send Magic Link</button>
+  </div>
+  
+  <button class="btn" style="background: var(--white); color: var(--ink); border: 1.5px solid var(--border); width: 100%; justify-content: center; font-size: 13px; font-weight: 600;" onclick="loginWithGoogle()">
+    <span style="font-size:16px; margin-right: 8px;">🌐</span> Sign In with Google
+  </button>
+</div>
+
+<div class="card">
   <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:16%"></div></div>
 
   <!-- STEP TABS -->
@@ -586,6 +602,14 @@
 </footer>
 
 <script>
+// ── SUPABASE CREDENTIAL INITIALIZATION ───────────────────────────────────────
+// Provide your exact Supabase operational values here
+const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co/rest/v1/"; 
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlicHNxbGxnaXRudHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NTM1NDQsImV4cCI6MjA5OTMyOTU0NH0.V8FT2cDAJMcfv1mtgCGWZck5wxswAlj7tyW-KbaJ8bM"; 
+
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let activeUserToken = null;
+
 // ── STATE ────────────────────────────────────────────────────────────────────
 let state = {
   destination:'', startCity:'', startDate:'', endDate:'', days:0, nights:0,
@@ -597,6 +621,41 @@ let state = {
 };
 let currentStep = 1;
 const TOTAL_STEPS = 7;
+
+// ── AUTHENTICATION PROTOCOLS ──────────────────────────────────────────────────
+async function loginWithGoogle() {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin }
+  });
+  if (error) alert("Google Authentication Protocol Error: " + error.message);
+}
+
+async function loginWithEmailMagicLink() {
+  const emailField = document.getElementById('emailInput').value.trim();
+  if (!emailField) return alert("Please present a structured, valid email address string.");
+
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email: emailField,
+    options: { emailRedirectTo: window.location.origin }
+  });
+
+  if (error) {
+    alert("Magic Link Dispatch Failure: " + error.message);
+  } else {
+    alert("Secure transmission confirmed! Check your inbox for your active validation routing hyperlink.");
+  }
+}
+
+// Session Validation Hook on Initialization
+window.addEventListener('load', async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    activeUserToken = session.access_token;
+    document.getElementById('authSection').style.display = 'none';
+    console.log("Session token handshaking confirmed for token user identity reference.");
+  }
+});
 
 // ── STEP NAV ─────────────────────────────────────────────────────────────────
 function goStep(n) {
@@ -860,11 +919,16 @@ async function generateItinerary() {
     document.getElementById('loadingMsg').textContent=messages[currentMsgIdx++ % messages.length]; 
   }, 1800);
 
+  // Package optional active header authorization keys
+  const requestHeaders = { 'Content-Type': 'application/json' };
+  if (activeUserToken) {
+    requestHeaders['Authorization'] = `Bearer ${activeUserToken}`;
+  }
+
   try {
-    // Calling the Vercel backend route instead of direct API URL strings
     const response = await fetch('/api/generate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: requestHeaders,
       body: JSON.stringify({
         payload: { destination: state.destination, startCity: state.startCity },
         prompt: prompt
@@ -873,7 +937,7 @@ async function generateItinerary() {
     
     if (!response.ok) {
       const errData = await response.json();
-      throw new Error(errData.error || 'Backend computing node execution failed');
+      throw new Error(errData.error || 'Backend infrastructure failure');
     }
     
     const parsedPlan = await response.json();
@@ -886,7 +950,7 @@ async function generateItinerary() {
     document.querySelector('.progress-bar').style.display = 'block';
     document.getElementById(`step${currentStep}`).classList.add('active');
     const e = document.getElementById('err7');
-    e.textContent = `Error: ${err.message}. Check your Vercel logs or environmental key configs.`;
+    e.textContent = `Error: ${err.message}. Check your Vercel deployment variable dashboard settings.`;
     e.classList.add('show');
   }
 }
