@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Travel Planner — Let's Explore!</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --ink: #0d1117; --paper: #faf8f4; --sand: #f0ebe1; --ocean: #1a3a5c;
@@ -28,7 +29,7 @@
   .step-heading { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 4px; }
   .step-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
   label { display: block; font-size: 12px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 5px; text-transform: uppercase; }
-  input[type="text"], input[type="date"], input[type="number"], select, textarea {
+  input[type="text"], input[type="date"], input[type="number"], input[type="email"], input[type="password"], select, textarea {
     width: 100%; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; background: white;
   }
   .form-group { margin-bottom: 18px; }
@@ -43,8 +44,14 @@
   .error-box { background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 10px; padding: 12px 16px; margin-top: 14px; display: none; font-size: 13px; color: #991b1b; }
   .error-box.show { display: block; }
   .daily-card { background: var(--white); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 16px; }
-  .modal-explore-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; }
-  .explore-item-box { border: 1px solid var(--border); border-radius: 8px; padding: 10px; cursor: pointer; background: var(--paper); font-size: 13px; text-align: center; transition: all 0.2s ease; }
+  
+  .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13,17,23,0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; }
+  .auth-modal { background: white; border-radius: 20px; max-width: 420px; width: 90%; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+  .auth-nav-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .auth-nav-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--muted); }
+  .auth-nav-tab.active { color: var(--coral); border-bottom: 2px solid var(--coral); }
+  .modal-explore-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+  .explore-item-box { border: 1px solid var(--border); border-radius: 8px; padding: 10px; cursor: pointer; background: var(--paper); font-size: 13px; transition: all 0.2s ease; }
   .explore-item-box:hover { border-color: var(--coral); background: var(--coral-light); }
 </style>
 </head>
@@ -52,7 +59,44 @@
 
 <nav>
   <a class="nav-brand" href="#">✈️ RoamRadar Pro</a>
+  <button id="authHeaderBtn" class="btn" style="background: var(--coral); color: white; padding: 6px 16px; font-size: 13px;" onclick="openAuthModal()">🔑 Sign In / Login</button>
 </nav>
+
+<!-- 🌟 DUAL ROUTE SIGN-IN & LOGIN HUB -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-modal">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h3 style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark);">Account Access Portal</h3>
+      <button style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted);" onclick="closeAuthModal()">×</button>
+    </div>
+    
+    <div class="auth-nav-tabs">
+      <div class="auth-nav-tab active" id="tabSignIn" onclick="switchAuthInterface('signin')">Sign Up (New Account)</div>
+      <div class="auth-nav-tab" id="tabLogin" onclick="switchAuthInterface('login')">Log In (Existing)</div>
+    </div>
+    
+    <div id="authFormContainer">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="authEmail" placeholder="name@example.com">
+      </div>
+      <div class="form-group" id="passwordGroup">
+        <label>Secure Password</label>
+        <input type="password" id="authPassword" placeholder="Minimum 6 characters">
+      </div>
+      
+      <button class="btn btn-primary" id="mainAuthSubmitBtn" style="width:100%; margin-bottom:12px;" onclick="handleCredentialAuth()">Submit Integration</button>
+      <button class="btn btn-ghost" style="width:100%; gap:8px;" onclick="loginWithGoogle()">
+        <img src="https://www.google.com/favicon.ico" width="16" height="16" alt="G"> Continue via Google
+      </button>
+
+      <div style="text-align:center; margin-top:14px; font-size:12px;">
+        <span class="auth-toggle-link" style="color:var(--muted);" onclick="triggerForgotPasswordRecovery()">Forgot your password?</span>
+      </div>
+    </div>
+    <div class="error-box" id="authErrorMsg" style="margin-top:12px;"></div>
+  </div>
+</div>
 
 <div class="main">
   <div class="card">
@@ -71,7 +115,7 @@
     <!-- STEP 1: DESTINATIONS -->
     <div class="step-panel active" id="step1">
       <div class="step-heading">Where are we exploring? 🗺️</div>
-      <p class="step-sub">Select destinations or let the engine create a completely randomized route blueprint.</p>
+      <p class="step-sub">Select destinations or create a completely randomized route map layout choice!</p>
       <div class="form-group">
         <label>Target Hub Selections:</label>
         <div class="chips" id="destChips">
@@ -88,7 +132,7 @@
         <label>Starting Location</label>
         <input type="text" id="startCity" placeholder="e.g. Bangalore">
       </div>
-      <button class="btn btn-primary" onclick="submitStepAndProgress(1, 2)">Next — Companion Crew →</button>
+      <button class="btn btn-primary" onclick="submitStepAndProgress(1, 2, 'Destinations Selection')">Next — Companion Crew →</button>
       <div class="error-box" id="err1">Please select a destination and fill in your starting location.</div>
     </div>
 
@@ -105,7 +149,7 @@
       </div>
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="goBack(1)">← Back</button>
-        <button class="btn btn-primary" onclick="submitStepAndProgress(2, 3)">Next — Travel Vectors →</button>
+        <button class="btn btn-primary" onclick="submitStepAndProgress(2, 3, 'Companion Mapping')">Next — Travel Vectors →</button>
       </div>
       <div class="error-box" id="err2">Please select a crew configuration.</div>
     </div>
@@ -128,7 +172,7 @@
 
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="goBack(2)">← Back</button>
-        <button class="btn btn-primary" onclick="submitStepAndProgress(3, 4)">Next — Fleet Preferences →</button>
+        <button class="btn btn-primary" onclick="submitStepAndProgress(3, 4, 'Date Telemetry Setup')">Next — Fleet Preferences →</button>
       </div>
       <div class="error-box" id="err3">Please choose valid operational dates.</div>
     </div>
@@ -139,8 +183,8 @@
       <div class="form-group">
         <label>Primary Hub Connection Fleet Mode</label>
         <div class="chips" id="transportChips">
-          <div class="chip" data-val="Complete Road Trip" class="selected">¼ Complete Road Trip</div>
-          <div class="chip" data-val="Flight Connected">✈ Fly Connected Sector</div>
+          <div class="chip" data-val="Complete Road Trip">🛣️ Complete Road Trip</div>
+          <div class="chip" data-val="Flight Connected">✈️ Flight Connected Sector</div>
         </div>
       </div>
 
@@ -151,7 +195,7 @@
       </div>
 
       <!-- Mileage Fuel Matrix Parameter Group -->
-      <div id="fuelMatrixWrapper">
+      <div id="fuelMatrixWrapper" style="display:none;">
         <div class="form-group">
           <label>Vehicle Fuel Type Pricing (INR per Litre)</label>
           <input type="number" id="fuelPriceInput" value="102" placeholder="e.g. 102">
@@ -164,8 +208,9 @@
 
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="goBack(3)">← Back</button>
-        <button class="btn btn-primary" onclick="submitStepAndProgress(4, 5)">Next — Daily Customization →</button>
+        <button class="btn btn-primary" onclick="submitStepAndProgress(4, 5, 'Fleet Metrics Setup')">Next — Daily Customization →</button>
       </div>
+      <div class="error-box" id="err4">Please verify fleet tracking configurations.</div>
     </div>
 
     <!-- STEP 5: DAILY VIBES GENERATOR MATRICES -->
@@ -174,7 +219,7 @@
       <div class="form-group"><div id="dailyVibeContainer"></div></div>
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="goBack(4)">← Back</button>
-        <button class="btn btn-primary" onclick="submitStepAndProgress(5, 6)">Next — Financial Bounds →</button>
+        <button class="btn btn-primary" onclick="submitStepAndProgress(5, 6, 'Vibe Mapping Matrix')">Next — Financial Bounds →</button>
       </div>
     </div>
 
@@ -187,13 +232,13 @@
       </div>
       <div class="form-group">
         <label>Calculation Scope Focus</label>
-        <div class="chips">
-          <div class="chip selected">Individual Basis Budget</div>
+        <div class="chips" id="budgetScopeChips">
+          <div class="chip data-val="Per-Person Scope" class="selected">Individual Basis Budget</div>
         </div>
       </div>
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="goBack(5)">← Back</button>
-        <button class="btn btn-primary" onclick="submitStepAndProgress(6, 7)">Next — Review Blueprint →</button>
+        <button class="btn btn-primary" onclick="submitStepAndProgress(6, 7, 'Budget Processing')">Next — Review Blueprint →</button>
       </div>
     </div>
 
@@ -204,10 +249,10 @@
       <button class="btn btn-primary" style="width:100%; background: var(--ocean-dark);" onclick="triggerBuiltInGeneration()">🚀 Generate My Optimized Route Plan</button>
     </div>
 
-    <!-- COMPULSORY BETA FEEDBACK CARD MODULE -->
+    <!-- ONE INTEGRATED COMPULSORY BETA FEEDBACK CAPTURE WINDOW -->
     <div class="compulsory-feedback-card" id="compulsoryFeedbackContainer">
       <div class="feedback-title" style="font-weight:600; font-size:14px; color: var(--ocean-dark); margin-bottom: 4px;">📋 Beta Tester Portal Review</div>
-      <textarea id="singleBetaFeedbackInput" rows="3" placeholder="How does the workflow feel, and what else should this page show?..." style="resize: none; font-size: 13px;">Layout feels fast and professional. Everything works local.</textarea>
+      <textarea id="singleBetaFeedbackInput" rows="3" placeholder="How does the workflow feel, and what else should this page show? (e.g. live traffic tracking integration maps...)" style="resize: none; font-size: 13px;">Layout feels fast and professional. Would love to see dynamic integration metrics.</textarea>
     </div>
 
     <!-- MAIN LIVE ITINERARY PAGE DISPLAY -->
@@ -217,10 +262,10 @@
         <button class="btn btn-ghost" style="padding: 6px 14px; font-size:12px; color:var(--coral);" onclick="modifyItinerary()">✏️ Reset Configuration</button>
       </div>
       
-      <!-- EXPLORE REGIONAL SIGHTS DRAWER -->
+      <!-- 🌟 DETAILED LIVE EXPLORATION SIDE PANEL (DYNAMIC TARGET INCLUSION MATRICES) -->
       <div style="background:var(--sand); padding:16px; border-radius:12px; margin-bottom:20px;">
         <h4 style="font-family:'Fraunces', serif; color:var(--ocean-dark); font-size:15px; margin-bottom:4px;">🔍 Explore Regional Showcase Spotlights</h4>
-        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Click an item below to dynamically inject its specific profile context straight into today's active itinerary slot.</p>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Click any item below to inject its local knowledge profile right into today's itinerary display framework.</p>
         <div class="modal-explore-section" id="itineraryExploreShowcaseHub"></div>
       </div>
 
@@ -231,6 +276,12 @@
 </div>
 
 <script>
+const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlic3FsbGdpdG50d2EiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNzEwNTE4OSwiZXhwIjoyMDUyNjgxMTg5fQ.q0zM8gK1M0k4q0m1_K0k4q0m1_K0k4q0m1_K0k4q0m1"; 
+
+const travelPlannerSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let activeUserToken = null;
+let currentAuthMode = 'signin'; 
 let currentActiveDayDisplayPointer = 0;
 
 let state = { 
@@ -268,6 +319,59 @@ const travelKnowledgeBase = {
   }
 };
 
+window.addEventListener('load', async () => {
+  const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
+  if (session) {
+    activeUserToken = session.access_token;
+    document.getElementById('authHeaderBtn').textContent = `🟢 ${session.user.email}`;
+  }
+  updateProgressBar();
+});
+
+function openAuthModal() { document.getElementById('authOverlay').style.display = 'flex'; }
+function closeAuthModal() { document.getElementById('authOverlay').style.display = 'none'; }
+
+function switchAuthInterface(mode) {
+  currentAuthMode = mode;
+  document.getElementById('authErrorMsg').classList.remove('show');
+  document.getElementById('tabSignIn').classList.toggle('active', mode === 'signin');
+  document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
+}
+
+async function handleCredentialAuth() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const errMsg = document.getElementById('authErrorMsg');
+  errMsg.classList.remove('show');
+
+  if (!email || !password || password.length < 6) {
+    errMsg.textContent = "Please ensure your entries include a valid password (minimum 6 characters).";
+    errMsg.classList.add('show'); return;
+  }
+
+  if (currentAuthMode === 'signin') {
+    // 🌟 FORCES INSTANT INBOX TRANSACTION EMAIL SIGNUP TRIGGER 
+    const { data, error } = await travelPlannerSupabaseClient.auth.signUp({ email, password });
+    if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); }
+    else { alert("Signup validation matrix successfully executed! Check email inbox for authentication confirmation."); closeAuthModal(); }
+  } else {
+    // DUAL CHANNEL LOGIN OPTION WITH EXPLICIT ACCOUNT VERIFICATION
+    const { data, error } = await travelPlannerSupabaseClient.auth.signInWithPassword({ email, password });
+    if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); }
+    else {
+      activeUserToken = data.session.access_token;
+      document.getElementById('authHeaderBtn').textContent = `🟢 ${data.user.email}`;
+      closeAuthModal();
+    }
+  }
+}
+
+async function loginWithGoogle() {
+  await travelPlannerSupabaseClient.auth.signInWithOAuth({
+    provider: 'google', options: { redirectTo: window.location.origin }
+  });
+}
+
 function triggerRandomItineraryGeneration() {
   const keys = ["Coorg, Karnataka", "Munnar, Kerala", "Gokarna, Karnataka"];
   const selectedRandomLocation = keys[Math.floor(Math.random() * keys.length)];
@@ -278,8 +382,7 @@ function triggerRandomItineraryGeneration() {
   });
   state.startCity = "Bangalore";
   document.getElementById('startCity').value = "Bangalore";
-  computeGeographicalDays();
-  alert(`🎲 Randomizer rolled: ${selectedRandomLocation} from Bangalore!`);
+  alert(`🎲 Randomized Route Engine selected: ${selectedRandomLocation} departing from Bangalore!`);
 }
 
 function computeGeographicalDays() {
@@ -291,6 +394,7 @@ function computeGeographicalDays() {
     const s = new Date(startVal), e = new Date(endVal);
     if (e >= s) {
       state.days = Math.round((e - s) / 86400000) + 1;
+      // 📊 SYSTEM COMPUTES APPROXIMATE ROUTE TELEMETRY DISTANCE AND AUTOMATICALLY PROPOSES TRANSIT BUFFER VALUES
       const targetLoc = state.destinations[0] || "Coorg";
       if(targetLoc.toLowerCase().includes("coorg")) state.computedDistanceKM = 260;
       else if(targetLoc.toLowerCase().includes("gokarna")) state.computedDistanceKM = 480;
@@ -300,7 +404,7 @@ function computeGeographicalDays() {
       document.getElementById('explicitTransitDaysInput').value = suggestedTransitBuffers;
       state.transitDaysAllocation = suggestedTransitBuffers;
 
-      telemetry.innerHTML = `🏁 Measured Target Hub: <strong>${state.computedDistanceKM} KM</strong> away.<br>💡 Recommended allocation: <strong>${suggestedTransitBuffers} Transit Days</strong> via current preferences.`;
+      telemetry.innerHTML = `🏁 Measured Target Hub: <strong>${state.computedDistanceKM} KM</strong> away.<br>💡 Recommended allocation: <strong>${suggestedTransitBuffers} Transit Days</strong> via current transport preference mappings.`;
       generateDailyVibeSelectors();
     }
   }
@@ -326,6 +430,13 @@ function generateDailyVibeSelectors() {
         <input type="text" class="daily-place-input" data-date="${dateStr}" value="${state.destinations[0] || 'Coorg'}">
       </div>
       <div class="form-group">
+        <label>Daily Vibes:</label>
+        <div class="vibe-checkbox-group">
+          <label><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🏔️ Adventure Trekking" checked> 🏔️ Adventure</label>
+          <label><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🍛 Food Obsessed" checked> 🍛 Local Foodie</label>
+        </div>
+      </div>
+      <div class="form-group">
         <label>Custom Focus Objective:</label>
         <input type="text" class="daily-things-input" data-date="${dateStr}" value="Explore regional spotlight frameworks">
       </div>
@@ -342,14 +453,10 @@ function updateProgressBar() {
   }
 }
 
-function submitStepAndProgress(stepNum, nextStepNum) {
+function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   const feedback = document.getElementById('singleBetaFeedbackInput').value.trim();
   if(!feedback) { alert("Beta Review Required."); return; }
   
-  if (stepNum === 1) {
-    state.startCity = document.getElementById('startCity').value.trim();
-    if(state.destinations.length === 0 || !state.startCity) { document.getElementById('err1').classList.add('show'); return; }
-  }
   if (stepNum === 3) {
     state.transitDaysAllocation = parseInt(document.getElementById('explicitTransitDaysInput').value) || 0;
   }
@@ -365,12 +472,10 @@ function submitStepAndProgress(stepNum, nextStepNum) {
       state.dailyPlanData.push({
         date: placeInp.dataset.date,
         place: placeInp.value.trim(),
+        vibes: ["🎒 Custom Layout Mix"],
         thingsToDo: card.querySelector('.daily-things-input').value.trim()
       });
     });
-  }
-  if (stepNum === 6) {
-    state.budgetVal = parseInt(document.getElementById('budgetAmount').value) || 25000;
   }
 
   document.getElementById(`step${stepNum}`).classList.remove('active');
@@ -396,6 +501,7 @@ function buildSummary() {
 }
 
 function triggerBuiltInGeneration() {
+  // 🌟 FLUID LOGISTICS FUEL AND MULTIMODAL TRANSPORT SPLIT CALCULATOR ENGINE
   let travelFuelExpenseAllocation = 0;
   if (state.transport === "Complete Road Trip") {
     travelFuelExpenseAllocation = Math.round((state.computedDistanceKM * 2 / state.mileageKmpl) * state.fuelPrice);
@@ -413,6 +519,7 @@ function triggerBuiltInGeneration() {
   let sidePanelShowcaseItems = "";
 
   state.dailyPlanData.forEach((day, index) => {
+    currentActiveDayDisplayPointer = index;
     const matchedKey = day.place.toLowerCase().trim();
     let baseLookup = travelKnowledgeBase["default"];
     for (const key in travelKnowledgeBase) {
@@ -423,11 +530,12 @@ function triggerBuiltInGeneration() {
     const offbeatElement = baseLookup.gems[index % baseLookup.gems.length];
     const cuisineElement = baseLookup.eats[index % baseLookup.eats.length];
 
+    // Build side panels dynamically to support click injections
     if(index === 0) {
       sidePanelShowcaseItems += `
-        <div class="explore-item-box" onclick="injectShowcaseSpotlightTarget('📸 Sights: ${mainFamousElement}')">🏛️ Famous Sights</div>
-        <div class="explore-item-box" onclick="injectShowcaseSpotlightTarget('🌿 Offbeat: ${offbeatElement}')">🌲 Offbeat Trails</div>
-        <div class="explore-item-box" onclick="injectShowcaseSpotlightTarget('🍲 Cuisine: ${cuisineElement}')">🍛 Local Food</div>
+        <div class="explore-item-box" onclick="injectShowcaseSpotlightTarget('📸 Feature landmark: ${mainFamousElement}')">🏛️ Famous Sights</div>
+        <div class="explore-item-box" onclick="injectShowcaseSpotlightTarget('🌿 Remote Outpost: ${offbeatElement}')">🌲 Offbeat Trails</div>
+        <div class="explore-item-box" onclick="injectShowcaseSpotlightTarget('🍲 Regional Recipe: ${cuisineElement}')">🍛 Local Flavours</div>
       `;
     }
 
@@ -437,7 +545,7 @@ function triggerBuiltInGeneration() {
     }
 
     htmlBody += `
-      <div class="daily-card" style="border-left:5px solid var(--coral); padding:20px; background:#fff; border-radius:12px; margin-bottom:15px;">
+      <div class="daily-card" id="itineraryCardDayElement-${index}" style="border-left:5px solid var(--coral); padding:20px; background:#fff; border-radius:12px; margin-bottom:15px;">
         <h4 style="color:var(--ocean-dark); font-family:'Fraunces', serif;">☀️ Day ${index + 1} Plan Matrix (${day.date})</h4>
         <p style="font-size:13px; margin:4px 0;">📍 Hub Location Sector: <strong>${day.place}</strong></p>
         
@@ -462,15 +570,18 @@ function triggerBuiltInGeneration() {
   document.getElementById('outputBody').innerHTML = htmlBody;
 }
 
+// 🌟 DYNAMIC SHOWCASE INTERACTIVE TARGET INJECTION ENGINE
 function injectShowcaseSpotlightTarget(textString) {
   const injectionTarget = document.getElementById(`dynamicShowcaseInjectionBox-${currentActiveDayDisplayPointer}`);
   if(injectionTarget) {
-    injectionTarget.innerHTML = `⚡ Injected Content: ${textString}`;
+    injectionTarget.innerHTML = `⚡ Injected Destination Objective: ${textString}`;
+    alert("Showcase profile successfully compiled and embedded directly into the active Day card framework!");
   }
 }
 
 function modifyItinerary() { location.reload(); }
 
+// INITIALIZE SECTOR METRICS CHIP BINDINGS
 setupMultiSelectChips('destChips', 'destinations', () => { computeGeographicalDays(); });
 setupExclusiveChips('crewChips', 'crew');
 setupExclusiveChips('transportChips', 'transport', (val) => {
