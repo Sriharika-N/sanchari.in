@@ -14,8 +14,8 @@ export default async function handler(req, res) {
   const { payload, prompt } = req.body;
 
   try {
-    // 🌟 THE DROP-IN STABLE MODEL FIX
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
+    // 🌟 STABLE V1 REPLACEMENT ENDPOINT
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent`;
     
     const enhancedPrompt = `${prompt}
     Format your response strictly as a single JSON object. Do not wrap the response in markdown code blocks like \`\`\`json or include any text outside the raw JSON structure. 
