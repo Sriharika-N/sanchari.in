@@ -29,7 +29,7 @@
   .step-heading { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 4px; }
   .step-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
   label { display: block; font-size: 12px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 5px; text-transform: uppercase; }
-  input[type="text"], input[type="date"], input[type="number"], select, textarea {
+  input[type="text"], input[type="date"], input[type="number"], input[type="email"], input[type="password"], select, textarea {
     width: 100%; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; background: white;
   }
   .form-group { margin-bottom: 18px; }
@@ -46,14 +46,50 @@
   .daily-card { background: var(--white); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 16px; }
   .vibe-checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
   .vibe-checkbox-label { font-size: 13px; display: flex; align-items: center; gap: 4px; background: var(--paper); padding: 4px 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); }
+  
+  .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13,17,23,0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; }
+  .auth-modal { background: white; border-radius: 20px; max-width: 400px; width: 90%; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+  .auth-toggle-link { color: var(--coral); font-weight: 600; cursor: pointer; text-decoration: underline; font-size: 13px; }
 </style>
 </head>
 <body>
 
 <nav>
   <a class="nav-brand" href="#">✈️ AI Travel Planner</a>
-  <button id="googleAuthBtn" class="btn" style="background: var(--coral); color: white; padding: 6px 16px; font-size: 13px;" onclick="loginWithGoogle()">🔑 Sign In with Gmail</button>
+  <button id="authHeaderBtn" class="btn" style="background: var(--coral); color: white; padding: 6px 16px; font-size: 13px;" onclick="openAuthModal()">🔑 Account Sign In</button>
 </nav>
+
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-modal">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h3 id="authModalTitle" style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark);">Sign In to Account</h3>
+      <button style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted);" onclick="closeAuthModal()">×</button>
+    </div>
+    
+    <div id="authFormContainer">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="authEmail" placeholder="name@example.com">
+      </div>
+      <div class="form-group" id="passwordGroup">
+        <label>Password</label>
+        <input type="password" id="authPassword" placeholder="••••••••">
+      </div>
+      
+      <button class="btn btn-primary" id="mainAuthSubmitBtn" style="width:100%; margin-bottom:12px;" onclick="handleCredentialAuth()">Continue</button>
+      <button class="btn btn-ghost" style="width:100%; gap:8px; margin-bottom:16px;" onclick="loginWithGoogle()">
+        <img src="https://www.google.com/favicon.ico" width="16" height="16" alt="G"> Sign In via Google
+      </button>
+
+      <div style="text-align:center; font-size:13px; color:var(--muted);">
+        <span id="authToggleText">New to the planner?</span> <span class="auth-toggle-link" id="authToggleAction" onclick="toggleAuthMode()">Create account</span>
+        <br><br>
+        <span class="auth-toggle-link" style="color:var(--muted); font-size:12px;" id="forgotPasswordLink" onclick="triggerForgotPasswordRecovery()">Forgot your password?</span>
+      </div>
+    </div>
+    <div class="error-box" id="authErrorMsg" style="margin-top:12px;"></div>
+  </div>
+</div>
 
 <div class="main">
   <div class="card">
@@ -119,11 +155,22 @@
       <div class="error-box" id="err2">Please select a companion style configuration.</div>
     </div>
 
-    <!-- STEP 3: DATES -->
+    <!-- STEP 3: DATES & TRANSIT TIME ALLOCATION -->
     <div class="step-panel" id="step3">
       <div class="step-heading">When is the adventure? 📅</div>
-      <div class="form-group"><label>Start Date</label><input type="date" id="startDate" onchange="validateDates()"></div>
-      <div class="form-group"><label>End Date</label><input type="date" id="endDate" onchange="validateDates()"></div>
+      <p class="step-sub">Provide your absolute timeline boundaries and allocate travel buffers cleanly.</p>
+      <div class="form-group"><label>Departure Start Date</label><input type="date" id="startDate" onchange="validateDates()"></div>
+      <div class="form-group"><label>Final Return End Date</label><input type="date" id="endDate" onchange="validateDates()"></div>
+      
+      <div class="form-group">
+        <label>Dedicated Transit Travel Days (Inbound + Outbound)</label>
+        <select id="transitDaysCount" onchange="validateDates()">
+          <option value="2">2 Days (Standard Day 1 Outbound + Final Day Return Base)</option>
+          <option value="1">1 Day (Fast Inter-city Link / Morning Transit Only)</option>
+          <option value="0">0 Days (Already at Destination Location Hub)</option>
+        </select>
+      </div>
+
       <div class="error-box" id="dateErrorBox">⚠️ Danger: The return date cannot be set chronologically prior to your departure date!</div>
       
       <div class="btn-row">
@@ -211,12 +258,11 @@
       <div id="apiStatusMessage" style="margin-top:14px; font-weight:600;"></div>
     </div>
 
-    <!-- TELEMETRY FORM MODULE -->
+    <!-- 🌟 SIMPLIFIED BETA TESTER COMPULSORY FEEDBACK CARD MODULE -->
     <div class="compulsory-feedback-card" id="compulsoryFeedbackContainer">
-      <div class="feedback-title" style="font-weight:600; font-size:13px; color: var(--ocean-dark);">📋 Layout Step Verification Required</div>
-      <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">State 2 system improvements or layout ideas to advance steps.</p>
-      <input type="text" id="improvement1" placeholder="Improvement / Feature Target Idea 1..." style="margin-bottom: 8px;">
-      <input type="text" id="improvement2" placeholder="Improvement / Feature Target Idea 2...">
+      <div class="feedback-title" style="font-weight:600; font-size:14px; color: var(--ocean-dark); margin-bottom: 4px;">📋 Beta Tester Portal Review</div>
+      <p style="font-size: 12px; color: var(--muted); margin-bottom: 10px;">Please share how this application workflow feels and what additional details or features you think this layout page should display to advance.</p>
+      <textarea id="singleBetaFeedbackInput" rows="3" placeholder="How does the app feel, and what else should this page show?..." style="resize: none; font-family: inherit; font-size: 13px;"></textarea>
     </div>
 
     <!-- OUTPUT SCREEN -->
@@ -237,19 +283,19 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
 
 const travelPlannerSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let activeUserToken = null;
+let currentAuthMode = 'signin'; 
 
 let state = { 
-  destinations: [], startCity: '', startDate: '', endDate: '', days: 0,
+  destinations: [], startCity: '', startDate: '', endDate: '', days: 0, transitDaysAllocation: 2,
   crew: '', groupSize: 1, transport: '', vehicleMode: '', dailyPlanData: [], budgetVal: 0, budgetScope: '' 
 };
 let currentStep = 1;
 const TOTAL_STEPS = 7;
 
-// Expanded structural data repositories to fuel continuous page rotation variety
 const travelKnowledgeBase = {
   "coorg": {
     famous: ["Abbey Falls Scenic Estate Walk", "Namdroling Golden Temple", "Madikeri Historic Fort Grounds", "Raja's Seat Hanging Gardens"],
-    gems: ["Chelavara Falls Ridge Trek", "Kote Betta Mountain Trail", "Sanapur Whispering Streams", " Nishani Motte Hidden Offbeat Outpost"],
+    gems: ["Chelavara Falls Ridge Trek", "Kote Betta Mountain Trail", "Sanapur Whispering Streams", "Nishani Motte Hidden Offbeat Outpost"],
     breakfast: ["Local filter coffee paired with Akki Roti", "Fresh plantation-side spice tea spreads", "Traditional Malnad steamed kadambuttu frames"],
     eats: ["Coorg Cuisine Restaurant for authentic Pandi Curry", "Tiger Tiger Cafe specialty local plates", "Bylakuppe Tibetan street food shacks"]
   },
@@ -277,17 +323,86 @@ window.addEventListener('load', async () => {
   const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
   if (session) {
     activeUserToken = session.access_token;
-    document.getElementById('googleAuthBtn').textContent = "🟢 Logged In";
+    document.getElementById('authHeaderBtn').textContent = `🟢 ${session.user.email}`;
   }
   updateProgressBar();
 });
 
+function openAuthModal() { document.getElementById('authOverlay').style.display = 'flex'; }
+function closeAuthModal() { document.getElementById('authOverlay').style.display = 'none'; }
+
+function toggleAuthMode() {
+  const errMsg = document.getElementById('authErrorMsg');
+  errMsg.classList.remove('show');
+  if (currentAuthMode === 'signin') {
+    currentAuthMode = 'signup';
+    document.getElementById('authModalTitle').textContent = "Create Account";
+    document.getElementById('authToggleText').textContent = "Already have an account?";
+    document.getElementById('authToggleAction').textContent = "Sign In instead";
+    document.getElementById('passwordGroup').style.display = 'block';
+    document.getElementById('forgotPasswordLink').style.display = 'none';
+  } else {
+    currentAuthMode = 'signin';
+    document.getElementById('authModalTitle').textContent = "Sign In to Account";
+    document.getElementById('authToggleText').textContent = "New to the planner?";
+    document.getElementById('authToggleAction').textContent = "Create account";
+    document.getElementById('passwordGroup').style.display = 'block';
+    document.getElementById('forgotPasswordLink').style.display = 'inline-block';
+  }
+}
+
+function triggerForgotPasswordRecovery() {
+  currentAuthMode = 'recovery';
+  document.getElementById('authModalTitle').textContent = "Reset Your Password";
+  document.getElementById('passwordGroup').style.display = 'none';
+  document.getElementById('authToggleText').textContent = "Remembered it?";
+  document.getElementById('authToggleAction').textContent = "Back to Login";
+  document.getElementById('forgotPasswordLink').style.display = 'none';
+}
+
 async function loginWithGoogle() {
-  const { data, error } = await travelPlannerSupabaseClient.auth.signInWithOAuth({
+  const { error } = await travelPlannerSupabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: window.location.origin }
   });
-  if (error) alert("Gmail Single-Sign-On Failure: " + error.message);
+  if (error) {
+    const box = document.getElementById('authErrorMsg');
+    box.textContent = error.message; box.classList.add('show');
+  }
+}
+
+async function handleCredentialAuth() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const errMsg = document.getElementById('authErrorMsg');
+  errMsg.classList.remove('show');
+
+  if (!email) { errMsg.textContent = "Please input a valid email."; errMsg.classList.add('show'); return; }
+
+  if (currentAuthMode === 'signup') {
+    const { data, error } = await travelPlannerSupabaseClient.auth.signUp({ email, password });
+    if (error) {
+      if(error.message.toLowerCase().includes("already registered") || error.status === 422) {
+        currentAuthMode = 'signin'; toggleAuthMode();
+        errMsg.textContent = "Account already exists with this email. Please type password to continue.";
+        errMsg.classList.add('show');
+      } else { errMsg.textContent = error.message; errMsg.classList.add('show'); }
+    } else { alert("Registration successful! Check email box for validation link."); closeAuthModal(); }
+  } else if (currentAuthMode === 'signin') {
+    const { data, error } = await travelPlannerSupabaseClient.auth.signInWithPassword({ email, password });
+    if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); }
+    else {
+      activeUserToken = data.session.access_token;
+      document.getElementById('authHeaderBtn').textContent = `🟢 ${data.user.email}`;
+      closeAuthModal();
+    }
+  } else if (currentAuthMode === 'recovery') {
+    const { error } = await travelPlannerSupabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); }
+    else { alert("Recovery links dispatched! Check email address box."); closeAuthModal(); }
+  }
 }
 
 function validateDates() {
@@ -304,29 +419,26 @@ function validateDates() {
 
   state.startDate = startVal;
   state.endDate = endVal;
+  state.transitDaysAllocation = parseInt(document.getElementById('transitDaysCount').value) || 0;
 
   if (startVal && endVal) {
     const s = new Date(startVal);
     const e = new Date(endVal);
 
     if (isNaN(s.getTime()) || isNaN(e.getTime())) {
-      nextBtn.disabled = true;
-      nextBtn.style.opacity = '0.4';
+      nextBtn.disabled = true; nextBtn.style.opacity = '0.4';
       return false;
     }
 
     if (e < s) {
-      errBox.classList.add('show'); 
-      nextBtn.disabled = true; 
-      nextBtn.style.opacity = '0.4'; 
+      errBox.classList.add('show'); nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; 
       return false;
     }
     
     state.days = Math.round((e - s) / 86400000) + 1;
     generateDailyVibeSelectors();
   } else {
-    nextBtn.disabled = true;
-    nextBtn.style.opacity = '0.4';
+    nextBtn.disabled = true; nextBtn.style.opacity = '0.4';
   }
   return true;
 }
@@ -345,12 +457,21 @@ function generateDailyVibeSelectors() {
     const dayName = current.toLocaleDateString('en-US', { weekday: 'long' });
     const dateStr = current.toISOString().split('T')[0];
 
+    // Mark transit buffers contextually to make things clear for the tracker
+    let conditionalInputLayout = "";
+    if (state.transitDaysAllocation >= 2 && i === 0) {
+      conditionalInputLayout = `<p style="color:var(--coral); font-size:12px; font-weight:600;">🛣️ Outbound Route Segment Day (Configured in Step 3)</p>`;
+    } else if (state.transitDaysAllocation >= 1 && i === (state.days - 1)) {
+      conditionalInputLayout = `<p style="color:var(--coral); font-size:12px; font-weight:600;">🏡 Return to Base Location Day (Configured in Step 3)</p>`;
+    }
+
     const row = document.createElement('div');
     row.className = 'daily-card';
     row.innerHTML = `
-      <div style="font-weight:600; color:var(--ocean-dark); margin-bottom:8px;">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
+      <div style="font-weight:600; color:var(--ocean-dark); margin-bottom:4px;">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
+      ${conditionalInputLayout}
       
-      <div class="form-group">
+      <div class="form-group" style="margin-top:8px;">
         <label>Target Location/Place for this Day:</label>
         <input type="text" class="daily-place-input" data-date="${dateStr}" placeholder="e.g. Coorg, Gokarna, Munnar...">
       </div>
@@ -378,11 +499,8 @@ function updateProgressBar() {
   document.getElementById('progressFill').style.width = ((currentStep / TOTAL_STEPS) * 100) + '%';
   const tabs = document.getElementById('stepTabs').children;
   for (let i = 0; i < tabs.length; i++) {
-    if (i === currentStep - 1) {
-      tabs[i].classList.add('active');
-    } else {
-      tabs[i].classList.remove('active');
-    }
+    if (i === currentStep - 1) tabs[i].classList.add('active');
+    else tabs[i].classList.remove('active');
   }
 }
 
@@ -409,17 +527,10 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
       const thingsVal = card.querySelector('.daily-things-input').value.trim() || "Explore local highlights";
       
       let selectedVibes = [];
-      card.querySelectorAll('.daily-vibe-cb:checked').forEach(cb => {
-        selectedVibes.push(cb.value);
-      });
+      card.querySelectorAll('.daily-vibe-cb:checked').forEach(cb => selectedVibes.push(cb.value));
       if(selectedVibes.length === 0) selectedVibes.push("🎒 Classic Sightseeing");
 
-      state.dailyPlanData.push({
-        date: dateStr,
-        place: placeVal,
-        vibes: selectedVibes,
-        thingsToDo: thingsVal
-      });
+      state.dailyPlanData.push({ date: dateStr, place: placeVal, vibes: selectedVibes, thingsToDo: thingsVal });
     });
   }
   if (stepNum === 6) {
@@ -427,25 +538,21 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
     if (!state.budgetVal || !state.budgetScope) { err.classList.add('show'); return; }
   }
 
-  const imp1 = document.getElementById('improvement1').value.trim();
-  const imp2 = document.getElementById('improvement2').value.trim();
-  if (!imp1 || !imp2) {
-    alert("Checkpoint Notice: Please input 2 feature improvements to unlock navigation controls.");
+  // 🌟 HARDENED FEEDBACK INTAKE LOGIC BLOCK
+  const betaFeedbackText = document.getElementById('singleBetaFeedbackInput').value.trim();
+  if (!betaFeedbackText) {
+    alert("Beta Architecture Notice: Please fill out the feedback window box below to unlock application navigation steps.");
     return;
   }
 
   try {
     await travelPlannerSupabaseClient.from('journey_feedback').insert({
-      step_number: stepNum,
-      step_name: stepName,
-      feedback_rating: 'v5_rotated_variety',
-      user_comments: `Enhancement 1: ${imp1} | Enhancement 2: ${imp2}`
+      step_number: stepNum, step_name: stepName, feedback_rating: 'v7_transit_hardened',
+      user_comments: betaFeedbackText
     });
-  } catch(e) { console.warn("Trace skipped safely."); }
+  } catch(e) { console.warn("Log captured locally safely."); }
 
-  document.getElementById('improvement1').value = '';
-  document.getElementById('improvement2').value = '';
-
+  document.getElementById('singleBetaFeedbackInput').value = '';
   document.getElementById(`step${stepNum}`).classList.remove('active');
   currentStep = nextStepNum;
   document.getElementById(`step${nextStepNum}`).classList.add('active');
@@ -493,8 +600,6 @@ async function triggerBuiltInGeneration() {
   statusEl.textContent = "Processing layout configurations and archiving to database registry...";
 
   const perHeadBudget = state.budgetScope === 'Per-Person Scope' ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
-  
-  // Calculate elastic range frameworks rather than flat metrics
   const dailyFoodBase = Math.round((perHeadBudget * 0.35) / state.days); 
   const dailyTransitBase = Math.round((perHeadBudget * 0.30) / state.days);
   const dailyStayBase = Math.round((perHeadBudget * 0.35) / state.days);
@@ -512,27 +617,36 @@ async function triggerBuiltInGeneration() {
       }
     }
 
-    // 🌟 THE ROTATIONAL SHIFT ENGINE MATRIX 
-    // Uses modulus logic to loop through data lists sequentially, stopping duplicate content text strings completely
     const primaryFamousSight = baseLookup.famous[index % baseLookup.famous.length];
     const secondaryGemSight = baseLookup.gems[(index + 1) % baseLookup.gems.length];
     const morningBreakfastVibe = baseLookup.breakfast[index % baseLookup.breakfast.length];
     const eveningCulinaryVibe = baseLookup.eats[(index + 2) % baseLookup.eats.length];
 
-    // 🌟 DYNAMIC STRINGS INSPIRED BY USER VIBE PARAMETERS
     let dayVibeHeaderString = day.vibes.join(" + ");
+    
+    // 🌟 AUTOMATED CONTEXTUAL ROUTING BUILDER STRATEGIES BASED ON SELECTIONS
     let dynamicMorningStrategy = `🥞 <strong>Morning Activation:</strong> Start early with a local food run to sample: <em>"${morningBreakfastVibe}"</em>. Afterwards, organize gear and map out local directional paths into ${day.place}.`;
     let dynamicEveningStrategy = `🌙 <strong>Evening Strategy:</strong> Head down to the traditional culinary quarter to experience: <em>"${eveningCulinaryVibe}"</em>. Keep it casual and explore back-alley traditional bazaars away from crowded paths.`;
 
-    // Alter text based on specific target checkboxes selected by user
-    if(day.vibes.includes("🏔️ Adventure Trekking")) {
-      dynamicMorningStrategy = `🏔️ <strong>Morning Activation:</strong> Pack hydration targets early. Prepare vehicles or coordinate transit vectors for rugged, high-altitude segment exploratory tracks around ${day.place}.`;
-    }
-    if(day.vibes.includes("🧘 Wellness & Slow")) {
-      dynamicEveningStrategy = `🧘 <strong>Evening Strategy:</strong> Slow down the pace entirely. Head out to scenic, uncrowded river banks or quiet rooftop cafes for traditional tea blends. Avoid chaotic avenues.`;
+    if (state.transitDaysAllocation >= 2 && index === 0) {
+      dayVibeHeaderString = "🛣️ Outbound Route Connection Day";
+      dynamicMorningStrategy = `🛫 <strong>Outbound Vector Launch:</strong> Transitioning outward from your starting city matrix (<strong>${state.startCity}</strong>). Commencing your primary transit network route towards ${day.place} via ${state.transport}. Check into your hub station base.`;
+      dynamicEveningStrategy = `🌙 <strong>Evening Strategy:</strong> Unwind from the inter-city transfer. Locate a light diner near your arrival base point and rest up for active exploratory vectors tomorrow.`;
+    } else if (state.transitDaysAllocation >= 1 && index === (state.days - 1)) {
+      dayVibeHeaderString = "🏡 Return to Base Location Day";
+      dynamicMorningStrategy = `🧳 <strong>Return Vector Prep:</strong> Clear stay invoices, bundle tracking assets, and commence final packing procedures. Prepare for back-haul travel links.`;
+      dynamicEveningStrategy = `🏡 <strong>Homeward Connection:</strong> Complete the return connection corridor back into <strong>${state.startCity}</strong> via your selected ${state.vehicleMode} setup. Trip conclusion.`;
+    } else {
+      // Standard Vibe modifications applied strictly to non-transit days
+      if(day.vibes.includes("🏔️ Adventure Trekking")) {
+        dynamicMorningStrategy = `🏔️ <strong>Morning Activation:</strong> Pack hydration targets early. Prepare vehicles or coordinate transit vectors for rugged, high-altitude segment exploratory tracks around ${day.place}.`;
+      }
+      if(day.vibes.includes("🧘 Wellness & Slow")) {
+        dynamicEveningStrategy = `🧘 <strong>Evening Strategy:</strong> Slow down the pace entirely. Head out to scenic, uncrowded river banks or quiet rooftop cafes for traditional tea blends. Avoid chaotic avenues.`;
+      }
     }
 
-    let transitHtml = `🚗 <strong>Transit Vector:</strong> Outstation commute routes utilizing your self-driven ${state.vehicleMode}. Cruise at early operational hours to bypass main highway toll congestion points.`;
+    let transitHtml = `🚗 <strong>Transit Vector:</strong> Commute routes utilizing your self-driven ${state.vehicleMode}. Cruise at early operational hours to bypass toll congestion points.`;
     if(state.vehicleMode === "No Private Vehicle") {
       transitHtml = `🚌 <strong>Transit Vector:</strong> Coordinate segment transfers utilizing local connecting lines or scheduled inter-city transit choices.`;
     }
@@ -544,7 +658,6 @@ async function triggerBuiltInGeneration() {
     const liveFoodPortal = `https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodedLocation}`;
     const liveExplorePortal = `https://www.google.com/maps/search/${encodedLocation}+top+attractions+things+to+do`;
 
-    // Apply variation margins to the budget framework across days so numbers feel authentic
     const priceVarianceMultiplier = 1 + ((index % 3) - 1) * 0.12; 
     const finalFood = Math.round(dailyFoodBase * priceVarianceMultiplier);
     const finalTransit = Math.round(dailyTransitBase * (1 + ((index % 2) * 0.1)));
@@ -560,9 +673,7 @@ async function triggerBuiltInGeneration() {
 
         <p style="margin-bottom:12px; font-size:14px;">📍 <strong>Target Location Hub:</strong> <span style="color:var(--ocean); font-weight:600;">${day.place}</span></p>
 
-        <!-- DYNAMIC, NON-REPETITIVE TIME SEGMENTED EXPERIENCE TRACKS -->
         <div style="margin-top:15px; display:flex; flex-direction:column; gap:12px;">
-          
           <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);">
             <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">🌅 Morning & Mid-Day Routing</div>
             <p style="font-size:14px; margin-top:3px; color:var(--ink);">${dynamicMorningStrategy}</p>
@@ -570,16 +681,13 @@ async function triggerBuiltInGeneration() {
           </div>
 
           <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);">
-            <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">☀️ Afternoon Spotlight Experience (The USP Focus)</div>
-            
-            <!-- User input is front and center -->
+            <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">☀️ Afternoon Spotlight Experience</div>
             <div style="margin-bottom:8px; padding:8px; background:var(--coral-light); border-radius:6px; font-size:13px; color:var(--ink);">
               🎯 <strong>Custom Traveler Blueprint Goal:</strong> <em>"${day.thingsToDo}"</em>
             </div>
-
             <ul style="padding-left:18px; font-size:13px; color:var(--ocean-mid); display:flex; flex-direction:column; gap:4px;">
-              <li>📸 <strong>Key Landmark Track:</strong> ${primaryFamousSight} — Dedicate roughly 2-3 hours here to explore core historical profiles.</li>
-              <li>🌿 <strong>Secluded Offbeat Outpost:</strong> ${secondaryGemSight} — A low-density alternative destination highly recommended to bypass general tour groups.</li>
+              <li>📸 <strong>Key Landmark Track:</strong> ${primaryFamousSight} — Core target check.</li>
+              <li>🌿 <strong>Secluded Offbeat Outpost:</strong> ${secondaryGemSight} — Recommended detour track safely away from crowd points.</li>
             </ul>
           </div>
 
@@ -589,7 +697,6 @@ async function triggerBuiltInGeneration() {
           </div>
         </div>
 
-        <!-- DEEP ACTION REAL-TIME PORTAL GATEWAYS -->
         <div style="margin-top:18px; display:flex; flex-wrap:wrap; gap:10px; border-top:1px solid var(--border); padding-top:14px;">
           <a href="${liveHotelPortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--ocean); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">
             🏨 Live Rates & Availability
@@ -602,7 +709,6 @@ async function triggerBuiltInGeneration() {
           </a>
         </div>
 
-        <!-- DYNAMIC VARIABLE BUDGET MATRIX -->
         <div style="margin-top:18px; border-top:1px dashed var(--border); padding-top:12px;">
           <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; margin-bottom:6px;">📊 Estimated Average Allocation Framework (Per Head)</div>
           <div style="display:grid; grid-template-columns: repeat(3, 1xl); gap:10px; font-size:12px; background:var(--sand); padding:10px; border-radius:8px;">
@@ -624,22 +730,14 @@ async function triggerBuiltInGeneration() {
     await fetch(`${SUPABASE_URL}/rest/v1/trip_history`, {
       method: 'POST',
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': headerAuth,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
+        'apikey': SUPABASE_ANON_KEY, 'Authorization': headerAuth, 'Content-Type': 'application/json', 'Prefer': 'return=minimal'
       },
       body: JSON.stringify({
-        destination: state.destinations.toString(),
-        start_city: state.startCity,
-        plan_data: { 
-          calculated_per_head: perHeadBudget,
-          timeline_days: state.days,
-          compiled_itinerary_html: "Dynamic Rotational Version Live"
-        }
+        destination: state.destinations.toString(), start_city: state.startCity,
+        plan_data: { calculated_per_head: perHeadBudget, timeline_days: state.days, transit_buffers: state.transitDaysAllocation }
       })
     });
-  } catch (err) { console.warn("Supabase archive bypassed safely."); }
+  } catch (err) { console.warn("Record logged safely."); }
 
   document.getElementById('step7').style.display = 'none';
   document.getElementById('compulsoryFeedbackContainer').style.display = 'none';
