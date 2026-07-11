@@ -10,9 +10,19 @@ export default async function handler(req, res) {
   const { payload, prompt } = req.body;
 
   try {
-    // Invoke active Gemini model endpoint
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
     
+    // Inject strict optimization blueprints directly into the prompt matrix
+    const enhancedPrompt = `${prompt} 
+    Return a structural JSON object containing:
+    1. "famousActivities": Array of iconic sights.
+    2. "hiddenGems": Array of offbeat, not-so-famous spots.
+    3. "timingOptimization": { "bestTimeToDepart": String, "layoverTransverseStrategy": String }
+    4. "multimodalBudgetOptions": { "budgetRoute": String, "premiumRoute": String, "optimizedStayRecommendation": String }
+    5. "itinerary": Daily layout map including the explicit Day Names (e.g., Monday, Tuesday) derived from the schedule calendar layout context.
+    
+    CRITICAL: Return ONLY valid JSON. Do not include markdown blocks, code wrappers, or any text outside the curly braces.`;
+
     const geminiRes = await fetch(geminiUrl, {
       method: 'POST',
       headers: {
@@ -20,8 +30,8 @@ export default async function handler(req, res) {
         'x-goog-api-key': GEMINI_API_KEY
       },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.4 }
+        contents: [{ parts: [{ text: enhancedPrompt }] }],
+        generationConfig: { responseMimeType: "application/json", temperature: 0.5 }
       })
     });
 
@@ -31,17 +41,15 @@ export default async function handler(req, res) {
     }
     
     const data = await geminiRes.json();
-    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     
-    // Extractor wrapper to cleanly capture JSON structures
-    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-    const parsedPlan = jsonMatch ? JSON.parse(jsonMatch[0]) : { raw_output: rawText };
-
-    // Capture token context from request header. Fallback to server verification key if guest.
+    // Clean out any accidental markdown wrapper characters if the engine slips up
+    rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    const parsedPlan = JSON.parse(rawText);
     const authHeader = req.headers['authorization'] || `Bearer ${SUPABASE_KEY}`;
 
-    // Post to the updated, verified database schema table structure
-    const dbPostResponse = await fetch(`${SUPABASE_URL}/rest/v1/trip_history`, {
+    await fetch(`${SUPABASE_URL}/rest/v1/trip_history`, {
       method: 'POST',
       headers: {
         'apikey': SUPABASE_KEY,
@@ -50,16 +58,11 @@ export default async function handler(req, res) {
         'Prefer': 'return=minimal'
       },
       body: JSON.stringify({
-        destination: payload.destination,
+        destination: payload.destination.toString(),
         start_city: payload.startCity,
         plan_data: parsedPlan
       })
     });
-
-    if (!dbPostResponse.ok) {
-      const dbErr = await dbPostResponse.text();
-      throw new Error(`Supabase DB Write Error: ${dbErr}`);
-    }
 
     return res.status(200).json(parsedPlan);
 
