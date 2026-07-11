@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Travel Planner — Let's Explore!</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Supabase Auth Client Library Bundle CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
@@ -213,7 +214,7 @@
       <div id="apiStatusMessage" style="margin-top:14px; font-weight:600;"></div>
     </div>
 
-    <!-- COMPULSORY FEEDBACK CHECKPOINT -->
+    <!-- MANDATORY FEEDBACK CHECKPOINT -->
     <div class="compulsory-feedback-card" id="compulsoryFeedbackContainer">
       <div class="feedback-title" style="font-weight:600; font-size:13px; color: var(--ocean-dark);">📋 Layout Step Verification Required</div>
       <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">State 2 system improvements or layout ideas to advance steps.</p>
@@ -231,12 +232,12 @@
 </div>
 
 <script>
-// ── FIXED GLOBAL CALL DECLARATION ───────────────────────────────────────────
+// ── MASTER CONFIGURATION BLOCK ───────────────────────────────────────────────
 const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlicHNxbGxnaXRudHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NTM1NDQsImV4cCI6MjA5OTMyOTU0NH0.V8FT2cDAJMcfv1mtgCGWZck5wxswAlj7tyW-KbaJ8bM"; 
 
-// Explicit context initialization using window mapping to bypass reference locks
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Local isolated name token variable wrapper map to explicitly isolate syntax conflicts
+const travelPlannerSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let activeUserToken = null;
 
 let state = { 
@@ -247,7 +248,7 @@ let currentStep = 1;
 const TOTAL_STEPS = 7;
 
 window.addEventListener('load', async () => {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
   if (session) {
     activeUserToken = session.access_token;
     document.getElementById('googleAuthBtn').textContent = "🟢 Logged In";
@@ -256,7 +257,7 @@ window.addEventListener('load', async () => {
 });
 
 async function loginWithGoogle() {
-  const { data, error } = await supabase.auth.signInWithOAuth({
+  const { data, error } = await travelPlannerSupabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: window.location.origin }
   });
@@ -343,7 +344,7 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   }
 
   try {
-    await supabase.from('journey_feedback').insert({
+    await travelPlannerSupabaseClient.from('journey_feedback').insert({
       step_number: stepNum, step_name: stepName, feedback_rating: 'multimodal_pipeline_trace',
       user_comments: `Enhancement 1: ${imp1} | Enhancement 2: ${imp2}`
     });
