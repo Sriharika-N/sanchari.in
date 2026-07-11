@@ -270,22 +270,28 @@ function validateDates() {
   const errBox = document.getElementById('dateErrorBox');
   const nextBtn = document.getElementById('btnStep3');
 
+  // 1. Reset immediately on change/click to ensure the message clears out
+  errBox.classList.remove('show');
+  nextBtn.disabled = false;
+  nextBtn.style.opacity = '1';
+
+  // 2. Only perform chronological calculation if BOTH fields are completely filled out
   if (startVal && endVal) {
-    const s = new Date(startVal), e = new Date(endVal);
+    const s = new Date(startVal);
+    const e = new Date(endVal);
+
     if (e < s) {
+      // If the selection is truly illegal, throw the error state
       errBox.classList.add('show'); 
       nextBtn.disabled = true; 
       nextBtn.style.opacity = '0.4'; 
       return false;
     }
+    
     state.days = Math.round((e - s) / 86400000) + 1;
     generateDailyVibeSelectors();
   }
   
-  // 🌟 THE FIX: Forcefully hide the error alert box and reactivate button when valid
-  errBox.classList.remove('show'); 
-  nextBtn.disabled = false; 
-  nextBtn.style.opacity = '1'; 
   return true;
 }
 
