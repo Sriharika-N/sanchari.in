@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Travel Planner — Plan your perfect trip</title>
-<link href="[https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600&display=swap](https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600&display=swap)" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
     --ink: #0d1117;
@@ -274,7 +274,7 @@
     <span class="nav-name">AI Travel Planner</span>
     <span class="nav-badge">Beta</span>
   </a>
-  <div class="nav-powered">Powered by <span>Gemini</span> ✦</div>
+  <div class="nav-powered">Powered by <span>AI Hub Backend</span> ✦</div>
 </nav>
 
 <!-- HERO -->
@@ -586,9 +586,6 @@
 </footer>
 
 <script>
-// ── CONFIG ───────────────────────────────────────────────────────────────────
-const GEMINI_API_KEY = 'AQ.Ab8RN6JJmGRQU2OG_8Qj_1gyRAgoSOPn3cRkrnziaGm7RLmO0w'; 
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 // ── STATE ────────────────────────────────────────────────────────────────────
 let state = {
   destination:'', startCity:'', startDate:'', endDate:'', days:0, nights:0,
@@ -644,7 +641,7 @@ function updateDates() {
   if (e <= s) { document.getElementById('endDate').value = ''; return; }
 
   const diffMs = e - s;
-  state.days  = Math.round(diffMs / 86400000) + 1; // Count inclusive days
+  state.days  = Math.round(diffMs / 86400000) + 1;
   state.nights = state.days - 1;
 
   document.getElementById('durationText').textContent = `${state.days} Day${state.days>1?'s':''} Trip`;
@@ -652,7 +649,6 @@ function updateDates() {
   document.getElementById('tripDurationBadge').style.display = 'block';
   document.getElementById('availSection').style.display = 'block';
 
-  // Build availability grid
   const grid = document.getElementById('availGrid');
   grid.innerHTML = '';
   state.availability = {};
@@ -747,7 +743,7 @@ function calcFuel() {
   const mileage   = parseFloat(document.getElementById('mileage').value) || 20;
   const price    = parseFloat(document.getElementById('fuelPrice').value) || 105;
   const litresOne = distKm / mileage;
-  const totalLitres = litresOne * vehicles * 2; // round trip
+  const totalLitres = litresOne * vehicles * 2;
   const totalCost = Math.round(totalLitres * price);
   const perPerson = Math.round(totalCost / (state.groupSize || 1));
   state.numVehicles = vehicles; state.mileage = mileage; state.fuelPrice = price;
@@ -800,20 +796,19 @@ function buildSummary() {
     ⏰ Departing at <strong>${state.departureTime}</strong> · <strong>${state.transport}</strong>${state.transportHours>0?` (~${state.transportHours} hrs)`:''}
     ${state.transport && state.transport.includes('Own vehicle')?`<br>🚗 ${state.numVehicles} vehicle${state.numVehicles>1?'s':''} · ${state.mileage} km/L · Est. fuel ₹${(state.fuelCost||0).toLocaleString('en-IN')} (₹${(state.fuelPerPerson||0).toLocaleString('en-IN')}/person)`:''}
     <br>👥 ${state.crew}${state.groupSize>1?` (${state.groupSize} people)`:''}<br>
-      🛵 ${state.localTransport || 'Flexible at destination'}<br>
+    🛵 ${state.localTransport || 'Flexible at destination'}<br>
     ✨ ${state.vibes.join(', ') || 'Open to anything'}<br>
     💰 ${state.budget}<br>
     ${state.travelNote?`💬 "${state.travelNote}"`:''}
   `;
 }
 
-// ── GENERATE ITINERARY FROM GEMINI API ──────────────────────────────────────
+// ── GENERATE ITINERARY BY CALLING VERCEL SERVERLESS BACKEND ───────────────────
 async function generateItinerary() {
-  if (GEMINI_API_KEY === 'PASTE_YOUR_GEMINI_API_KEY_HERE') {
-    const e = document.getElementById('err7');
-    e.textContent = '⚠️ Add your Gemini API key in the JavaScript configuration snippet (look for GEMINI_API_KEY).';
-    e.classList.add('show'); return;
-  }
+  document.getElementById(`step${currentStep}`).classList.remove('active');
+  document.getElementById('stepTabs').style.display = 'none';
+  document.querySelector('.progress-bar').style.display = 'none';
+  document.getElementById('loadingPanel').style.display = 'block';
 
   const availContext = Object.entries(state.availability).map(([date,status]) => {
     const d = new Date(date).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
@@ -859,12 +854,6 @@ async function generateItinerary() {
     }
   }`;
 
-  // UI transition to loading state
-  document.getElementById(`step${currentStep}`).classList.remove('active');
-  document.getElementById('stepTabs').style.display = 'none';
-  document.querySelector('.progress-bar').style.display = 'none';
-  document.getElementById('loadingPanel').style.display = 'block';
-
   const messages = ['Checking local weather conditions... 🌤️', 'Finding curated offbeat gems... 📍', 'Calculating relative transit routes... ⏱️', 'Assembling custom budget targets... 💰'];
   let currentMsgIdx = 0;
   const intervalId = setInterval(()=>{ 
@@ -872,23 +861,22 @@ async function generateItinerary() {
   }, 1800);
 
   try {
-    const response = await fetch(GEMINI_URL, {
+    // Calling the Vercel backend route instead of direct API URL strings
+    const response = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: "application/json", temperature: 0.4 }
+        payload: { destination: state.destination, startCity: state.startCity },
+        prompt: prompt
       })
     });
     
-    if (!response.ok) throw new Error(`API response failed with HTTP status code ${response.status}`);
-    const data = await response.json();
-    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.error || 'Backend computing node execution failed');
+    }
     
-    // Robust cleanup to protect against unformatted string blocks
-    const cleanedText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const parsedPlan = JSON.parse(cleanedText);
-    
+    const parsedPlan = await response.json();
     clearInterval(intervalId);
     renderOutput(parsedPlan);
   } catch(err) {
@@ -898,7 +886,7 @@ async function generateItinerary() {
     document.querySelector('.progress-bar').style.display = 'block';
     document.getElementById(`step${currentStep}`).classList.add('active');
     const e = document.getElementById('err7');
-    e.textContent = `Error processing generation request: ${err.message}. Please check your active network state or update your key configuration context.`;
+    e.textContent = `Error: ${err.message}. Check your Vercel logs or environmental key configs.`;
     e.classList.add('show');
   }
 }
@@ -927,7 +915,6 @@ function renderOutput(plan) {
 
   html += buildBookingSection();
 
-  // Interactive local client logging structure
   html += `
   <div class="booking-input-section">
     <div class="booking-input-title">📋 Live Booking Confirmation Desk <span style="font-weight:400;color:var(--muted);font-size:11px">— state monitoring tracker</span></div>
@@ -985,8 +972,7 @@ function renderOutput(plan) {
         <div class="budget-item"><div class="budget-item-label">🍛 Daily Food Allowance</div><div class="budget-item-val">₹${(b.food_per_day_inr||0).toLocaleString('en-IN')}</div></div>
         <div class="budget-item"><div class="budget-item-label">🚗 Regional Routing Transit</div><div class="budget-item-val">₹${(b.local_transport_total_inr||0).toLocaleString('en-IN')}</div></div>
         <div class="budget-item"><div class="budget-item-label">🎟️ Entry Admissions</div><div class="budget-item-val">₹${(b.entry_tickets_total_inr||0).toLocaleString('en-IN')}</div></div>
-        ${b.rentals_total_inr?`<div class="budget-item"><div class="budget-item-label">🛵 Equipment Rentals</div><div class="budget-item-val">₹b.rentals_total_inr.toLocaleString('en-IN')</div></div>`:''}
-        ${isOwn&&state.fuelPerPerson?`<div class="budget-item"><div class="budget-item-label">⛽ Apportioned Fuel Fuel Allocation</div><div class="budget-item-val">₹${state.fuelPerPerson.toLocaleString('en-IN')}</div></div>`:''}
+        ${isOwn&&state.fuelPerPerson?`<div class="budget-item"><div class="budget-item-label">⛽ Apportioned Fuel Allocation</div><div class="budget-item-val">₹${state.fuelPerPerson.toLocaleString('en-IN')}</div></div>`:''}
       </div>
       <div class="budget-total">
         <div class="budget-total-label">Projected Estimated Aggregation Target</div>
@@ -1023,11 +1009,11 @@ function buildBookingSection() {
   const d2 = state.endDate ? state.endDate.replace(/-/g,'') : '';
 
   const links = {
-    flight: `[https://www.makemytrip.com/flights/search?tripType=O&itinerary=$](https://www.makemytrip.com/flights/search?tripType=O&itinerary=$){encodeURIComponent(state.startCity)}-${encodeURIComponent(cleanDest)}-${state.startDate}&paxType=A-${state.groupSize||1}_C-0_I-0`,
-    train: `[https://www.irctc.co.in/nget/train-search](https://www.irctc.co.in/nget/train-search)`,
-    bus: `[https://www.redbus.in/bus-tickets/$](https://www.redbus.in/bus-tickets/$){encodeURIComponent(state.startCity.toLowerCase())}-to-${encodeURIComponent(cleanDest)}`,
-    stay_mmt: `[https://www.makemytrip.com/hotels/$](https://www.makemytrip.com/hotels/$){encodeURIComponent(cleanDest)}-hotels.html?checkin=${d1}&checkout=${d2}&roomCount=1&adultsCount=${state.groupSize||1}`,
-    homestay: `[https://www.airbnb.co.in/s/$](https://www.airbnb.co.in/s/$){encodeURIComponent(destRaw)}/homes?checkin=${state.startDate}&checkout=${state.endDate}&adults=${state.groupSize||1}`,
+    flight: `https://www.makemytrip.com/flights/search?tripType=O&itinerary=${encodeURIComponent(state.startCity)}-${encodeURIComponent(cleanDest)}-${state.startDate}&paxType=A-${state.groupSize||1}_C-0_I-0`,
+    train: `https://www.irctc.co.in/nget/train-search`,
+    bus: `https://www.redbus.in/bus-tickets/${encodeURIComponent(state.startCity.toLowerCase())}-to-${encodeURIComponent(cleanDest)}`,
+    stay_mmt: `https://www.makemytrip.com/hotels/${encodeURIComponent(cleanDest)}-hotels.html?checkin=${d1}&checkout=${d2}&roomCount=1&adultsCount=${state.groupSize||1}`,
+    homestay: `https://www.airbnb.co.in/s/${encodeURIComponent(destRaw)}/homes?checkin=${state.startDate}&checkout=${state.endDate}&adults=${state.groupSize||1}`,
   };
 
   const isOwnVehicle = state.transport && state.transport.includes('Own vehicle');
@@ -1066,7 +1052,7 @@ function renderTimeBlock(label, acts) {
 
 function toggleDay(card) { card.classList.toggle('open'); }
 function copyLink() { navigator.clipboard.writeText(window.location.href).then(()=>alert('Tracking identity string copied to clipboard! 🔗')); }
-function shareWhatsApp() { window.open(`[https://wa.me/?text=$](https://wa.me/?text=$){encodeURIComponent('Synchronizing dynamic itinerary data asset workspace: '+window.location.href)}`, '_blank'); }
+function shareWhatsApp() { window.open(`https://wa.me/?text=${encodeURIComponent('Synchronizing dynamic itinerary data asset workspace: '+window.location.href)}`, '_blank'); }
 
 // ── INITIALIZATION PROTOCOLS ──────────────────────────────────────────────────
 setupCards('crewCards', 'crew', false);
