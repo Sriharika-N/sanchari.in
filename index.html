@@ -270,18 +270,28 @@ function validateDates() {
   const errBox = document.getElementById('dateErrorBox');
   const nextBtn = document.getElementById('btnStep3');
 
-  // Reset internal UI error blocks immediately
+  // Clear out general step execution errors first
+  const stepErrBox = document.getElementById('err3');
+  if (stepErrBox) stepErrBox.classList.remove('show');
+
+  // Reset internal UI error state elements immediately
   errBox.classList.remove('show');
   nextBtn.disabled = false;
   nextBtn.style.opacity = '1';
 
-  // 🌟 THE CRITICAL FIX: Save the form inputs directly to the code's memory state!
   state.startDate = startVal;
   state.endDate = endVal;
 
   if (startVal && endVal) {
     const s = new Date(startVal);
     const e = new Date(endVal);
+
+    // 🌟 PROTECTIVE CHECK: If the browser fails to parse the date strings cleanly, stop immediately
+    if (isNaN(s.getTime()) || isNaN(e.getTime())) {
+      nextBtn.disabled = true;
+      nextBtn.style.opacity = '0.4';
+      return false;
+    }
 
     if (e < s) {
       errBox.classList.add('show'); 
@@ -292,6 +302,10 @@ function validateDates() {
     
     state.days = Math.round((e - s) / 86400000) + 1;
     generateDailyVibeSelectors();
+  } else {
+    // Keep next button locked if inputs are completely empty
+    nextBtn.disabled = true;
+    nextBtn.style.opacity = '0.4';
   }
   
   return true;
@@ -299,19 +313,29 @@ function validateDates() {
 
 function generateDailyVibeSelectors() {
   const container = document.getElementById('dailyVibeContainer');
+  if (!container) return;
   container.innerHTML = '';
+  
+  if (!state.startDate || isNaN(state.days) || state.days <= 0) return;
+
   const start = new Date(state.startDate);
+  // 🌟 PROTECTIVE CHECK: Ensure the base start date inside memory structure is fully valid
+  if (isNaN(start.getTime())) return;
   
   for (let i = 0; i < state.days; i++) {
-    const current = new Date(start);
+    const current = new Date(start.getTime());
     current.setDate(start.getDate() + i);
+    
+    // Final defensive check against corrupted loops
+    if (isNaN(current.getTime())) continue;
+
     const dayName = current.toLocaleDateString('en-US', { weekday: 'long' });
     const dateStr = current.toISOString().split('T')[0];
 
     const row = document.createElement('div');
     row.className = 'daily-vibe-row';
     row.innerHTML = `
-      <div class="daily-vibe-label">${dayName} (${dateStr}):</div>
+      <div class="daily-vibe-label"><strong>${dayName}</strong><br><span style="font-size:11px; color:var(--muted);">${dateStr}</span></div>
       <select class="vibe-day-select" data-date="${dateStr}">
         <option value="Offbeat & Hidden Gems">🌿 Hidden Gems Focus</option>
         <option value="Adventure & Trekking">🏔️ Adventure Seek</option>
@@ -323,7 +347,6 @@ function generateDailyVibeSelectors() {
     container.appendChild(row);
   }
 }
-
 function updateProgressBar() {
   document.getElementById('progressFill').style.width = ((currentStep / TOTAL_STEPS) * 100) + '%';
 }
