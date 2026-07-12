@@ -70,9 +70,16 @@
   }
   .app-notification-toast.show { top: 20px; }
 
-  .live-helper-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; font-size: 12px; }
-  .live-helper-link { color: var(--ocean); font-weight: 500; text-decoration: none; background: var(--sand); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border); }
-  .live-helper-link:hover { background: var(--coral-light); border-color: var(--coral); color: var(--coral); }
+  /* 🌟 UPGRADED HIGH VISIBILITY LIVE HELPER BUTTONS (SCALED UP BY .5 TO 18PX) */
+  .live-helper-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+  .live-helper-link { 
+    color: var(--white); font-weight: 600; text-decoration: none; 
+    background: var(--coral); padding: 8px 16px; border-radius: 8px; 
+    border: 1px solid var(--coral); font-size: 18px; display: inline-flex; 
+    align-items: center; gap: 6px; transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 10px rgba(232, 99, 58, 0.15);
+  }
+  .live-helper-link:hover { background: var(--ocean); border-color: var(--ocean); color: var(--white); transform: translateY(-1px); }
 </style>
 </head>
 <body>
@@ -334,7 +341,7 @@
     <div class="compulsory-feedback-card" id="compulsoryFeedbackContainer">
       <div class="feedback-title" style="font-weight:600; font-size:14px; color: var(--ocean-dark); margin-bottom: 4px;">📋 Beta Tester Portal Review</div>
       <p style="font-size: 12px; color: var(--muted); margin-bottom: 10px;">Please share how this application workflow feels and what additional details or features you think this layout page should display to advance.</p>
-      <textarea id="singleBetaFeedbackInput" rows="3" placeholder="How does the app feel, and what else should this page show?..." style="resize: none; font-family: inherit; font-size: 13px运行;"></textarea>
+      <textarea id="singleBetaFeedbackInput" rows="3" placeholder="How does the app feel, and what else should this page show?..." style="resize: none; font-family: inherit; font-size: 13px;"></textarea>
     </div>
 
     <!-- OUTPUT SCREEN -->
@@ -447,18 +454,6 @@ function showAppNotification(messageString) {
   toast.classList.add('show');
   setTimeout(() => { toast.classList.remove('show'); }, 4500);
 }
-
-window.addEventListener('load', async () => {
-  const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
-  if (session) {
-    activeUserToken = session.access_token;
-    document.getElementById('authHeaderBtn').textContent = `🟢 ${session.user.email}`;
-  }
-  updateProgressBar();
-});
-
-function openAuthModal() { document.getElementById('authOverlay').style.display = 'flex'; }
-function closeAuthModal() { document.getElementById('authOverlay').style.display = 'none'; }
 
 function setAuthInterfaceMode(mode) {
   currentAuthMode = mode;
@@ -695,10 +690,12 @@ function updateLiveHelperMapLinks(inputElement, dateStr) {
   
   const foodLink = document.getElementById(`live-link-food-${dateStr}`);
   const sightsLink = document.getElementById(`live-link-sights-${dateStr}`);
+  const stayLink = document.getElementById(`live-link-stay-${dateStr}`);
   
-  if(foodLink && sightsLink) {
+  if(foodLink && sightsLink && stayLink) {
     foodLink.href = `https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(updatedCityValue)}`;
     sightsLink.href = `https://www.google.com/maps/search/${encodeURIComponent(updatedCityValue)}+top+attractions+things+to+do`;
+    stayLink.href = `https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(updatedCityValue)}`;
   }
 }
 
@@ -760,8 +757,9 @@ function generateDailyVibeSelectors() {
             <label>Current Location Base:</label>
             <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${targetDestinationValue}">
             <div class="live-helper-bar">
-              <a href="https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(targetDestinationValue)}" target="_blank" id="live-link-food-${dateStr}" class="live-helper-link">🔍 Open Live Restaurant Reviews</a>
-              <a href="https://www.google.com/maps/search/${encodeURIComponent(targetDestinationValue)}+top+attractions+things+to+do" target="_blank" id="live-link-sights-${dateStr}" class="live-helper-link">🏛️ Open Live Sightseeing Attractions</a>
+              <a href="https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(targetDestinationValue)}" target="_blank" id="live-link-food-${dateStr}" class="live-helper-link">🍲 Choose From Live Restaurants</a>
+              <a href="https://www.google.com/maps/search/${encodeURIComponent(targetDestinationValue)}+top+attractions+things+to+do" target="_blank" id="live-link-sights-${dateStr}" class="live-helper-link">🏛️ Choose From Live Sightseeing</a>
+              <a href="https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(targetDestinationValue)}" target="_blank" id="live-link-stay-${dateStr}" class="live-helper-link">🏨 Choose From Live Stays</a>
             </div>
           </div>
 
@@ -794,6 +792,7 @@ function generateDailyVibeSelectors() {
             <div class="live-helper-bar">
               <a href="https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(targetDestinationValue)}" target="_blank" id="live-link-food-${dateStr}" class="live-helper-link">🍛 Choose From Live Restaurant Links</a>
               <a href="https://www.google.com/maps/search/${encodeURIComponent(targetDestinationValue)}+top+attractions+things+to+do" target="_blank" id="live-link-sights-${dateStr}" class="live-helper-link">🏛️ Choose From Live Sightseeing Attractions</a>
+              <a href="https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(targetDestinationValue)}" target="_blank" id="live-link-stay-${dateStr}" class="live-helper-link">🏨 Choose From Live Stays</a>
             </div>
           </div>
 
@@ -843,7 +842,6 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   }
   if (stepNum === 2 && !state.crew) { err.classList.add('show'); return; }
   
-  /* 🌟 DIRECT REAL-TIME FORCE VALIDATION SYNC ON STEP 3 CLICK EVENT */
   if (stepNum === 3) {
     const datesAreValid = validateDatesOnly();
     if (!datesAreValid || !state.startDate || !state.endDate) { 
@@ -887,9 +885,11 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   } catch(e) { console.warn("Logged safely."); }
 
   document.getElementById('singleBetaFeedbackInput').value = '';
-  document.getElementById(`step${stepNum}`).classList.remove('active');
+  document.getElementById suicide = document.getElementById(`step${stepNum}`);
+  if(suicide) suicide.classList.remove('active');
   currentStep = nextStepNum;
-  document.getElementById(`step${nextStepNum}`).classList.add('active');
+  const nextPanel = document.getElementById(`step${nextStepNum}`);
+  if(nextPanel) nextPanel.classList.add('active');
   updateProgressBar();
   
   window.scrollTo({ top: 0, behavior: 'smooth' });
