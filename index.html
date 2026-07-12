@@ -80,7 +80,6 @@
   }
   .live-helper-link:hover { background: var(--ocean); border-color: var(--ocean); color: var(--white); transform: translateY(-1px); }
 
-  /* 🌟 STYLE SPECIFICATIONS FOR IMMERSIVE IN-APP POPUP MODAL OVERLAY */
   .injection-modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(15, 35, 64, 0.6); backdrop-filter: blur(4px);
@@ -98,7 +97,6 @@
 
 <div id="appNotificationToast" class="app-notification-toast"></div>
 
-<!-- 🌟 IN-APP REPLACEMENT MODAL OVERLAY DOM ELEMENT -->
 <div id="injectionModal" class="injection-modal-overlay">
   <div class="injection-modal-container">
     <h3 style="font-family:'Fraunces', serif; color:var(--ocean-dark); font-size:18px; margin-bottom:8px;">Add Spotlight Item</h3>
@@ -195,7 +193,7 @@
       
       <div class="form-group">
         <label>Or enter custom location</label>
-        <input type="text" id="customDest" placeholder="e.g. Ooty, Wayanad...">
+        <input type="text" id="customDest" placeholder="e.g. Ooty, Wayanad, Jaipur, Udaipur...">
       </div>
       <div class="form-group">
         <label>Starting Location</label>
@@ -240,22 +238,66 @@
       
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="goBack(2)">← Back</button>
-        <button class="btn btn-primary" id="btnStep3" onclick="submitStepAndProgress(3, 4, 'Date Setup')">Next — Choose How to Travel →</button>
+        <button class="btn btn-primary" id="btnStep3" onclick="submitStepAndProgress(3, 4, 'Date Setup')">Next — Elaborate Transit Route →</button>
       </div>
       <div class="error-box" id="err3">Please choose valid dates.</div>
     </div>
 
-    <!-- STEP 4: TRANSIT LOGISTICS -->
+    <!-- STEP 4: ELABORATED TRANSIT LOGISTICS ARCHITECTURE -->
     <div class="step-panel" id="step4">
       <div class="step-heading">Transit & Travel Day Settings 🚗💨</div>
-      <p class="step-sub">Choose your primary transport mode to compute distance, driving times, and finalize journey blocks.</p>
+      <p class="step-sub">Configure your multi-modal transition legs to map exact connection metrics.</p>
       
-      <div class="form-group">
-        <label>Primary Mode of Transport</label>
-        <div class="chips" id="transportChips">
-          <div class="chip" data-val="Full Road Trip">🛣️ Complete Road Trip (Drive/Ride)</div>
-          <div class="chip" data-val="Flight Connected">✈️ Fly to Hub (Plane + Local Cab)</div>
-          <div class="chip" data-val="Train Connected">🚂 Train to Hub (Rail Corridor)</div>
+      <!-- SECTION 1: THE LONG DISTANCE LAUNCH -->
+      <div style="background: var(--paper); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+        <h4 style="font-family:'Fraunces', serif; font-size:15px; color:var(--ocean-dark); margin-bottom:8px;">🛫 Leg 1: Long-Distance Launch (Home to First Hub)</h4>
+        <div class="form-group">
+          <label>How are you reaching your initial city stop/hub?</label>
+          <div class="chips" id="leg1TransportChips">
+            <div class="chip" data-val="Flight Connected">✈️ Flying There</div>
+            <div class="chip" data-val="Train Connected">🚂 Taking a Train</div>
+            <div class="chip" data-val="Full Road Trip">🚗 Driving All the Way</div>
+          </div>
+        </div>
+        <div class="form-group" id="firstHubFieldGroup" style="display:none;">
+          <label>Where are you arriving first? (Intermediate Stop / Entry City)</label>
+          <input type="text" id="intermediateHubInput" placeholder="e.g. Jaipur (Before moving to Udaipur)">
+        </div>
+        <div class="form-group" id="leg1FlightCostGroup" style="display:none;">
+          <label>Estimated Flight Ticket Cost per Head (INR)</label>
+          <input type="number" id="leg1FlightTicketCost" value="0" min="0">
+        </div>
+      </div>
+
+      <!-- SECTION 2: INTERNAL SHIFTS & COMMUTES -->
+      <div style="background: var(--paper); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+        <h4 style="font-family:'Fraunces', serif; font-size:15px; color:var(--ocean-dark); margin-bottom:8px;">🔀 Leg 2: Regional Transfers & Local Connections</h4>
+        <div class="form-group">
+          <label>How will you move between regional cities or get around locally?</label>
+          <div class="chips" id="leg2TransportChips">
+            <div class="chip" data-val="Hired Inter-city Cab">🚕 Hired Outstation Cab</div>
+            <div class="chip" data-val="Pre-booked Train Link">🚂 Inter-City Rail Corridor</div>
+            <div class="chip" data-val="Self-Drive Commute">🚗 Local Self-Drive Rental</div>
+            <div class="chip" data-val="Local Sightseeing">❌ Local Cabs & Shuttles Only</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Vehicle Configuration Setup</label>
+          <div class="chips" id="vehicleChips">
+            <div class="chip" data-val="Own Private Car">🚗 Personal Car</div>
+            <div class="chip" data-val="Own Private Bike">🏍️ Personal Bike</div>
+            <div class="chip" data-val="No Private Vehicle">❌ Public/Rental Vehicles Only</div>
+          </div>
+        </div>
+        <div id="mileageInputGroup" style="display:none;">
+          <div class="form-group">
+            <label>Estimated Fuel Price per Litre (INR)</label>
+            <input type="number" id="fuelPrice" value="102" min="0">
+          </div>
+          <div class="form-group">
+            <label>Vehicle Mileage / Fuel Economy (KM per Litre)</label>
+            <input type="number" id="vehicleMileage" value="15" min="1">
+          </div>
         </div>
       </div>
       
@@ -270,36 +312,11 @@
         </select>
       </div>
 
-      <div class="form-group">
-        <label>Vehicle Configuration Setup</label>
-        <div class="chips" id="vehicleChips">
-          <div class="chip" data-val="Own Private Car">🚗 Own Car (Self-Driven)</div>
-          <div class="chip" data-val="Own Private Bike">🏍️ Own Bike (Self-Ridden)</div>
-          <div class="chip" data-val="No Private Vehicle">❌ No Own Transport</div>
-        </div>
-      </div>
-
-      <div class="form-group" id="flightInputGroup" style="display:none;">
-        <label>Estimated Roundtrip Flight Cost per Ticket (INR)</label>
-        <input type="number" id="flightTicketCost" value="0" min="0">
-      </div>
-
-      <div id="mileageInputGroup" style="display:none;">
-        <div class="form-group">
-          <label>Estimated Fuel Price per Litre (INR)</label>
-          <input type="number" id="fuelPrice" value="102" min="0">
-        </div>
-        <div class="form-group">
-          <label>Vehicle Mileage / Fuel Economy (KM per Litre)</label>
-          <input type="number" id="vehicleMileage" value="15" min="1">
-        </div>
-      </div>
-
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="goBack(3)">← Back</button>
         <button class="btn btn-primary" onclick="submitStepAndProgress(4, 5, 'Transit Configuration')">Next — Tailor Daily Vibes →</button>
       </div>
-      <div class="error-box" id="err4">Please select your transport preferences and journey days allocation.</div>
+      <div class="error-box" id="err4">Please select your transport preferences across both journey segments.</div>
     </div>
 
     <!-- STEP 5: PER-DAY VIBES -->
@@ -399,15 +416,15 @@ const travelPlannerSupabaseClient = window.supabase.createClient(SUPABASE_URL, S
 let activeUserToken = null;
 let currentAuthMode = 'signin'; 
 
+// Segregated Multi-Modal Transport State tracking parameters
 let state = { 
-  destinations: [], startCity: '', startDate: '', endDate: '', days: 0, transitDaysAllocation: 2,
-  crew: '', groupSize: 1, transport: 'Full Road Trip', vehicleMode: 'Own Private Car', dailyPlanData: [], budgetVal: 0, budgetScope: '' ,
+  destinations: [], startCity: '', intermediateHub: '', startDate: '', endDate: '', days: 0, transitDaysAllocation: 2,
+  crew: '', groupSize: 1, transport: 'Full Road Trip', leg2Transport: 'Local Sightseeing', vehicleMode: 'Own Private Car', dailyPlanData: [], budgetVal: 0, budgetScope: '' ,
   flightTicketCost: 0, fuelPrice: 102, vehicleMileage: 15, calculatedDistanceKM: 0
 };
 let currentStep = 1;
 const TOTAL_STEPS = 7;
 
-// Modal tracking object states
 let modalContextItem = { type: '', value: '' };
 
 const travelKnowledgeBase = {
@@ -491,6 +508,18 @@ function showAppNotification(messageString) {
   toast.classList.add('show');
   setTimeout(() => { toast.classList.remove('show'); }, 4500);
 }
+
+window.addEventListener('load', async () => {
+  const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
+  if (session) {
+    activeUserToken = session.access_token;
+    document.getElementById('authHeaderBtn').textContent = `🟢 ${session.user.email}`;
+  }
+  updateProgressBar();
+});
+
+function openAuthModal() { document.getElementById('authOverlay').style.display = 'flex'; }
+function closeAuthModal() { document.getElementById('authOverlay').style.display = 'none'; }
 
 function setAuthInterfaceMode(mode) {
   currentAuthMode = mode;
@@ -621,122 +650,6 @@ function selectThematicRandomEngine(categoryType) {
   generateDailyVibeSelectors();
 }
 
-async function runGeographicalDistanceAndSpeedSuggester() {
-  const suggestionBox = document.getElementById('distanceSuggestionBox');
-  const transitWrapper = document.getElementById('transitDaysWrapper');
-  
-  if (!state.destinations.length || !state.transport) {
-    suggestionBox.style.display = 'none'; transitWrapper.style.display = 'none'; return;
-  }
-
-  suggestionBox.style.display = 'block';
-  suggestionBox.innerHTML = `⏳ Fetching live real-time network routes from OpenStreetMap APIs...`;
-
-  try {
-    const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=`;
-    
-    const resStart = await fetch(geocodeUrl + encodeURIComponent(state.startCity));
-    const dataStart = await resStart.json();
-    const resDest = await fetch(geocodeUrl + encodeURIComponent(state.destinations[0]));
-    const dataDest = await resDest.json();
-    
-    if (dataStart.length && dataDest.length) {
-      const startLonLat = `${dataStart[0].lon},${dataStart[0].lat}`;
-      const destLonLat = `${dataDest[0].lon},${dataDest[0].lat}`;
-      
-      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startLonLat};${destLonLat}?overview=false`;
-      const osrmRes = await fetch(osrmUrl);
-      const osrmData = await osrmRes.json();
-      
-      if (osrmData.routes && osrmData.routes.length) {
-        const networkRoute = osrmData.routes[0];
-        const finalCalculatedKM = Math.round(networkRoute.distance / 1000);
-        state.calculatedDistanceKM = finalCalculatedKM;
-
-        let journeyPerformanceText = "";
-        let suggestedJourneyDays = 2;
-
-        if (state.transport === "Full Road Trip") {
-          const exactDrivingHours = Math.round(networkRoute.duration / 3600);
-          const formattedMinutes = Math.round((networkRoute.duration % 3600) / 60);
-          journeyPerformanceText = `🚗 <strong>Estimated Drive Time:</strong> Around ${exactDrivingHours}h ${formattedMinutes}m on real-world road networks.`;
-          suggestedJourneyDays = finalCalculatedKM > 450 ? 2 : 1;
-        } else if (state.transport === "Flight Connected") {
-          journeyPerformanceText = `✈️ <strong>Estimated Air Corridor:</strong> ~2 hours standard flight sector tracking + airport ground buffer windows.`;
-          suggestedJourneyDays = 1;
-        } else {
-          journeyPerformanceText = `🚂 <strong>Estimated Rail Corridor:</strong> ~${Math.round(finalCalculatedKM / 45)} hours transit along regional tracks.`;
-          suggestedJourneyDays = finalCalculatedKM > 500 ? 2 : 1;
-        }
-
-        transitWrapper.style.display = 'block';
-        suggestionBox.innerHTML = `
-          🗺️ <strong>Real Maps Distance:</strong> ~${finalCalculatedKM} KM total road distance.<br>
-          ${journeyPerformanceText}<br>
-          💡 <strong>Our Recommendation:</strong> We suggest choosing <strong>${suggestedJourneyDays} Traveling Day(s)</strong> for this layout setup.
-        `;
-
-        document.getElementById('transitDaysCount').value = suggestedJourneyDays;
-        state.transitDaysAllocation = suggestedJourneyDays;
-        generateDailyVibeSelectors();
-        return;
-      }
-    }
-    throw new Error("Geocoding mismatch loop popped.");
-  } catch (apiError) {
-    console.warn("API limit fallback loops engaged.", apiError);
-    let fallbackKM = 320;
-    if(state.destinations[0].toLowerCase().includes("manali")) fallbackKM = 499;
-    if(state.destinations[0].toLowerCase().includes("udaipur")) fallbackKM = 650;
-    state.calculatedDistanceKM = fallbackKM;
-    
-    transitWrapper.style.display = 'block';
-    suggestionBox.innerHTML = `🏁 <strong>Approximate Distance (Cached fallback):</strong> ~${fallbackKM} KM.<br>💡 API server busy. We recommend 2 Travel Days standard.`;
-    document.getElementById('transitDaysCount').value = 2;
-    state.transitDaysAllocation = 2;
-    generateDailyVibeSelectors();
-  }
-}
-
-function updateJourneyDaysState() {
-  state.transitDaysAllocation = parseInt(document.getElementById('transitDaysCount').value) || 0;
-  generateDailyVibeSelectors();
-}
-
-function applyVibesGloballyToAllDays() {
-  const globalCheckboxes = document.querySelectorAll('#globalMassSchedulerGroup input[type="checkbox"]');
-  let chosenVibesList = [];
-  globalCheckboxes.forEach(cb => { if (cb.checked) chosenVibesList.push(cb.value); });
-
-  if (chosenVibesList.length === 0) {
-    showAppNotification("Please choose a vibe pattern block first inside the scheduler widget."); return;
-  }
-
-  const totalCardsCount = document.querySelectorAll('.daily-card');
-  totalCardsCount.forEach((card, idx) => {
-    if(state.transitDaysAllocation >= 1 && idx === (state.days - 1)) return; 
-    const itemCheckboxes = card.querySelectorAll('.daily-vibe-cb');
-    itemCheckboxes.forEach(cb => { cb.checked = chosenVibesList.includes(cb.value); });
-  });
-
-  showAppNotification(`Synced [${chosenVibesList.join(', ')}] across vacation days!`);
-}
-
-function updateLiveHelperMapLinks(inputElement, dateStr) {
-  const updatedCityValue = inputElement.value.trim();
-  if(!updatedCityValue) return;
-  
-  const foodLink = document.getElementById(`live-link-food-${dateStr}`);
-  const sightsLink = document.getElementById(`live-link-sights-${dateStr}`);
-  const stayLink = document.getElementById(`live-link-stay-${dateStr}`);
-  
-  if(foodLink && sightsLink && stayLink) {
-    foodLink.href = `https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(updatedCityValue)}`;
-    sightsLink.href = `https://www.google.com/maps/search/${encodeURIComponent(updatedCityValue)}+top+attractions+things+to+do`;
-    stayLink.href = `https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(updatedCityValue)}`;
-  }
-}
-
 function validateDatesOnly() {
   const startVal = document.getElementById('startDate').value;
   const endVal = document.getElementById('endDate').value;
@@ -744,10 +657,7 @@ function validateDatesOnly() {
   const nextBtn = document.getElementById('btnStep3');
 
   if (errBox) errBox.classList.remove('show');
-  if (nextBtn) {
-    nextBtn.disabled = false;
-    nextBtn.style.opacity = '1';
-  }
+  if (nextBtn) { nextBtn.disabled = false; nextBtn.style.opacity = '1'; }
   state.startDate = startVal; state.endDate = endVal;
 
   if (startVal && endVal) {
@@ -759,13 +669,98 @@ function validateDatesOnly() {
   return true;
 }
 
+/* 🌟 HIGH-PRECISION MULTI-STAGE GEOGRAPHIC TELEMETRY ROUTER API EXTENSION */
+async function runGeographicalDistanceAndSpeedSuggester() {
+  const suggestionBox = document.getElementById('distanceSuggestionBox');
+  const transitWrapper = document.getElementById('transitDaysWrapper');
+  
+  if (!state.destinations.length || !state.transport) {
+    suggestionBox.style.display = 'none'; transitWrapper.style.display = 'none'; return;
+  }
+
+  suggestionBox.style.display = 'block';
+  suggestionBox.innerHTML = `⏳ Calculating live multi-modal route corridors from OpenStreetMap API...`;
+
+  try {
+    const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=`;
+    
+    // Resolve location vector nodes natively
+    const resStart = await fetch(geocodeUrl + encodeURIComponent(state.startCity));
+    const dataStart = await resStart.json();
+    
+    // Check if intermediate hub contains string data, if not route to primary destination hub directly
+    const targetMidCity = state.intermediateHub || state.destinations[0];
+    const resMid = await fetch(geocodeUrl + encodeURIComponent(targetMidCity));
+    const dataMid = await resMid.json();
+    
+    const resFinal = await fetch(geocodeUrl + encodeURIComponent(state.destinations[0]));
+    const dataFinal = await resFinal.json();
+    
+    if (dataStart.length && dataMid.length && dataFinal.length) {
+      const startPoint = `${dataStart[0].lon},${dataStart[0].lat}`;
+      const midPoint = `${dataMid[0].lon},${dataMid[0].lat}`;
+      const finalPoint = `${dataFinal[0].lon},${dataFinal[0].lat}`;
+      
+      // Multi-stage coordinate array generation pass mapping full corridor lengths
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startPoint};${midPoint};${finalPoint}?overview=false`;
+      const osrmRes = await fetch(osrmUrl);
+      const osrmData = await osrmRes.json();
+      
+      if (osrmData.routes && osrmData.routes.length) {
+        const networkRoute = osrmData.routes[0];
+        const finalCalculatedKM = Math.round(networkRoute.distance / 1000);
+        state.calculatedDistanceKM = finalCalculatedKM;
+
+        const exactDrivingHours = Math.round(networkRoute.duration / 3600);
+        const formattedMinutes = Math.round((networkRoute.duration % 3600) / 60);
+        
+        let journeyPerformanceText = `🛣️ <strong>Leg 1 (${state.transport}):</strong> Outbound corridors matching structural network hubs.<br>🔄 <strong>Leg 2 (${state.leg2Transport}):</strong> Local connections mapped natively inside final base locations.`;
+        let suggestedJourneyDays = finalCalculatedKM > 500 ? 2 : 1;
+
+        transitWrapper.style.display = 'block';
+        suggestionBox.innerHTML = `
+          🗺️ <strong>Multi-Modal Map Distance:</strong> ~${finalCalculatedKM} KM cumulative route mapping.<br>
+          ${journeyPerformanceText}<br>
+          ⏱️ <strong>Estimated Continuous Road Duration:</strong> ~${exactDrivingHours}h ${formattedMinutes}m.<br>
+          💡 <strong>Our Recommendation:</strong> We suggest allocating exactly <strong>${suggestedJourneyDays} Travel Day(s)</strong>.
+        `;
+
+        document.getElementById('transitDaysCount').value = suggestedJourneyDays;
+        state.transitDaysAllocation = suggestedJourneyDays;
+        generateDailyVibeSelectors();
+        return;
+      }
+    }
+    throw new Error("Geocoding coordinates sequence mismatch.");
+  } catch (apiError) {
+    console.warn("API fallback loops triggered safely.", apiError);
+    let fallbackKM = 420;
+    const destLower = state.destinations[0].toLowerCase();
+    if(destLower.includes("manali")) fallbackKM = 530;
+    if(destLower.includes("udaipur")) fallbackKM = 780;
+    
+    state.calculatedDistanceKM = fallbackKM;
+    transitWrapper.style.display = 'block';
+    suggestionBox.innerHTML = `🏁 <strong>Corridor Projection (Cached Fallback):</strong> ~${fallbackKM} KM across combined multi-modal segments.<br>💡 Recommended: Allocate 2 Travel Days standard setup.`;
+    document.getElementById('transitDaysCount').value = 2;
+    state.transitDaysAllocation = 2;
+    generateDailyVibeSelectors();
+  }
+}
+
+function updateJourneyDaysState() {
+  state.transitDaysAllocation = parseInt(document.getElementById('transitDaysCount').value) || 0;
+  generateDailyVibeSelectors();
+}
+
 function generateDailyVibeSelectors() {
   const container = document.getElementById('dailyVibeContainer');
   if (!container || !state.startDate || isNaN(state.days) || state.days <= 0) return;
   container.innerHTML = '';
   
   const start = new Date(state.startDate);
-  const targetDestinationValue = state.destinations[0] || "Coorg, Karnataka";
+  const initialBaseCity = state.intermediateHub || state.destinations[0] || "Manali, HP";
+  const finalBaseCity = state.destinations[0] || "Udaipur, Rajasthan";
   
   for (let i = 0; i < state.days; i++) {
     const current = new Date(start.getTime());
@@ -785,8 +780,8 @@ function generateDailyVibeSelectors() {
         `;
       } else {
         platformLogisticsCheckboxes = `
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> ⛽ Gas Station Top-Up: Fill fuel tank to maximum before leaving destination base</label>
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🔧 Check car/bike engine vitals, fluid pressure indices, and tire health parameters</label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> ⛽ Gas Station Top-Up: Fill fuel tank to maximum before leaving final regional stops</label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🔧 Check car/bike engine vitals, fluid pressure indices, and tire health layers</label>
         `;
       }
 
@@ -797,7 +792,7 @@ function generateDailyVibeSelectors() {
           
           <div class="form-group" style="margin-top:10px;">
             <label>Current Location Base:</label>
-            <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${targetDestinationValue}">
+            <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${finalBaseCity}">
             <div class="live-helper-bar"></div>
           </div>
 
@@ -820,6 +815,10 @@ function generateDailyVibeSelectors() {
         conditionalInputLayout = `<p style="color:var(--coral); font-size:12px; font-weight:600;">🛣️ Day 1 Traveling There — Journey Commenced</p>`;
       }
 
+      // Pre-populate logical intermediate stops on initial days vs final destinations contextually
+      const computedDefaultPlace = (i < 2 && state.intermediateHub) ? initialBaseCity : finalBaseCity;
+      const computedDefaultTransit = (i < 2) ? "Local Sightseeing" : state.leg2Transport;
+
       customCardHtml = `
         <div class="daily-card">
           <div style="font-weight:600; color:var(--ocean-dark); margin-bottom:4px;">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
@@ -827,22 +826,22 @@ function generateDailyVibeSelectors() {
           
           <div class="form-group" style="margin-top:8px;">
             <label>Target Location/City for this Day:</label>
-            <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${targetDestinationValue}" placeholder="e.g. Jaipur, Udaipur...">
+            <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${computedDefaultPlace}" placeholder="e.g. Jaipur, Udaipur...">
             <div class="live-helper-bar">
-              <a href="https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(targetDestinationValue)}" target="_blank" id="live-link-food-${dateStr}" class="live-helper-link"> 🍛 Choose From Live Restaurant Links</a>
-              <a href="https://www.google.com/maps/search/${encodeURIComponent(targetDestinationValue)}+top+attractions+things+to+do" target="_blank" id="live-link-sights-${dateStr}" class="live-helper-link"> 🏛️ Choose From Live Sightseeing Attractions</a>
-              <a href="https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(targetDestinationValue)}" target="_blank" id="live-link-stay-${dateStr}" class="live-helper-link"> 🏨 Choose From Live Stays</a>
+              <a href="https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(computedDefaultPlace)}" target="_blank" id="live-link-food-${dateStr}" class="live-helper-link">🍛 Choose From Live Restaurant Links</a>
+              <a href="https://www.google.com/maps/search/${encodeURIComponent(computedDefaultPlace)}+top+attractions+things+to+do" target="_blank" id="live-link-sights-${dateStr}" class="live-helper-link">🏛️ Choose From Live Sightseeing Attractions</a>
+              <a href="https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(computedDefaultPlace)}" target="_blank" id="live-link-stay-${dateStr}" class="live-helper-link">🏨 Choose From Live Stays</a>
             </div>
           </div>
 
           <div class="form-group" style="margin-top: 14px; background: var(--paper); padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
             <label style="color: var(--coral); font-size: 11px;">🔀 Moving Cities / Local Commute Today?</label>
             <select class="daily-transit-mode-select" style="padding: 6px 10px; font-size: 13px;">
-              <option value="Local Sightseeing">Stay at current destination (Local sightseeing / cabs / walking)</option>
-              <option value="Pre-booked Train Link">🚂 Shift Cities: Take a Train (Book rail tickets ahead)</option>
-              <option value="Hired Inter-city Cab">🚕 Shift Cities: Hire an Inter-city Outstation Cab</option>
-              <option value="Domestic Connection Flight">✈️ Shift Cities: Domestic Connecting Flight Sector</option>
-              <option value="Self-Drive Commute">🚗 Shift Cities: Continuous Road Trip Drive/Ride leg</option>
+              <option value="Local Sightseeing" ${computedDefaultTransit === 'Local Sightseeing' ? 'selected' : ''}>Stay at current destination (Local sightseeing / cabs / walking)</option>
+              <option value="Pre-booked Train Link" ${computedDefaultTransit === 'Pre-booked Train Link' ? 'selected' : ''}>🚂 Shift Cities: Take a Train (Book rail tickets ahead)</option>
+              <option value="Hired Inter-city Cab" ${computedDefaultTransit === 'Hired Inter-city Cab' ? 'selected' : ''}>🚕 Shift Cities: Hire an Inter-city Outstation Cab</option>
+              <option value="Domestic Connection Flight" ${computedDefaultTransit === 'Domestic Connection Flight' ? 'selected' : ''}>✈️ Shift Cities: Domestic Connecting Flight Sector</option>
+              <option value="Self-Drive Commute" ${computedDefaultTransit === 'Self-Drive Commute' ? 'selected' : ''}>🚗 Shift Cities: Continuous Road Trip Drive/Ride leg</option>
             </select>
           </div>
 
@@ -883,10 +882,7 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   if (stepNum === 1) {
     state.startCity = document.getElementById('startCity').value.trim();
     const customInputVal = document.getElementById('customDest').value.trim();
-    
-    if (customInputVal && !state.destinations.includes(customInputVal)) {
-      state.destinations = [customInputVal];
-    }
+    if (customInputVal && !state.destinations.includes(customInputVal)) { state.destinations = [customInputVal]; }
     if (state.destinations.length === 0 || !state.startCity) { err.classList.add('show'); return; }
   }
   if (stepNum === 2 && !state.crew) { err.classList.add('show'); return; }
@@ -895,7 +891,14 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
     const datesAreValid = validateDatesOnly();
     if (!datesAreValid || !state.startDate || !state.endDate) { if (err) err.classList.add('show'); return; }
   }
-  if (stepNum === 4 && (!state.transport || !state.vehicleMode)) { document.getElementById('err4').classList.add('show'); return; }
+  
+  if (stepNum === 4) {
+    if (!state.transport || !state.leg2Transport || !state.vehicleMode) { document.getElementById('err4').classList.add('show'); return; }
+    state.intermediateHub = document.getElementById('intermediateHubInput').value.trim();
+    state.flightTicketCost = parseInt(document.getElementById('leg1FlightTicketCost').value) || 0;
+    state.fuelPrice = parseInt(document.getElementById('fuelPrice').value) || 102;
+    state.vehicleMileage = parseInt(document.getElementById('vehicleMileage').value) || 15;
+  }
   
   if (stepNum === 5) {
     state.dailyPlanData = [];
@@ -964,7 +967,6 @@ function modifyItinerary() {
 
 function getDayName(dateStr) { return dateStr ? new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long' }) : ''; }
 
-/* 🌟 RE-ENGINEERED IN-APP MODAL INJECTION LOGIC SYSTEM (REPLACING NATIVE PROMPTS COMPLETELY) */
 function injectExploreTargetIntoItinerary(targetType, contentValue) {
   modalContextItem.type = targetType;
   modalContextItem.value = contentValue;
@@ -979,25 +981,18 @@ function injectExploreTargetIntoItinerary(targetType, contentValue) {
   document.getElementById('injectionModal').style.display = 'flex';
 }
 
-function closeInAppModal() {
-  document.getElementById('injectionModal').style.display = 'none';
-}
+function closeInAppModal() { document.getElementById('injectionModal').style.display = 'none'; }
 
 function confirmInAppModalInjection() {
   const targetDayVal = parseInt(document.getElementById('injectionDayInput').value);
   const parsedDayIndex = targetDayVal - 1;
 
   if (isNaN(parsedDayIndex) || parsedDayIndex < 0 || parsedDayIndex >= state.days) {
-    alert(`Invalid day target allocation value. Drop a number between 1 and ${state.days}.`);
-    return;
+    alert(`Invalid day target allocation value. Drop a number between 1 and ${state.days}.`); return;
   }
 
   const container = document.getElementById(`injectedExploreBox-day-${parsedDayIndex}`);
-  if (!container) {
-    alert("This element card context layout can't process explicit spot item inclusions.");
-    closeInAppModal();
-    return;
-  }
+  if (!container) { alert("This element card context layout can't process explicit spot item inclusions."); closeInAppModal(); return; }
 
   container.style.display = "block";
   if (modalContextItem.type === 'cuisine') {
@@ -1015,11 +1010,11 @@ function confirmInAppModalInjection() {
 function buildSummary() {
   const perPersonCost = (state.budgetScope === 'Per-Person Scope') ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
   document.getElementById('tripSummary').innerHTML = `
-    🗺️ Route Blueprint: <strong>${state.destinations.join(' ➔ ')}</strong><br>
-    🏁 Primary Hub Connection Distance: <strong>~${state.calculatedDistanceKM} KM Network</strong><br>
-    📅 Timeline Parameters: <strong>${state.startDate}</strong> to <strong>${state.endDate}</strong> (${state.days} Days Total, ${state.transitDaysAllocation} Traveling)<br>
-    🚗 Transport Choice: <strong>${state.transport} (${state.vehicleMode})</strong><br>
-    💰 Allotment Target: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR Per Head</strong>
+    🗺️ Route Blueprint: <strong>${state.startCity} ➔ ${state.intermediateHub ? state.intermediateHub + ' ➔ ' : ''}${state.destinations[0]}</strong><br>
+    🏁 Integrated Multi-Modal Distance: <strong>~${state.calculatedDistanceKM} KM Network</strong><br>
+    📅 Timeline Breakdown: <strong>${state.days} Days Total</strong> (${state.transitDaysAllocation} Days traveling inter-city)<br>
+    🚗 Core Transport: <strong>${state.transport} ➔ ${state.leg2Transport} Mix</strong><br>
+    💰 Financial Allotment: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR Per Head</strong>
   `;
 }
 
@@ -1067,11 +1062,10 @@ async function triggerBuiltInGeneration() {
 
     const isLastDay = (state.transitDaysAllocation >= 1 && index === (state.days - 1));
 
-    // INJECTS DYNAMIC MULTI-MODAL COMMUTE BLOCK INTO RENDERED DESTINATION CARDS
     let transitCardLogisticsHtml = "";
     if (day.dailyTransit && day.dailyTransit !== "Local Sightseeing" && !isLastDay) {
       transitCardLogisticsHtml = `
-        <div style="margin: 10px 0; padding: 10px 14px; background: #fffde6; color: #856404; font-size: 13.5px; border-radius: 8px; border: 1px solid #ffeeba; display: flex; flex-direction: column; gap: 4px;">
+        <div style="margin: 10px 0; padding: 10px 14px; background: #fffide6; color: #856404; font-size: 13.5px; border-radius: 8px; border: 1px solid #ffeeba; display: flex; flex-direction: column; gap: 4px;">
           <div>🔀 <strong>Inter-City Multi-Modal Commute:</strong> Today features a cross-city route switch utilizing <strong>${day.dailyTransit}</strong>.</div>
           <div style="font-size: 11.5px; color: var(--muted); font-style: italic;">📋 Checklist context added: Download digital ticket vouchers or confirm outstation vehicle deployment layers ahead of departure time parameters.</div>
         </div>
@@ -1079,8 +1073,8 @@ async function triggerBuiltInGeneration() {
     }
 
     if (state.transitDaysAllocation >= 2 && index === 0) {
-      dayVibeHeaderString = "🛣️ Leaving Home (Day 1 Transit)";
-      dynamicMorningStrategy = `🛫 <strong>Setting Off:</strong> Commencing your journey outward from <strong>${state.startCity}</strong> towards ${day.place} via ${state.transport}. Check into your stay.`;
+      dayVibeHeaderString = "🛣️ Leaving Home (Day 1 Transit Hub Link)";
+      dynamicMorningStrategy = `🛫 <strong>Setting Off:</strong> Commencing your journey outward from <strong>${state.startCity}</strong> towards ${day.place} via ${state.transport}. Check into your arrival stay.`;
       dynamicEveningStrategy = `🌙 <strong>Evening:</strong> Settle down from travel hours. Grab a casual dinner nearby and rest up for tomorrow.`;
     } else if (isLastDay) {
       dayVibeHeaderString = "🏡 Returning Home leg";
@@ -1109,7 +1103,7 @@ async function triggerBuiltInGeneration() {
           <h3 style="color:var(--ocean-dark); font-family:'Fraunces', serif; font-size:18px;">☀️ Day ${index + 1} — ${getDayName(day.date)}, ${day.date}</h3>
           <span style="background:var(--coral-light); color:var(--coral); font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; text-transform:uppercase;">${dayVibeHeaderString}</span>
         </div>
-        <p style="margin-bottom:12px; font-size:14px;">📍 <strong>Today's Area Base:</strong> <span style="color:var(--ocean); font-weight:600;">${day.place}</span></p>
+        <p style="margin-bottom:12px; font-size:14px;">📍 <strong>Today's Active Base Area:</strong> <span style="color:var(--ocean); font-weight:600;">${day.place}</span></p>
         
         ${transitCardLogisticsHtml}
 
@@ -1185,14 +1179,19 @@ setupExclusiveChips('crewChips', 'crew', (val) => {
   document.getElementById('budgetInputLabel').textContent = val === 'Solo' ? 'Target Budget Allocation Amount (INR)' : 'Target Budget Allocation Amount per Person (INR)';
 });
 
-setupExclusiveChips('transportChips', 'transport', (val) => {
-  document.getElementById('flightInputGroup').style.display = val === 'Flight Connected' ? 'block' : 'none';
-  document.getElementById('mileageInputGroup').style.display = (val === 'Full Road Trip' && ['Own Private Car', 'Own Private Bike'].includes(state.vehicleMode)) ? 'block' : 'none';
+setupExclusiveChips('leg1TransportChips', 'transport', (val) => {
+  document.getElementById('firstHubFieldGroup').style.display = (val === 'Full Road Trip') ? 'none' : 'block';
+  document.getElementById('leg1FlightCostGroup').style.display = (val === 'Flight Connected') ? 'block' : 'none';
+  runGeographicalDistanceAndSpeedSuggester();
+});
+
+setupExclusiveChips('leg2TransportChips', 'leg2Transport', (val) => {
   runGeographicalDistanceAndSpeedSuggester();
 });
 
 setupExclusiveChips('vehicleChips', 'vehicleMode', (val) => {
-  document.getElementById('mileageInputGroup').style.display = (state.transport === 'Full Road Trip' && ['Own Private Car', 'Own Private Bike'].includes(val)) ? 'block' : 'none';
+  const hasVehicle = ['Own Private Car', 'Own Private Bike'].includes(val);
+  document.getElementById('mileageInputGroup').style.display = hasVehicle ? 'block' : 'none';
   runGeographicalDistanceAndSpeedSuggester();
 });
 
