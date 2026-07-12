@@ -178,7 +178,7 @@
       <div class="error-box" id="err2">Please select a companion style configuration.</div>
     </div>
 
-    <!-- STEP 3: DATES (SIMPLE TIMELINE INPUT) -->
+    <!-- STEP 3: DATES -->
     <div class="step-panel" id="step3">
       <div class="step-heading">When is the adventure? 📅</div>
       <p class="step-sub">Provide your absolute holiday calendar start and end dates below.</p>
@@ -194,7 +194,7 @@
       <div class="error-box" id="err3">Please choose valid dates.</div>
     </div>
 
-    <!-- STEP 4: INTERLINKED TRANSIT LOGISTICS WITH AUTOMATED GEOGRAPHY SUGGESTIONS -->
+    <!-- STEP 4: INTERLINKED TRANSIT LOGISTICS -->
     <div class="step-panel" id="step4">
       <div class="step-heading">Transit & Travel Day Settings 🚗💨</div>
       <p class="step-sub">Choose your transport mode to compute distance, driving times, and finalize journey blocks.</p>
@@ -208,7 +208,6 @@
         </div>
       </div>
       
-      <!-- INITIATES DYNAMICALLY CALCULATED ROAD METRICS HERE -->
       <div id="distanceSuggestionBox" style="background:var(--sand); padding:16px; border-radius:12px; font-size:14px; margin-bottom:18px; display:none; color:var(--ocean-dark); border-left: 4px solid var(--gold);"></div>
 
       <div class="form-group" id="transitDaysWrapper" style="display:none;">
@@ -255,7 +254,21 @@
     <!-- STEP 5: PER-DAY MULTI-VIBES MAP -->
     <div class="step-panel" id="step5">
       <div class="step-heading">Daily Customization Matrix ✨</div>
-      <p class="step-sub">Select multiple vibes, specific destinations, and custom preferences per day.</p>
+      <p class="step-sub">Select multiple preferences per day, or use the tool below to copy a pattern globally to prevent overwhelming configuration fatigue.</p>
+      
+      <!-- 🌟 GLOBAL MASS SCHEDULER WIDGET -->
+      <div style="background: var(--paper); border: 1.5px dashed var(--coral); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--ocean-dark); margin-bottom: 8px;">⚡ Fast Pass: Apply Same Vibes to All Days</div>
+        <div class="vibe-checkbox-group" id="globalMassSchedulerGroup">
+          <label class="vibe-checkbox-label"><input type="checkbox" id="g-vibe-famous" value="🏛️ Iconic Sights"> 🏛️ Iconic Sights</label>
+          <label class="vibe-checkbox-label"><input type="checkbox" id="g-vibe-offbeat" value="🌿 Offbeat Gems"> 🌿 Offbeat Gems</label>
+          <label class="vibe-checkbox-label"><input type="checkbox" id="g-vibe-trekking" value="🏔️ Adventure Trekking"> 🏔️ Adventure Trekking</label>
+          <label class="vibe-checkbox-label"><input type="checkbox" id="g-vibe-foodie" value="🍛 Local Foodie" checked> 🍛 Local Foodie</label>
+          <label class="vibe-checkbox-label"><input type="checkbox" id="g-vibe-slow" value="🧘 Slow & Wellness"> 🧘 Slow & Wellness</label>
+        </div>
+        <button class="btn btn-ghost" style="margin-top: 12px; width: 100%; font-size: 13px; color: var(--coral); border-color: var(--coral); background: white;" onclick="applyVibesGloballyToAllDays()">Sync Selection Across Entire Itinerary 🔄</button>
+      </div>
+
       <div class="form-group">
         <div id="dailyVibeContainer">
           <p style="color:var(--muted); font-size:13px;">Please configure your dates in step 3 to populate daily customization matrices.</p>
@@ -265,7 +278,6 @@
         <button class="btn btn-ghost" onclick="goBack(4)">← Back</button>
         <button class="btn btn-primary" onclick="submitStepAndProgress(5, 6, 'Vibe Mapping')">Next — Budget Allocations →</button>
       </div>
-      <div class="error-box" id="err5">Please verify your daily vibe structure.</div>
     </div>
 
     <!-- STEP 6: DYNAMIC BUDGET OPTIONS -->
@@ -340,7 +352,7 @@ let currentAuthMode = 'signin';
 
 let state = { 
   destinations: [], startCity: '', startDate: '', endDate: '', days: 0, transitDaysAllocation: 2,
-  crew: '', groupSize: 1, transport: 'Full Road Trip', vehicleMode: 'Own Private Car', dailyPlanData: [], budgetVal: 0, budgetScope: '',
+  crew: '', groupSize: 1, transport: 'Full Road Trip', vehicleMode: 'Own Private Car', dailyPlanData: [], budgetVal: 0, budgetScope: '' ,
   flightTicketCost: 0, fuelPrice: 102, vehicleMileage: 15, calculatedDistanceKM: 0
 };
 let currentStep = 1;
@@ -469,7 +481,7 @@ async function handleCredentialAuth() {
   errMsg.classList.remove('show');
 
   if (!email || (currentAuthMode !== 'recovery' && !password)) {
-    errMsg.textContent = "Please fill out all mandatory fields completely.";
+    errMsg.textContent = "Please fill out all fields completely.";
     errMsg.classList.add('show'); return;
   }
 
@@ -651,6 +663,32 @@ function updateJourneyDaysState() {
   generateDailyVibeSelectors();
 }
 
+/* 🌟 GLOBAL MASS ACTION FUNCTION TO COMBAT SCHEDULING FATIGUE */
+function applyVibesGloballyToAllDays() {
+  const globalCheckboxes = document.querySelectorAll('#globalMassSchedulerGroup input[type="checkbox"]');
+  let chosenVibesList = [];
+  
+  globalCheckboxes.forEach(cb => {
+    if (cb.checked) chosenVibesList.push(cb.value);
+  });
+
+  if (chosenVibesList.length === 0) {
+    alert("Please check at least one vibe in the sync widget box to propagate.");
+    return;
+  }
+
+  // Iterate across every single child card input on the screen and force state match
+  const totalCardsCount = document.querySelectorAll('.daily-card');
+  totalCardsCount.forEach(card => {
+    const itemCheckboxes = card.querySelectorAll('.daily-vibe-cb');
+    itemCheckboxes.forEach(cb => {
+      cb.checked = chosenVibesList.includes(cb.value);
+    });
+  });
+
+  alert(`🔄 Successfully applied [${chosenVibesList.join(', ')}] across all daily slots inside the matrix!`);
+}
+
 function generateDailyVibeSelectors() {
   const container = document.getElementById('dailyVibeContainer');
   if (!container || !state.startDate || isNaN(state.days) || state.days <= 0) return;
@@ -682,12 +720,14 @@ function generateDailyVibeSelectors() {
         <input type="text" class="daily-place-input" data-date="${dateStr}" value="${state.destinations[0] || 'Coorg'}" placeholder="e.g. Coorg, Gokarna, Munnar...">
       </div>
 
+      <!-- 🌟 EXPANDED MULTI-SELECT MATRIX WITH FAMOUS OPTION INTEGRATION -->
       <div class="form-group">
         <label>Select Daily Vibes (Mix & Match Multiple):</label>
         <div class="vibe-checkbox-group">
+          <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🏛️ Iconic Sights"> 🏛️ Iconic Sights</label>
           <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🌿 Offbeat Gems"> 🌿 Offbeat Gems</label>
           <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🏔️ Adventure Trekking"> 🏔️ Adventure Trekking</label>
-          <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🍛 Food Obsessed"> 🍛 Local Foodie</label>
+          <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🍛 Food Obsessed" checked> 🍛 Local Foodie</label>
           <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🧘 Wellness & Slow"> 🧘 Slow & Wellness</label>
         </div>
       </div>
@@ -740,7 +780,7 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
       
       let selectedVibes = [];
       card.querySelectorAll('.daily-vibe-cb:checked').forEach(cb => selectedVibes.push(cb.value));
-      if(selectedVibes.length === 0) selectedVibes.push("🎒 Classic Sightseeing");
+      if(selectedVibes.length === 0) selectedVibes.push("🍛 Food Obsessed");
 
       state.dailyPlanData.push({ date: dateStr, place: placeVal, vibes: selectedVibes, thingsToDo: thingsVal });
     });
@@ -758,7 +798,7 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
 
   try {
     await travelPlannerSupabaseClient.from('journey_feedback').insert({
-      step_number: stepNum, step_name: stepName, feedback_rating: 'v11_interlinked_calculations',
+      step_number: stepNum, step_name: stepName, feedback_rating: 'v12_mass_scheduling_applied',
       user_comments: betaFeedbackText
     });
   } catch(e) { console.warn("Log captured safely."); }
@@ -874,6 +914,7 @@ async function triggerBuiltInGeneration() {
       `;
     }
 
+    // 🌟 INTEGRATES MULTI-SELECTED CO-EXISTING STRATEGIES SEAMLESSLY
     let dayVibeHeaderString = day.vibes.join(" + ");
     
     let dynamicMorningStrategy = `🥞 <strong>Morning Activation:</strong> Start early with a local food run to sample: <em>"${morningBreakfastVibe}"</em>. Afterwards, organize gear and map out local directional paths into ${day.place}.`;
@@ -888,6 +929,10 @@ async function triggerBuiltInGeneration() {
       dynamicMorningStrategy = `🧳 <strong>Packing up:</strong> Clear stay checkout lists, pack up your travel gear, and commence the return journey leg.`;
       dynamicEveningStrategy = `🏡 <strong>Homeward connection:</strong> Complete the homeward bound corridor back into <strong>${state.startCity}</strong>. Travel complete!`;
     } else {
+      // Correctly handle compound strategies when multiple vibes are checked
+      if(day.vibes.includes("🏛️ Iconic Sights")) {
+        dynamicMorningStrategy = `🏛️ <strong>Morning Activation:</strong> Prioritize flagship spots. Head out early to catch: <em>"${primaryFamousSight}"</em> before peak crowd arrival matrices peak.`;
+      }
       if(day.vibes.includes("🏔️ Adventure Trekking")) {
         dynamicMorningStrategy = `🏔️ <strong>Morning Activation:</strong> Pack hydration targets early. Prepare vehicles or coordinate transit vectors for rugged, high-altitude segment exploratory tracks around ${day.place}.`;
       }
@@ -896,9 +941,9 @@ async function triggerBuiltInGeneration() {
       }
     }
 
-    let transitHtml = `🚗 <strong>Getting around:</strong> Outstation segments utilizing your self-driven ${state.vehicleMode}. Cruise at early operational hours to bypass peak traffic congestion.`;
+    let transitHtml = `🚗 <strong>Transit Vector:</strong> Outstation segments utilizing your self-driven ${state.vehicleMode}. Cruise at early operational hours to bypass peak traffic congestion.`;
     if(state.vehicleMode === "No Private Vehicle") {
-      transitHtml = `🚌 <strong>Getting around:</strong> Coordinate local segment transfers utilizing connecting city buses, short cabs, or scheduled public transit lines.`;
+      transitHtml = `🚌 <strong>Transit Vector:</strong> Coordinate segment transfers utilizing connecting city buses, short cabs, or scheduled public transit lines.`;
     }
 
     const encodedLocation = encodeURIComponent(day.place);
