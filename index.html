@@ -70,7 +70,6 @@
   }
   .app-notification-toast.show { top: 20px; }
 
-  /* 🌟 UPGRADED HIGH VISIBILITY LIVE HELPER BUTTONS (SCALED UP BY .5 TO 18PX) */
   .live-helper-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
   .live-helper-link { 
     color: var(--white); font-weight: 600; text-decoration: none; 
@@ -455,6 +454,18 @@ function showAppNotification(messageString) {
   setTimeout(() => { toast.classList.remove('show'); }, 4500);
 }
 
+window.addEventListener('load', async () => {
+  const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
+  if (session) {
+    activeUserToken = session.access_token;
+    document.getElementById('authHeaderBtn').textContent = `🟢 ${session.user.email}`;
+  }
+  updateProgressBar();
+});
+
+function openAuthModal() { document.getElementById('authOverlay').style.display = 'flex'; }
+function closeAuthModal() { document.getElementById('authOverlay').style.display = 'none'; }
+
 function setAuthInterfaceMode(mode) {
   currentAuthMode = mode;
   const errMsg = document.getElementById('authErrorMsg');
@@ -705,15 +716,19 @@ function validateDatesOnly() {
   const errBox = document.getElementById('dateErrorBox');
   const nextBtn = document.getElementById('btnStep3');
 
-  errBox.classList.remove('show'); nextBtn.disabled = false; nextBtn.style.opacity = '1';
+  if (errBox) errBox.classList.remove('show');
+  if (nextBtn) {
+    nextBtn.disabled = false;
+    nextBtn.style.opacity = '1';
+  }
   state.startDate = startVal; state.endDate = endVal;
 
   if (startVal && endVal) {
     const s = new Date(startVal), e = new Date(endVal);
-    if (isNaN(s.getTime()) || isNaN(e.getTime())) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; return false; }
-    if (e < s) { errBox.classList.add('show'); nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; return false; }
+    if (isNaN(s.getTime()) || isNaN(e.getTime())) { if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } return false; }
+    if (e < s) { if(errBox) errBox.classList.add('show'); if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } return false; }
     state.days = Math.round((e - s) / 86400000) + 1;
-  } else { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; return false; }
+  } else { if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } return false; }
   return true;
 }
 
@@ -757,8 +772,8 @@ function generateDailyVibeSelectors() {
             <label>Current Location Base:</label>
             <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${targetDestinationValue}">
             <div class="live-helper-bar">
-              <a href="https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(targetDestinationValue)}" target="_blank" id="live-link-food-${dateStr}" class="live-helper-link">🍲 Choose From Live Restaurants</a>
-              <a href="https://www.google.com/maps/search/${encodeURIComponent(targetDestinationValue)}+top+attractions+things+to+do" target="_blank" id="live-link-sights-${dateStr}" class="live-helper-link">🏛️ Choose From Live Sightseeing</a>
+              <a href="https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(targetDestinationValue)}" target="_blank" id="live-link-food-${dateStr}" class="live-helper-link">🔍 Open Live Restaurant Reviews</a>
+              <a href="https://www.google.com/maps/search/${encodeURIComponent(targetDestinationValue)}+top+attractions+things+to+do" target="_blank" id="live-link-sights-${dateStr}" class="live-helper-link">🏛️ Open Live Sightseeing Attractions</a>
               <a href="https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(targetDestinationValue)}" target="_blank" id="live-link-stay-${dateStr}" class="live-helper-link">🏨 Choose From Live Stays</a>
             </div>
           </div>
@@ -885,8 +900,11 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   } catch(e) { console.warn("Logged safely."); }
 
   document.getElementById('singleBetaFeedbackInput').value = '';
-  document.getElementById suicide = document.getElementById(`step${stepNum}`);
-  if(suicide) suicide.classList.remove('active');
+  
+  /* 🌟 FIXES WRONG VARIABLE SYNTAX TYPO REMOVING THE COMPILER BLOCK CRASH */
+  const activePanel = document.getElementById(`step${stepNum}`);
+  if(activePanel) activePanel.classList.remove('active');
+  
   currentStep = nextStepNum;
   const nextPanel = document.getElementById(`step${nextStepNum}`);
   if(nextPanel) nextPanel.classList.add('active');
