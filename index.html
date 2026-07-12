@@ -107,7 +107,7 @@
 <div class="auth-overlay" id="authOverlay">
   <div class="auth-modal">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-      <h3 id="authModalTitle" style="font-family:'Fraunces', serif; color:var(--ocean-dark);">Account Portal</h3>
+      <h3 id="authModalTitle" style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark);">Account Portal</h3>
       <button style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted);" onclick="closeAuthModal()">×</button>
     </div>
 
@@ -230,7 +230,7 @@
       <div class="error-box" id="err3">Please choose valid dates.</div>
     </div>
 
-    <!-- STEP 4: MULTI-SELECT TRANSIT SELECTIONS -->
+    <!-- STEP 4: TRANSIT SETTINGS -->
     <div class="step-panel" id="step4">
       <div class="step-heading">How are we getting there? 🚗💨</div>
       <p class="step-sub">Configure your travel modes to map out your journey lines.</p>
@@ -407,6 +407,8 @@ let state = {
 let currentStep = 1;
 const TOTAL_STEPS = 7;
 
+let modalContextItem = { type: '', value: '' };
+
 const travelKnowledgeBase = {
   "coorg": {
     famous: ["Abbey Falls Scenic Estate Walk", "Namdroling Golden Temple", "Madikeri Historic Fort Grounds", "Raja's Seat Hanging Gardens"],
@@ -482,33 +484,37 @@ const travelKnowledgeBase = {
   }
 };
 
-window.addEventListener('load', async () => {
-  const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
-  if (session) {
-    activeUserToken = session.access_token;
-    document.getElementById('authHeaderBtn').textContent = `🟢 ${session.user.email}`;
+function showAppNotification(messageString) {
+  const toast = document.getElementById('appNotificationToast');
+  if (toast) {
+    toast.innerHTML = `✨ ${messageString}`;
+    toast.classList.add('show');
+    setTimeout(() => { toast.classList.remove('show'); }, 4500);
   }
-  updateProgressBar();
-});
-
-function openAuthModal() { document.getElementById('authOverlay').style.display = 'flex'; }
-function closeAuthModal() { document.getElementById('authOverlay').style.display = 'none'; }
+}
 
 function setAuthInterfaceMode(mode) {
   currentAuthMode = mode;
   const errMsg = document.getElementById('authErrorMsg');
-  errMsg.classList.remove('show');
-  document.getElementById('authTabSignin').classList.toggle('active', mode === 'signin');
-  document.getElementById('authTabLogin').classList.toggle('active', mode === 'login');
+  if (errMsg) errMsg.classList.remove('show');
+  
+  const tabSignin = document.getElementById('authTabSignin');
+  const tabLogin = document.getElementById('authTabLogin');
+  if (tabSignin) tabSignin.classList.toggle('active', mode === 'signin');
+  if (tabLogin) tabLogin.classList.toggle('active', mode === 'login');
+  
+  const title = document.getElementById('authModalTitle');
+  const pGroup = document.getElementById('passwordGroup');
+  const fLink = document.getElementById('forgotPasswordLink');
   
   if (mode === 'signin') {
-    document.getElementById('authModalTitle').textContent = "Create Account";
-    document.getElementById('passwordGroup').style.display = 'block';
-    document.getElementById('forgotPasswordLink').style.display = 'none';
+    if (title) title.textContent = "Create Account";
+    if (pGroup) pGroup.style.display = 'block';
+    if (fLink) fLink.style.display = 'none';
   } else {
-    document.getElementById('authModalTitle').textContent = "Log In to Account";
-    document.getElementById('passwordGroup').style.display = 'block';
-    document.getElementById('forgotPasswordLink').style.display = 'inline-block';
+    if (title) title.textContent = "Log In to Account";
+    if (pGroup) pGroup.style.display = 'block';
+    if (fLink) fLink.style.display = 'inline-block';
   }
 }
 
@@ -516,9 +522,12 @@ function toggleAuthMode() { setAuthInterfaceMode(currentAuthMode === 'signin' ? 
 
 function triggerForgotPasswordRecovery() {
   currentAuthMode = 'recovery';
-  document.getElementById('authModalTitle').textContent = "Reset Your Password";
-  document.getElementById('passwordGroup').style.display = 'none';
-  document.getElementById('forgotPasswordLink').style.display = 'none';
+  const title = document.getElementById('authModalTitle');
+  const pGroup = document.getElementById('passwordGroup');
+  const fLink = document.getElementById('forgotPasswordLink');
+  if (title) title.textContent = "Reset Your Password";
+  if (pGroup) pGroup.style.display = 'none';
+  if (fLink) fLink.style.display = 'none';
 }
 
 async function loginWithGoogle() {
@@ -527,19 +536,21 @@ async function loginWithGoogle() {
   });
   if (error) {
     const box = document.getElementById('authErrorMsg');
-    box.textContent = error.message; box.classList.add('show');
+    if (box) { box.textContent = error.message; box.classList.add('show'); }
   }
 }
 
 async function handleCredentialAuth() {
-  const email = document.getElementById('authEmail').value.trim();
-  const password = document.getElementById('authPassword').value;
+  const emailInp = document.getElementById('authEmail');
+  const passInp = document.getElementById('authPassword');
+  const email = emailInp ? emailInp.value.trim() : '';
+  const password = passInp ? passInp.value : '';
   const errMsg = document.getElementById('authErrorMsg');
-  errMsg.classList.remove('show');
+  if (errMsg) errMsg.classList.remove('show');
 
   if (!email || (currentAuthMode !== 'recovery' && !password)) {
-    errMsg.textContent = "Please fill out all fields completely.";
-    errMsg.classList.add('show'); return;
+    if (errMsg) { errMsg.textContent = "Please fill out all fields completely."; errMsg.classList.add('show'); }
+    return;
   }
 
   if (currentAuthMode === 'signup' || currentAuthMode === 'signin') {
@@ -547,23 +558,23 @@ async function handleCredentialAuth() {
     if (error) {
       if(error.message.toLowerCase().includes("already registered") || error.status === 422) {
         setAuthInterfaceMode('login');
-        errMsg.textContent = "Account verified. Please enter your password to log in directly.";
-        errMsg.classList.add('show');
-      } else { errMsg.textContent = error.message; errMsg.classList.add('show'); }
+        if (errMsg) { errMsg.textContent = "Account verified. Please enter your password to log in directly."; errMsg.classList.add('show'); }
+      } else { if (errMsg) { errMsg.textContent = error.message; errMsg.classList.add('show'); } }
     } else { showAppNotification("Verification link dispatched to your inbox!"); closeAuthModal(); }
   } else if (currentAuthMode === 'login') {
     const { data, error } = await travelPlannerSupabaseClient.auth.signInWithPassword({ email, password });
-    if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); }
+    if (error) { if (errMsg) { errMsg.textContent = error.message; errMsg.classList.add('show'); } }
     else {
       activeUserToken = data.session.access_token;
-      document.getElementById('authHeaderBtn').textContent = `🟢 ${data.user.email}`;
+      const hBtn = document.getElementById('authHeaderBtn');
+      if (hBtn) hBtn.textContent = `🟢 ${data.user.email}`;
       closeAuthModal();
     }
   } else if (currentAuthMode === 'recovery') {
     const { error } = await travelPlannerSupabaseClient.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
-    if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); }
+    if (error) { if (errMsg) { errMsg.textContent = error.message; errMsg.classList.add('show'); } }
     else { showAppNotification("Password initialization link sent."); closeAuthModal(); }
   }
 }
@@ -578,22 +589,26 @@ function selectThematicRandomEngine(categoryType) {
     const mountainPool = ["Spiti Valley, HP", "Munnar, Kerala", "Leh Ladakh, JK", "Manali, HP"];
     chosenDestinationValue = mountainPool[Math.floor(Math.random() * mountainPool.length)];
     const baseHub = chosenDestinationValue.includes("Munnar") ? "Kochi" : "Delhi";
-    document.getElementById('startCity').value = baseHub;
+    const sCity = document.getElementById('startCity');
+    if (sCity) sCity.value = baseHub;
     state.startCity = baseHub;
   } else if (categoryType === 'beaches') {
     const beachPool = ["Gokarna, Karnataka", "Goa, India", "Varkala, Kerala"];
     chosenDestinationValue = beachPool[Math.floor(Math.random() * beachPool.length)];
-    document.getElementById('startCity').value = "Bangalore";
+    const sCity = document.getElementById('startCity');
+    if (sCity) sCity.value = "Bangalore";
     state.startCity = "Bangalore";
   } else {
     const heritagePool = ["Hampi, Karnataka", "Udaipur, Rajasthan", "Jaipur, Rajasthan", "Varanasi, UP"];
     chosenDestinationValue = heritagePool[Math.floor(Math.random() * heritagePool.length)];
     const baseHub = chosenDestinationValue.includes("Hampi") ? "Bangalore" : "Delhi";
-    document.getElementById('startCity').value = baseHub;
+    const sCity = document.getElementById('startCity');
+    if (sCity) sCity.value = baseHub;
     state.startCity = baseHub;
   }
 
-  document.getElementById('customDest').value = "";
+  const cDest = document.getElementById('customDest');
+  if (cDest) cDest.value = "";
 
   let chipFound = false;
   allChips.forEach(chip => {
@@ -605,22 +620,161 @@ function selectThematicRandomEngine(categoryType) {
 
   if (!chipFound) {
     const destChipsContainer = document.getElementById('destChips');
-    const newChip = document.createElement('div');
-    newChip.className = 'chip selected';
-    newChip.dataset.val = chosenDestinationValue;
-    const cleanShortTitle = chosenDestinationValue.split(',')[0];
-    newChip.innerHTML = `✨ ${cleanShortTitle}`;
-    
-    newChip.addEventListener('click', () => {
-      newChip.classList.toggle('selected');
-      state.destinations = newChip.classList.contains('selected') ? [chosenDestinationValue] : [];
-    });
-    destChipsContainer.appendChild(newChip);
+    if (destChipsContainer) {
+      const newChip = document.createElement('div');
+      newChip.className = 'chip selected';
+      newChip.dataset.val = chosenDestinationValue;
+      const cleanShortTitle = chosenDestinationValue.split(',')[0];
+      newChip.innerHTML = `✨ ${cleanShortTitle}`;
+      
+      newChip.addEventListener('click', () => {
+        newChip.classList.toggle('selected');
+        state.destinations = newChip.classList.contains('selected') ? [chosenDestinationValue] : [];
+      });
+      destChipsContainer.appendChild(newChip);
+    }
   }
 
   state.destinations.push(chosenDestinationValue);
-  showAppNotification(`Theme Matrix selected: ${chosenDestinationValue}`);
+  showAppNotification(`Theme selected: ${chosenDestinationValue}`);
   generateDailyVibeSelectors();
+}
+
+function validateDatesOnly() {
+  const startInp = document.getElementById('startDate');
+  const endInp = document.getElementById('endDate');
+  const startVal = startInp ? startInp.value : '';
+  const endVal = endInp ? endInp.value : '';
+  const errBox = document.getElementById('dateErrorBox');
+  const nextBtn = document.getElementById('btnStep3');
+
+  if (errBox) errBox.classList.remove('show');
+  if (nextBtn) { nextBtn.disabled = false; nextBtn.style.opacity = '1'; }
+  state.startDate = startVal; state.endDate = endVal;
+
+  if (startVal && endVal) {
+    const s = new Date(startVal), e = new Date(endVal);
+    if (isNaN(s.getTime()) || isNaN(e.getTime())) { if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } return false; }
+    if (e < s) { if(errBox) errBox.classList.add('show'); if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } return false; }
+    state.days = Math.round((e - s) / 86400000) + 1;
+  } else { if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } return false; }
+  return true;
+}
+
+function generateDailyVibeSelectors() {
+  const container = document.getElementById('dailyVibeContainer');
+  if (!container || !state.startDate || isNaN(state.days) || state.days <= 0) return;
+  container.innerHTML = '';
+  
+  const start = new Date(state.startDate);
+  const initialBaseCity = state.intermediateHub || state.destinations[0] || "Jaipur, Rajasthan";
+  const finalBaseCity = state.destinations[0] || "Udaipur, Rajasthan";
+  
+  for (let i = 0; i < state.days; i++) {
+    const current = new Date(start.getTime());
+    current.setDate(start.getDate() + i);
+    const dayName = current.toLocaleDateString('en-US', { weekday: 'long' });
+    const dateStr = current.toISOString().split('T')[0];
+
+    const isLastDayOfTravel = (state.transitDaysAllocation >= 1 && i === (state.days - 1));
+    let customCardHtml = "";
+
+    if (isLastDayOfTravel) {
+      let platformLogisticsCheckboxes = "";
+      if(state.vehicleMode === "No Private Vehicle") {
+        platformLogisticsCheckboxes = `
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 📱 Check transit tickets status updates</label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🚕 Ride to the connection hub or terminal station</label>
+        `;
+      } else {
+        platformLogisticsCheckboxes = `
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> ⛽ Tank Refuel Check: Top up before leaving for home</label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🔧 Verify tire levels and engine fluid metrics</label>
+        `;
+      }
+
+      customCardHtml = `
+        <div class="daily-card" style="border-left: 4px solid var(--coral);">
+          <div style="font-weight:600; color:var(--ocean-dark);">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
+          <p style="color:var(--coral); font-size:12px; font-weight:600; margin-top:2px;">🏡 Leaving for home smoothly</p>
+          
+          <div class="form-group" style="margin-top:10px;">
+            <label>Current Location Base:</label>
+            <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${finalBaseCity}">
+            <div class="live-helper-bar"></div>
+          </div>
+
+          <div class="form-group">
+            <label style="color:var(--ocean-dark);">📋 Travel Day Checklist:</label>
+            <div style="display:flex; flex-direction:column; gap:4px; margin-top:5px;">
+              <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🛌 Double check room belongings and complete hotel checkout</label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🧾 Settle stay invoices and tracking receipts</label>
+              ${platformLogisticsCheckboxes}
+            </div>
+          </div>
+
+          <input type="hidden" class="daily-things-input" data-date="${dateStr}" value="Heading home smoothly.">
+          <input type="hidden" class="daily-transit-cb" value="Return Leg">
+        </div>
+      `;
+    } else {
+      let conditionalInputLayout = "";
+      if (state.transitDaysAllocation >= 2 && i === 0) {
+        conditionalInputLayout = `<p style="color:var(--coral); font-size:12px; font-weight:600;">🛣️ Day 1 Traveling There — Journey Commenced</p>`;
+      }
+
+      const computedDefaultPlace = (i < 2 && state.intermediateHub) ? initialBaseCity : finalBaseCity;
+
+      customCardHtml = `
+        <div class="daily-card">
+          <div style="font-weight:600; color:var(--ocean-dark); margin-bottom:4px;">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
+          ${conditionalInputLayout}
+          
+          <div class="form-group" style="margin-top:8px;">
+            <label>Target Location/City for this Day:</label>
+            <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${computedDefaultPlace}" placeholder="e.g. Jaipur, Udaipur...">
+            <div class="live-helper-bar">
+              <a href="https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(computedDefaultPlace)}" target="_blank" id="live-link-food-${dateStr}" class="live-helper-link">🍛 Choose From Live Restaurant Links</a>
+              <a href="https://www.google.com/maps/search/${encodeURIComponent(computedDefaultPlace)}+top+attractions+things+to+do" target="_blank" id="live-link-sights-${dateStr}" class="live-helper-link">🏛️ Choose From Live Sightseeing Attractions</a>
+              <a href="https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(computedDefaultPlace)}" target="_blank" id="live-link-stay-${dateStr}" class="live-helper-link">🏨 Choose From Live Stays</a>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 14px; background: var(--paper); padding: 12px; border-radius: 10px; border: 1px solid var(--border);">
+            <label style="color: var(--coral); font-size: 11px;">🔀 Shifting Cities or Local Commutes Today? (Select all that apply):</label>
+            <div style="display:flex; flex-direction:column; gap:6px; margin-top:5px;">
+              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Local Sightseeing" checked> Local wandering (explore on foot, local transit, walking)</label>
+              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Pre-booked Train Link"> 🚂 Shift Cities: Take a Train</label>
+              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Hired Inter-city Cab"> 🚕 Shift Cities: Hire an Inter-City Private Cab</label>
+              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Private Sleeper Bus Link"> 🚌 Shift Cities: Private Sleeper/AC Bus</label>
+              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Govt State Bus Link"> 🚍 Shift Cities: Govt State Bus (KSRTC/RSRTC)</label>
+              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Self-Drive Commute"> 🚗 Shift Cities: Continuous Road Trip Leg</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Select Daily Vibes (Mix & Match Multiple):</label>
+            <div class="vibe-checkbox-group">
+              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🏛️ Iconic Sights"> 🏛️ Iconic Sights</label>
+              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🌿 Offbeat Gems"> 🌿 Offbeat Gems</label>
+              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🏔️ Adventure Trekking"> 🏔️ Adventure Trekking</label>
+              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🍛 Local Foodie" checked> 🍛 Local Foodie</label>
+              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🧘 Slow & Wellness"> 🧘 Slow & Wellness</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Things you want to do here specifically (Choose from links above):</label>
+            <input type="text" class="daily-things-input" data-date="${dateStr}" placeholder="e.g. Try special dishes, check local architecture maps...">
+          </div>
+        </div>
+      `;
+    }
+
+    const elementWrapper = document.createElement('div');
+    elementWrapper.innerHTML = customCardHtml;
+    container.appendChild(elementWrapper.firstElementChild);
+  }
 }
 
 function submitTransitStepAndProgress() {
@@ -635,13 +789,20 @@ function submitTransitStepAndProgress() {
   });
 
   if (state.transportList.length === 0 || state.leg2TransportList.length === 0) {
-    document.getElementById('err4').classList.add('show'); return;
+    const errBox = document.getElementById('err4');
+    if (errBox) errBox.classList.add('show');
+    return;
   }
   
-  state.intermediateHub = document.getElementById('intermediateHubInput').value.trim();
-  state.flightTicketCost = parseInt(document.getElementById('leg1TicketCostInput').value) || 0;
-  state.fuelPrice = parseInt(document.getElementById('fuelPrice').value) || 102;
-  state.vehicleMileage = parseInt(document.getElementById('vehicleMileage').value) || 15;
+  const midHub = document.getElementById('intermediateHubInput');
+  const ticketCost = document.getElementById('leg1TicketCostInput');
+  const fPrice = document.getElementById('fuelPrice');
+  const vMileage = document.getElementById('vehicleMileage');
+
+  state.intermediateHub = midHub ? midHub.value.trim() : '';
+  state.flightTicketCost = ticketCost ? parseInt(ticketCost.value) || 0 : 0;
+  state.fuelPrice = fPrice ? parseInt(fPrice.value) || 102 : 102;
+  state.vehicleMileage = vMileage ? parseInt(vMileage.value) || 15 : 15;
 
   submitStepAndProgress(4, 5, 'Transit Configuration');
 }
@@ -658,7 +819,8 @@ function parseAppTransitMatrixAndProgress() {
     card.querySelectorAll('.daily-transit-cb:checked').forEach(cb => { transitSelections.push(cb.value); });
     if(transitSelections.length === 0) transitSelections.push("Local Sightseeing");
 
-    const thingsVal = card.querySelector('.daily-things-input') ? card.querySelector('.daily-things-input').value.trim() : "Enjoy regional tracks explore goals.";
+    const thingsInp = card.querySelector('.daily-things-input');
+    const thingsVal = thingsInp ? thingsInp.value.trim() : "Enjoy regional tracks explore goals.";
     
     let selectedVibes = [];
     if(state.transitDaysAllocation >= 1 && idx === (state.days - 1)) {
@@ -683,8 +845,10 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   const err = document.getElementById(`err${stepNum}`); if (err) err.classList.remove('show');
 
   if (stepNum === 1) {
-    state.startCity = document.getElementById('startCity').value.trim();
-    const customInputVal = document.getElementById('customDest').value.trim();
+    const sCity = document.getElementById('startCity');
+    state.startCity = sCity ? sCity.value.trim() : '';
+    const customInp = document.getElementById('customDest');
+    const customInputVal = customInp ? customInp.value.trim() : '';
     if (customInputVal && !state.destinations.includes(customInputVal)) { state.destinations = [customInputVal]; }
     if (state.destinations.length === 0 || !state.startCity) { if(err) err.classList.add('show'); return; }
   }
@@ -694,11 +858,13 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
     if (!datesAreValid || !state.startDate || !state.endDate) { if (err) err.classList.add('show'); return; }
   }
   if (stepNum === 6) {
-    state.budgetVal = parseInt(document.getElementById('budgetAmount').value);
+    const bAmt = document.getElementById('budgetAmount');
+    state.budgetVal = bAmt ? parseInt(bAmt.value) : 0;
     if (!state.budgetVal || !state.budgetScope) { if(err) err.classList.add('show'); return; }
   }
 
-  const betaFeedbackText = document.getElementById('singleBetaFeedbackInput').value.trim();
+  const fbInp = document.getElementById('singleBetaFeedbackInput');
+  const betaFeedbackText = fbInp ? fbInp.value.trim() : '';
   if (!betaFeedbackText) { showAppNotification("Please share your feedback below to advance parameters!"); return; }
 
   try {
@@ -707,7 +873,7 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
     });
   } catch(e) { console.warn("Log processed cleanly."); }
 
-  document.getElementById('singleBetaFeedbackInput').value = '';
+  if (fbInp) fbInp.value = '';
   
   const activePanel = document.getElementById(`step${stepNum}`);
   if(activePanel) activePanel.classList.remove('active');
@@ -728,19 +894,26 @@ function injectExploreTargetIntoItinerary(targetType, contentValue) {
   modalContextItem.value = contentValue;
   
   const modalLabel = document.getElementById('injectionModalLabel');
-  modalLabel.innerHTML = `Enter the day number (<strong>1 to ${state.days}</strong>) where you want to add <em>"${contentValue}"</em> to your generated itinerary layout structure:`;
+  if (modalLabel) modalLabel.innerHTML = `Enter the day number (<strong>1 to ${state.days}</strong>) where you want to add <em>"${contentValue}"</em> to your generated itinerary layout structure:`;
   
   const dayInputField = document.getElementById('injectionDayInput');
-  dayInputField.max = state.days;
-  dayInputField.value = 1;
+  if (dayInputField) {
+    dayInputField.max = state.days;
+    dayInputField.value = 1;
+  }
   
-  document.getElementById('injectionModal').style.display = 'flex';
+  const iModal = document.getElementById('injectionModal');
+  if (iModal) iModal.style.display = 'flex';
 }
 
-function closeInAppModal() { document.getElementById('injectionModal').style.display = 'none'; }
+function closeInAppModal() { 
+  const iModal = document.getElementById('injectionModal');
+  if (iModal) iModal.style.display = 'none'; 
+}
 
 function confirmInAppModalInjection() {
-  const targetDayVal = parseInt(document.getElementById('injectionDayInput').value);
+  const dayInp = document.getElementById('injectionDayInput');
+  const targetDayVal = dayInp ? parseInt(dayInp.value) : 1;
   const parsedDayIndex = targetDayVal - 1;
 
   if (isNaN(parsedDayIndex) || parsedDayIndex < 0 || parsedDayIndex >= state.days) {
@@ -752,11 +925,11 @@ function confirmInAppModalInjection() {
 
   container.style.display = "block";
   if (modalContextItem.type === 'cuisine') {
-    container.innerHTML = `🍲 <strong>Injected Local Culinary Goal:</strong> Explore regional food styles highlighting: <em>${modalContextItem.value}</em>.`;
+    container.innerHTML = `🍲 <strong>Added Local Food Pick:</strong> Enjoy local food spots highlighting: <em>${modalContextItem.value}</em>.`;
   } else if (modalContextItem.type === 'famous') {
-    container.innerHTML = `📸 <strong>Injected Iconic Sightseeing Check:</strong> Drop by the signature landmark target: <em>${modalContextItem.value}</em>.`;
+    container.innerHTML = `📸 <strong>Added Main Sight Check:</strong> Squeeze in a visit to: <em>${modalContextItem.value}</em>.`;
   } else {
-    container.innerHTML = `🌿 <strong>Injected Remote Trail Exploration:</strong> Venture down offbeat path tracks to discover: <em>${modalContextItem.value}</em>.`;
+    container.innerHTML = `🌿 <strong>Added Offbeat Path Exploration:</strong> Take a quiet detour to discover: <em>${modalContextItem.value}</em>.`;
   }
   
   closeInAppModal();
@@ -765,18 +938,21 @@ function confirmInAppModalInjection() {
 
 function buildSummary() {
   const perPersonCost = (state.budgetScope === 'Per-Person Scope') ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
-  document.getElementById('tripSummary').innerHTML = `
-    🗺️ Route Blueprint: <strong>${state.startCity} ➔ ${state.intermediateHub ? state.intermediateHub + ' ➔ ' : ''}${state.destinations[0]}</strong><br>
-    🏁 Map Distance Calculation: <strong>~${state.calculatedDistanceKM} KM</strong><br>
-    📅 Timeline Parameter Breakdown: <strong>${state.days} Days Total</strong> (${state.transitDaysAllocation} Traveling)<br>
-    🚗 Transport Choice Mix Matrix: <strong>[${state.transportList.join(', ')}]</strong><br>
-    💰 Total Allocation Limit per Person: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR</strong>
-  `;
+  const tSummary = document.getElementById('tripSummary');
+  if (tSummary) {
+    tSummary.innerHTML = `
+      🗺️ Route Blueprint: <strong>${state.startCity} ➔ ${state.intermediateHub ? state.intermediateHub + ' ➔ ' : ''}${state.destinations[0]}</strong><br>
+      🏁 Map Distance Calculation: <strong>~${state.calculatedDistanceKM} KM</strong><br>
+      📅 Timeline Parameter Breakdown: <strong>${state.days} Days Total</strong> (${state.transitDaysAllocation} Traveling)<br>
+      🚗 Transport Choice Mix Matrix: <strong>[${state.transportList.join(', ')}]</strong><br>
+      💰 Total Allocation Limit per Person: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR</strong>
+    `;
+  }
 }
 
 async function triggerBuiltInGeneration() {
   const statusEl = document.getElementById('apiStatusMessage');
-  statusEl.style.color = "green"; statusEl.textContent = "Compiling vibe-driven itinerary matrices...";
+  if (statusEl) { statusEl.style.color = "green"; statusEl.textContent = "Compiling vibe-driven itinerary matrices..."; }
 
   let coreTransitOverheadCost = state.flightTicketCost || 450;
   if(state.transportList.includes("Full Road Trip") && state.vehicleMode !== "No Private Vehicle") {
@@ -812,8 +988,8 @@ async function triggerBuiltInGeneration() {
     }
 
     let dayVibeHeaderString = day.vibes.join(" + ");
-    let dynamicMorningStrategy = `🥞 <strong>Breakfast Spot:</strong> Start your morning slow with a local market crawl to find: <em>"${morningBreakfastVibe}"</em>. Settle into the local rhythm.`;
-    let dynamicEveningStrategy = `🌙 <strong>Evening Strategy:</strong> Head down to the bustling food quarters to sample: <em>"${eveningCulinaryVibe}"</em>. Keep it light, wander around, and explore old city lanes.`;
+    let dynamicMorningStrategy = `🥞 <strong>Morning Vibe:</strong> Start your morning slow with a local breakfast to sample: <em>"${morningBreakfastVibe}"</em>.`;
+    let dynamicEveningStrategy = `🌙 <strong>Evening Vibe:</strong> Head down to the local food stalls to try out: <em>"${eveningCulinaryVibe}"</em>. Keep it light and wander around local lanes.`;
 
     const isLastDay = (state.transitDaysAllocation >= 1 && index === (state.days - 1));
 
@@ -821,7 +997,7 @@ async function triggerBuiltInGeneration() {
     if (day.dailyTransitList && !day.dailyTransitList.includes("Local Sightseeing") && !isLastDay) {
       localCommuteInjectedHtml = `
         <div style="margin: 10px 0; padding: 10px 14px; background: #fffde6; color: #856404; font-size: 13.5px; border-radius: 8px; border: 1px solid #ffeeba;">
-          🔀 <strong>Transit Commute Chosen Today:</strong> [${day.dailyTransitList.join(', ')}]. Double check your reservation details or vehicle layout before leaving.
+          🔀 <strong>Transit Choices Active Today:</strong> [${day.dailyTransitList.join(', ')}]. Keep transit vouchers ready or confirm vehicle pickups ahead of departure.
         </div>
       `;
     }
@@ -832,7 +1008,7 @@ async function triggerBuiltInGeneration() {
       dynamicEveningStrategy = `🌙 <strong>Evening:</strong> Unwind completely from transit fatigue. Grab a relaxed meal nearby and charge up for active exploration tomorrow.`;
     } else if (isLastDay) {
       dayVibeHeaderString = "🏡 Returning Home Pass";
-      let operationalDeductionNote = (state.vehicleMode !== "No Private Vehicle") ? "Double-check your fuel meters, route bottlenecks, and car/bike oil indicators." : "Confirm your reservation timings on transport networks and verify gate numbers.";
+      let operationalDeductionNote = (state.vehicleMode !== "No Private Vehicle") ? "Double-check your fuel meters, route bottlenecks, and car/bike indicators." : "Confirm your reservation timings on transport networks and verify gate numbers.";
       dynamicMorningStrategy = `🧳 <strong>Clear Accommodations:</strong> Complete room checks, pack your custom souvenirs, and finalize hotel checkout parameters. ${operationalDeductionNote}`;
       dynamicEveningStrategy = `🏡 <strong>Homeward Leg:</strong> Execute the final transferleg connection back into <strong>${state.startCity}</strong>. Trip complete!`;
     } else {
@@ -862,23 +1038,23 @@ async function triggerBuiltInGeneration() {
           <h3 style="color:var(--ocean-dark); font-family:'Fraunces', serif; font-size:18px;">☀️ Day ${index + 1} — ${getDayName(day.date)}, ${day.date}</h3>
           <span style="background:var(--coral-light); color:var(--coral); font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; text-transform:uppercase;">${dayVibeHeaderString}</span>
         </div>
-        <p style="margin-bottom:12px; font-size:14px;">📍 <strong>Today's Base Location:</strong> <span style="color:var(--ocean); font-weight:600;">${day.place}</span></p>
+        <p style="margin-bottom:12px; font-size:14px;">📍 <strong>Today's Location Base:</strong> <span style="color:var(--ocean); font-weight:600;">${day.place}</span></p>
         
         ${localCommuteInjectedHtml}
 
         <div style="display:flex; flex-direction:column; gap:12px; font-size:14px; margin-top:10px;">
-          <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);"><strong>🌅 Morning & Mid-Day Activities:</strong> <p style="margin-top:3px; color:var(--ink);">${dynamicMorningStrategy}</p></div>
+          <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);"><strong>🌅 Morning & Mid-Day:</strong> <p style="margin-top:3px; color:var(--ink);">${dynamicMorningStrategy}</p></div>
           ${!(isLastDay) ? `
           <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);">
-            <strong>☀️ Afternoon Spotlight Experience:</strong> 
-            <div style="margin-bottom:6px; padding:6px; background:var(--coral-light); border-radius:6px; font-size:13px;">🎯 Objective Checklist: <em>"${day.thingsToDo || 'Discover unique attractions chosen straight from live links.'}"</em></div>
+            <strong>☀️ Afternoon Spotlight:</strong> 
+            <div style="margin-bottom:6px; padding:6px; background:var(--coral-light); border-radius:6px; font-size:13px;">🎯 Customized Choice: <em>"${day.thingsToDo || 'Discover unique attractions chosen straight from live links.'}"</em></div>
             <div id="injectedExploreBox-day-${index}" style="display:none; padding:8px; background:var(--success-bg); border-left:3px solid var(--success); border-radius:6px; font-size:13px; margin-bottom:10px; color:var(--success);"></div>
             <ul style="padding-left:18px; font-size:13px; color:var(--ocean-mid); display:flex; flex-direction:column; gap:3px;">
-              <li>🏛️ Landmark Highlight: ${primaryFamousSight}</li>
-              <li>🌲 Hidden Detour Gem: ${secondaryGemSight}</li>
+              <li>📸 Local Spot: ${primaryFamousSight}</li>
+              <li>🌲 Secluded Track: ${secondaryGemSight}</li>
             </ul>
           </div>` : ''}
-          <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);"><strong>🌙 Evening Vibes & Local Dining:</strong> <p style="margin-top:3px; color:var(--ink);">${dynamicEveningStrategy}</p></div>
+          <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);"><strong>🌙 Evening Delights:</strong> <p style="margin-top:3px; color:var(--ink);">${dynamicEveningStrategy}</p></div>
         </div>
         
         ${!isLastDay ? `
@@ -920,14 +1096,15 @@ async function triggerBuiltInGeneration() {
     </div>
   `;
 
-  document.getElementById('step7').style.display = 'none';
-  document.getElementById('compulsoryFeedbackContainer').style.display = 'none';
-  document.getElementById('stepTabs').style.display = 'none';
-  document.getElementById('itineraryExploreShowcaseHub').innerHTML = commonHubExploreItems;
+  const s7 = document.getElementById('step7'); if (s7) s7.style.display = 'none';
+  const cFeedback = document.getElementById('compulsoryFeedbackContainer'); if (cFeedback) cFeedback.style.display = 'none';
+  const sTabs = document.getElementById('stepTabs'); if (sTabs) sTabs.style.display = 'none';
+  const iHub = document.getElementById('itineraryExploreShowcaseHub'); if (iHub) iHub.innerHTML = commonHubExploreItems;
   
   const outPanel = document.getElementById('outputPanel');
-  outPanel.style.display = 'block';
-  document.getElementById('outputBody').innerHTML = htmlBody;
+  if (outPanel) outPanel.style.display = 'block';
+  const outBody = document.getElementById('outputBody');
+  if (outBody) outBody.innerHTML = htmlBody;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -936,7 +1113,7 @@ function setupExclusiveChips(containerId, stateKey, callback) {
     chip.addEventListener('click', () => {
       document.getElementById(containerId).querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
       chip.classList.add('selected'); state[stateKey] = chip.dataset.val;
-      document.getElementById('customDest').value = "";
+      const cDest = document.getElementById('customDest'); if (cDest) cDest.value = "";
       if(callback) callback(chip.dataset.val);
     });
   });
@@ -949,7 +1126,7 @@ function setupMultiSelectChips(containerId, stateKey, callback) {
       const val = chip.dataset.val;
       if (chip.classList.contains('selected')) { if(!state[stateKey].includes(val)) state[stateKey].push(val); } 
       else { state[stateKey] = state[stateKey].filter(v => v !== val); }
-      document.getElementById('customDest').value = "";
+      const cDest = document.getElementById('customDest'); if (cDest) cDest.value = "";
       if(callback) callback();
     });
   });
@@ -958,14 +1135,16 @@ function setupMultiSelectChips(containerId, stateKey, callback) {
 setupMultiSelectChips('destChips', 'destinations', () => { if(state.startCity) runGeographicalDistanceAndSpeedSuggester(); });
 setupExclusiveChips('crewChips', 'crew', (val) => {
   const sizeField = document.getElementById('groupSizeField');
-  if (['Friends', 'Family'].includes(val)) { sizeField.style.display = 'block'; state.groupSize = 4; document.getElementById('groupSize').value = 4; } 
-  else { sizeField.style.display = 'none'; state.groupSize = val === 'Solo' ? 1 : 2; }
-  document.getElementById('budgetInputLabel').textContent = val === 'Solo' ? 'Target Budget Allocation Amount (INR)' : 'Target Budget Allocation Amount per Person (INR)';
+  if (['Friends', 'Family'].includes(val)) { if (sizeField) sizeField.style.display = 'block'; state.groupSize = 4; const gSize = document.getElementById('groupSize'); if (gSize) gSize.value = 4; } 
+  else { if (sizeField) sizeField.style.display = 'none'; state.groupSize = val === 'Solo' ? 1 : 2; }
+  const bLabel = document.getElementById('budgetInputLabel');
+  if (bLabel) bLabel.textContent = val === 'Solo' ? 'Target Budget Allocation Amount (INR)' : 'Target Budget Allocation Amount per Person (INR)';
 });
 
 setupExclusiveChips('vehicleChips', 'vehicleMode', (val) => {
   const hasVehicle = ['Own Private Car', 'Own Private Bike'].includes(val);
-  document.getElementById('mileageInputGroup').style.display = hasVehicle ? 'block' : 'none';
+  const mGroup = document.getElementById('mileageInputGroup');
+  if (mGroup) mGroup.style.display = hasVehicle ? 'block' : 'none';
   runGeographicalDistanceAndSpeedSuggester();
 });
 
