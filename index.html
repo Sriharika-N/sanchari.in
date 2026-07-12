@@ -55,8 +55,29 @@
   .injection-modal-container {
     background: var(--white); border-radius: 16px; padding: 24px;
     width: 90%; max-width: 440px; box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border); animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
+  @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .app-notification-toast {
+    position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+    background: var(--ocean-dark); color: white; padding: 14px 24px;
+    border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    z-index: 2000; font-size: 14px; font-weight: 500; display: flex;
+    align-items: center; gap: 10px; transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid var(--ocean-mid); max-width: 90%; width: 500px;
+  }
+  .app-notification-toast.show { top: 20px; }
+
+  .live-helper-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+  .live-helper-link { 
+    color: var(--white); font-weight: 600; text-decoration: none; 
+    background: var(--coral); padding: 8px 16px; border-radius: 8px; 
+    border: 1px solid var(--coral); font-size: 18px; display: inline-flex; 
+    align-items: center; gap: 6px; transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 10px rgba(232, 99, 58, 0.15);
+  }
+  .live-helper-link:hover { background: var(--ocean); border-color: var(--ocean); color: var(--white); transform: translateY(-1px); }
 </style>
 </head>
 <body>
@@ -86,7 +107,7 @@
 <div class="auth-overlay" id="authOverlay">
   <div class="auth-modal">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-      <h3 id="authModalTitle" style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark);">Account Portal</h3>
+      <h3 id="authModalTitle" style="font-family:'Fraunces', serif; color:var(--ocean-dark);">Account Portal</h3>
       <button style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted);" onclick="closeAuthModal()">×</button>
     </div>
 
@@ -209,11 +230,12 @@
       <div class="error-box" id="err3">Please choose valid dates.</div>
     </div>
 
-    <!-- STEP 4: TRANSIT SETTINGS -->
+    <!-- STEP 4: MULTI-SELECT TRANSIT SELECTIONS -->
     <div class="step-panel" id="step4">
       <div class="step-heading">How are we getting there? 🚗💨</div>
       <p class="step-sub">Configure your travel modes to map out your journey lines.</p>
       
+      <!-- SECTION 1: LONG DISTANCE LAUNCH -->
       <div style="background: var(--paper); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
         <h4 style="font-family:'Fraunces', serif; font-size:15px; color:var(--ocean-dark); margin-bottom:8px;">🛫 Leg 1: Heading Out (Home to First Stop)</h4>
         <div class="form-group">
@@ -231,7 +253,7 @@
           <input type="text" id="intermediateHubInput" placeholder="e.g. Jaipur (Before moving to Udaipur)">
         </div>
         <div class="form-group">
-          <label>Estimated Heading Out Tickets Cost per Head (INR)</label>
+          <label>Estimated Tickets Cost per Head (INR)</label>
           <input type="number" id="leg1TicketCostInput" value="0" min="0">
         </div>
       </div>
@@ -311,11 +333,11 @@
       </div>
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="goBack(4)">← Back</button>
-        <button class="btn btn-primary" onclick="submitDailyVibesStepAndProgress()">Next — Budget Allocations →</button>
+        <button class="btn btn-primary" onclick="submitDailyVibeStepAndProgress()">Next — Budget Allocations →</button>
       </div>
     </div>
 
-    <!-- STEP 6: BUDGETS -->
+    <!-- STEP 6: FINANCIAL PLAN -->
     <div class="step-panel" id="step6">
       <div class="step-heading">Financial Parameters 💰</div>
       <p class="step-sub">State your limits to compute optimal stay layouts and settings.</p>
@@ -384,8 +406,6 @@ let state = {
 };
 let currentStep = 1;
 const TOTAL_STEPS = 7;
-
-let modalContextItem = { type: '', value: '' };
 
 const travelKnowledgeBase = {
   "coorg": {
@@ -462,222 +482,145 @@ const travelKnowledgeBase = {
   }
 };
 
-/* 🌟 STEP UPDATE CONTROLLER FIXED PERMANENTLY */
-function updateProgressBar() {
-  document.getElementById('progressFill').style.width = ((currentStep / TOTAL_STEPS) * 100) + '%';
-  const tabs = document.getElementById('stepTabs').children;
-  for (let i = 0; i < tabs.length; i++) { tabs[i].classList.toggle('active', i === currentStep - 1); }
-}
+window.addEventListener('load', async () => {
+  const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
+  if (session) {
+    activeUserToken = session.access_token;
+    document.getElementById('authHeaderBtn').textContent = `🟢 ${session.user.email}`;
+  }
+  updateProgressBar();
+});
 
-async function runGeographicalDistanceAndSpeedSuggester() {
-  const suggestionBox = document.getElementById('distanceSuggestionBox');
-  const transitWrapper = document.getElementById('transitDaysWrapper');
+function openAuthModal() { document.getElementById('authOverlay').style.display = 'flex'; }
+function closeAuthModal() { document.getElementById('authOverlay').style.display = 'none'; }
+
+function setAuthInterfaceMode(mode) {
+  currentAuthMode = mode;
+  const errMsg = document.getElementById('authErrorMsg');
+  errMsg.classList.remove('show');
+  document.getElementById('authTabSignin').classList.toggle('active', mode === 'signin');
+  document.getElementById('authTabLogin').classList.toggle('active', mode === 'login');
   
-  if (!state.destinations.length) {
-    suggestionBox.style.display = 'none'; transitWrapper.style.display = 'none'; return;
+  if (mode === 'signin') {
+    document.getElementById('authModalTitle').textContent = "Create Account";
+    document.getElementById('passwordGroup').style.display = 'block';
+    document.getElementById('forgotPasswordLink').style.display = 'none';
+  } else {
+    document.getElementById('authModalTitle').textContent = "Log In to Account";
+    document.getElementById('passwordGroup').style.display = 'block';
+    document.getElementById('forgotPasswordLink').style.display = 'inline-block';
+  }
+}
+
+function toggleAuthMode() { setAuthInterfaceMode(currentAuthMode === 'signin' ? 'login' : 'signin'); }
+
+function triggerForgotPasswordRecovery() {
+  currentAuthMode = 'recovery';
+  document.getElementById('authModalTitle').textContent = "Reset Your Password";
+  document.getElementById('passwordGroup').style.display = 'none';
+  document.getElementById('forgotPasswordLink').style.display = 'none';
+}
+
+async function loginWithGoogle() {
+  const { error } = await travelPlannerSupabaseClient.auth.signInWithOAuth({
+    provider: 'google', options: { redirectTo: window.location.origin }
+  });
+  if (error) {
+    const box = document.getElementById('authErrorMsg');
+    box.textContent = error.message; box.classList.add('show');
+  }
+}
+
+async function handleCredentialAuth() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const errMsg = document.getElementById('authErrorMsg');
+  errMsg.classList.remove('show');
+
+  if (!email || (currentAuthMode !== 'recovery' && !password)) {
+    errMsg.textContent = "Please fill out all fields completely.";
+    errMsg.classList.add('show'); return;
   }
 
-  suggestionBox.style.display = 'block';
-  suggestionBox.innerHTML = `⏳ Fetching live travel times and layout distances...`;
-
-  try {
-    const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=`;
-    const resStart = await fetch(geocodeUrl + encodeURIComponent(state.startCity || 'Delhi'));
-    const dataStart = await resStart.json();
-    
-    const targetMidCity = state.intermediateHub || state.destinations[0];
-    const resMid = await fetch(geocodeUrl + encodeURIComponent(targetMidCity));
-    const dataMid = await resMid.json();
-    
-    const resFinal = await fetch(geocodeUrl + encodeURIComponent(state.destinations[0]));
-    const dataFinal = await resFinal.json();
-    
-    if (dataStart.length && dataMid.length && dataFinal.length) {
-      const startLonLat = `${dataStart[0].lon},${dataStart[0].lat}`;
-      const midLonLat = `${dataMid[0].lon},${dataMid[0].lat}`;
-      const destLonLat = `${dataFinal[0].lon},${dataFinal[0].lat}`;
-      
-      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startLonLat};${midLonLat};${destLonLat}?overview=false`;
-      const osrmRes = await fetch(osrmUrl);
-      const osrmData = await osrmRes.json();
-      
-      if (osrmData.routes && osrmData.routes.length) {
-        const networkRoute = osrmData.routes[0];
-        const finalCalculatedKM = Math.round(networkRoute.distance / 1000);
-        state.calculatedDistanceKM = finalCalculatedKM;
-
-        transitWrapper.style.display = 'block';
-        suggestionBox.innerHTML = `
-          🗺️ <strong>Real Maps Route:</strong> ~${finalCalculatedKM} KM total journey line distance.<br>
-          💡 <strong>Vibe Check Suggestion:</strong> We recommend configured buffers for comfortable city exploration switches.
-        `;
-        return;
-      }
+  if (currentAuthMode === 'signup' || currentAuthMode === 'signin') {
+    const { data, error } = await travelPlannerSupabaseClient.auth.signUp({ email, password });
+    if (error) {
+      if(error.message.toLowerCase().includes("already registered") || error.status === 422) {
+        setAuthInterfaceMode('login');
+        errMsg.textContent = "Account verified. Please enter your password to log in directly.";
+        errMsg.classList.add('show');
+      } else { errMsg.textContent = error.message; errMsg.classList.add('show'); }
+    } else { showAppNotification("Verification link dispatched to your inbox!"); closeAuthModal(); }
+  } else if (currentAuthMode === 'login') {
+    const { data, error } = await travelPlannerSupabaseClient.auth.signInWithPassword({ email, password });
+    if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); }
+    else {
+      activeUserToken = data.session.access_token;
+      document.getElementById('authHeaderBtn').textContent = `🟢 ${data.user.email}`;
+      closeAuthModal();
     }
-    throw new Error("Geocoding mismatch.");
-  } catch (apiError) {
-    let fallbackKM = 499;
-    if(state.destinations[0] && state.destinations[0].toLowerCase().includes("udaipur")) fallbackKM = 760;
-    state.calculatedDistanceKM = fallbackKM;
-    transitWrapper.style.display = 'block';
-    suggestionBox.innerHTML = `🏁 <strong>Corridor Mapping (approx.):</strong> ~${fallbackKM} KM across selected segments.`;
+  } else if (currentAuthMode === 'recovery') {
+    const { error } = await travelPlannerSupabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); }
+    else { showAppNotification("Password initialization link sent."); closeAuthModal(); }
   }
 }
 
-function updateJourneyDaysState() {
-  state.transitDaysAllocation = parseInt(document.getElementById('transitDaysCount').value) || 0;
-  generateDailyVibeSelectors();
-}
+function selectThematicRandomEngine(categoryType) {
+  const allChips = document.querySelectorAll('#destChips .chip');
+  allChips.forEach(c => c.classList.remove('selected'));
+  state.destinations = [];
 
-function applyVibesGloballyToAllDays() {
-  const globalCheckboxes = document.querySelectorAll('#globalMassSchedulerGroup input[type="checkbox"]');
-  let chosenVibesList = [];
-  globalCheckboxes.forEach(cb => { if (cb.checked) chosenVibesList.push(cb.value); });
-
-  if (chosenVibesList.length === 0) {
-    showAppNotification("Please choose a vibe first inside the fast pass scheduler container."); return;
+  let chosenDestinationValue = "";
+  if (categoryType === 'mountains') {
+    const mountainPool = ["Spiti Valley, HP", "Munnar, Kerala", "Leh Ladakh, JK", "Manali, HP"];
+    chosenDestinationValue = mountainPool[Math.floor(Math.random() * mountainPool.length)];
+    const baseHub = chosenDestinationValue.includes("Munnar") ? "Kochi" : "Delhi";
+    document.getElementById('startCity').value = baseHub;
+    state.startCity = baseHub;
+  } else if (categoryType === 'beaches') {
+    const beachPool = ["Gokarna, Karnataka", "Goa, India", "Varkala, Kerala"];
+    chosenDestinationValue = beachPool[Math.floor(Math.random() * beachPool.length)];
+    document.getElementById('startCity').value = "Bangalore";
+    state.startCity = "Bangalore";
+  } else {
+    const heritagePool = ["Hampi, Karnataka", "Udaipur, Rajasthan", "Jaipur, Rajasthan", "Varanasi, UP"];
+    chosenDestinationValue = heritagePool[Math.floor(Math.random() * heritagePool.length)];
+    const baseHub = chosenDestinationValue.includes("Hampi") ? "Bangalore" : "Delhi";
+    document.getElementById('startCity').value = baseHub;
+    state.startCity = baseHub;
   }
 
-  const totalCardsCount = document.querySelectorAll('.daily-card');
-  totalCardsCount.forEach((card, idx) => {
-    if(state.transitDaysAllocation >= 1 && idx === (state.days - 1)) return; 
-    const itemCheckboxes = card.querySelectorAll('.daily-vibe-cb');
-    itemCheckboxes.forEach(cb => { cb.checked = chosenVibesList.includes(cb.value); });
+  document.getElementById('customDest').value = "";
+
+  let chipFound = false;
+  allChips.forEach(chip => {
+    if (chip.dataset.val === chosenDestinationValue) {
+      chip.classList.add('selected');
+      chipFound = true;
+    }
   });
 
-  showAppNotification(`Synced your daily vibe preferences cleanly!`);
-}
-
-function updateLiveHelperMapLinks(inputElement, dateStr) {
-  const updatedCityValue = inputElement.value.trim();
-  if(!updatedCityValue) return;
-  
-  const foodLink = document.getElementById(`live-link-food-${dateStr}`);
-  const sightsLink = document.getElementById(`live-link-sights-${dateStr}`);
-  const stayLink = document.getElementById(`live-link-stay-${dateStr}`);
-  
-  if(foodLink && sightsLink && stayLink) {
-    foodLink.href = `https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(updatedCityValue)}`;
-    sightsLink.href = `https://www.google.com/maps/search/${encodeURIComponent(updatedCityValue)}+top+attractions+things+to+do`;
-    stayLink.href = `https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(updatedCityValue)}`;
+  if (!chipFound) {
+    const destChipsContainer = document.getElementById('destChips');
+    const newChip = document.createElement('div');
+    newChip.className = 'chip selected';
+    newChip.dataset.val = chosenDestinationValue;
+    const cleanShortTitle = chosenDestinationValue.split(',')[0];
+    newChip.innerHTML = `✨ ${cleanShortTitle}`;
+    
+    newChip.addEventListener('click', () => {
+      newChip.classList.toggle('selected');
+      state.destinations = newChip.classList.contains('selected') ? [chosenDestinationValue] : [];
+    });
+    destChipsContainer.appendChild(newChip);
   }
-}
 
-function generateDailyVibeSelectors() {
-  const container = document.getElementById('dailyVibeContainer');
-  if (!container || !state.startDate || isNaN(state.days) || state.days <= 0) return;
-  container.innerHTML = '';
-  
-  const start = new Date(state.startDate);
-  const initialBaseCity = state.intermediateHub || state.destinations[0] || "Jaipur, Rajasthan";
-  const finalBaseCity = state.destinations[0] || "Udaipur, Rajasthan";
-  
-  for (let i = 0; i < state.days; i++) {
-    const current = new Date(start.getTime());
-    current.setDate(start.getDate() + i);
-    const dayName = current.toLocaleDateString('en-US', { weekday: 'long' });
-    const dateStr = current.toISOString().split('T')[0];
-
-    const isLastDayOfTravel = (state.transitDaysAllocation >= 1 && i === (state.days - 1));
-    let customCardHtml = "";
-
-    if (isLastDayOfTravel) {
-      let platformLogisticsCheckboxes = "";
-      if(state.vehicleMode === "No Private Vehicle") {
-        platformLogisticsCheckboxes = `
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 📱 Check departure transport tickets status updates ahead</label>
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🚕 Grab a local connection shuttle ride to the station terminal area</label>
-        `;
-      } else {
-        platformLogisticsCheckboxes = `
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> ⛽ Tank Refuel Check: Top up fuel limits completely before exit tracks</label>
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🔧 Quick fluid status and tire pressure levels verification check</label>
-        `;
-      }
-
-      customCardHtml = `
-        <div class="daily-card" style="border-left: 4px solid var(--coral);">
-          <div style="font-weight:600; color:var(--ocean-dark);">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
-          <p style="color:var(--coral); font-size:12px; font-weight:600; margin-top:2px;">🏡 Wrapping up the trip & traveling home safely</p>
-          
-          <div class="form-group" style="margin-top:10px;">
-            <label>Current Location Base:</label>
-            <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${finalBaseCity}">
-            <div class="live-helper-bar"></div>
-          </div>
-
-          <div class="form-group">
-            <label style="color:var(--ocean-dark);">📋 Travel Day Logistics Checklist:</label>
-            <div style="display:flex; flex-direction:column; gap:4px; margin-top:5px;">
-              <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🛌 Room room inventory walk & settle all hotel checkout balances</label>
-              <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🧾 Collect final stay invoices and clear any room service tracking tabs</label>
-              ${platformLogisticsCheckboxes}
-            </div>
-          </div>
-
-          <input type="hidden" class="daily-things-input" data-date="${dateStr}" value="Heading home smoothly.">
-          <input type="hidden" class="daily-transit-cb" value="Return Leg">
-        </div>
-      `;
-    } else {
-      let conditionalInputLayout = "";
-      if (state.transitDaysAllocation >= 2 && i === 0) {
-        conditionalInputLayout = `<p style="color:var(--coral); font-size:12px; font-weight:600;">🛣️ Day 1 Traveling There — Journey Commenced</p>`;
-      }
-
-      const computedDefaultPlace = (i < 2 && state.intermediateHub) ? initialBaseCity : finalBaseCity;
-
-      customCardHtml = `
-        <div class="daily-card">
-          <div style="font-weight:600; color:var(--ocean-dark); margin-bottom:4px;">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
-          ${conditionalInputLayout}
-          
-          <div class="form-group" style="margin-top:8px;">
-            <label>Target Location/City for this Day:</label>
-            <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${computedDefaultPlace}" placeholder="e.g. Jaipur, Udaipur...">
-            <div class="live-helper-bar">
-              <a href="https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(computedDefaultPlace)}" target="_blank" id="live-link-food-${dateStr}" class="live-helper-link">🍛 Choose From Live Restaurant Links</a>
-              <a href="https://www.google.com/maps/search/${encodeURIComponent(computedDefaultPlace)}+top+attractions+things+to+do" target="_blank" id="live-link-sights-${dateStr}" class="live-helper-link">🏛️ Choose From Live Sightseeing Attractions</a>
-              <a href="https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(computedDefaultPlace)}" target="_blank" id="live-link-stay-${dateStr}" class="live-helper-link">🏨 Choose From Live Stays</a>
-            </div>
-          </div>
-
-          <!-- 🌟 REPAIRED MULTI-SELECT CHECKBOX GRID MAP AT THE SELECTION POINT WITHIN STEP 5 -->
-          <div class="form-group" style="margin-top: 14px; background: var(--paper); padding: 12px; border-radius: 10px; border: 1px solid var(--border);">
-            <label style="color: var(--coral); font-size: 11px;">🔀 Shifting Cities or Local Commutes Today? (Select all that apply):</label>
-            <div style="display:flex; flex-direction:column; gap:6px; margin-top:5px;">
-              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Local Sightseeing" checked> Local wandering (Cabs / shuttles / sight visits on foot)</label>
-              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Pre-booked Train Link"> 🚂 Catch a Train (Pre-booked Rail Tickets Corridor)</label>
-              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Hired Inter-city Cab"> 安排 Hire an Inter-City Private Cab</label>
-              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Private Sleeper Bus Link"> 🚌 Booking a Private Sleeper/AC Bus Ticket</label>
-              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Govt State Bus Link"> 🚍 Regional State Transport Bus (RSRTC/KSRTC)</label>
-              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Self-Drive Commute"> 🚗 Cruising via Local Self-Drive Car/Bike Rental</label>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Select Daily Vibes (Mix & Match Multiple):</label>
-            <div class="vibe-checkbox-group">
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🏛️ Iconic Sights"> 🏛️ Iconic Sights</label>
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🌿 Offbeat Gems"> 🌿 Offbeat Gems</label>
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🏔️ Adventure Trekking"> 🏔️ Adventure Trekking</label>
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🍛 Local Foodie" checked> 🍛 Local Foodie</label>
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🧘 Wellness & Slow"> 🧘 Slow & Wellness</label>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Things you want to do here specifically (Choose from links above):</label>
-            <input type="text" class="daily-things-input" data-date="${dateStr}" placeholder="e.g. Try special kachoris, check lakeside architecture maps...">
-          </div>
-        </div>
-      `;
-    }
-
-    const elementWrapper = document.createElement('div');
-    elementWrapper.innerHTML = customCardHtml;
-    container.appendChild(elementWrapper.firstElementChild);
-  }
+  state.destinations.push(chosenDestinationValue);
+  showAppNotification(`Theme Matrix selected: ${chosenDestinationValue}`);
+  generateDailyVibeSelectors();
 }
 
 function submitTransitStepAndProgress() {
@@ -736,7 +679,6 @@ function submitDailyVibeStepAndProgress() {
   submitStepAndProgress(5, 6, 'Vibe Mapping');
 }
 
-/* 🌟 CENTRAL STEP BINDER CODE LOOP RE-ENGINEERED WITH CLEAN INTEGRATION LAYER RULES */
 async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   const err = document.getElementById(`err${stepNum}`); if (err) err.classList.remove('show');
 
@@ -832,7 +774,6 @@ function buildSummary() {
   `;
 }
 
-/* 🌟 DYNAMIC GENERATOR OUTPUT COMPILER WITH 10-MULTIPLE BOUNDARIES AND NET WALLET SAVINGS METRICS PACKED IN */
 async function triggerBuiltInGeneration() {
   const statusEl = document.getElementById('apiStatusMessage');
   statusEl.style.color = "green"; statusEl.textContent = "Compiling vibe-driven itinerary matrices...";
@@ -880,18 +821,18 @@ async function triggerBuiltInGeneration() {
     if (day.dailyTransitList && !day.dailyTransitList.includes("Local Sightseeing") && !isLastDay) {
       localCommuteInjectedHtml = `
         <div style="margin: 10px 0; padding: 10px 14px; background: #fffde6; color: #856404; font-size: 13.5px; border-radius: 8px; border: 1px solid #ffeeba;">
-          🔀 <strong>Transit Commute Chosen Today:</strong> [${day.dailyTransitList.join(', ')}]. Double check your pre-booked ticket timings or cab connection availability windows ahead of departure!
+          🔀 <strong>Transit Commute Chosen Today:</strong> [${day.dailyTransitList.join(', ')}]. Double check your reservation details or vehicle layout before leaving.
         </div>
       `;
     }
 
     if (state.transitDaysAllocation >= 2 && index === 0) {
-      dayVibeHeaderString = "🛣️ Leaving Home (Day 1 Transit Sector)";
+      dayVibeHeaderString = "🛣️ Leaving Home (Day 1 Transit)";
       dynamicMorningStrategy = `🛫 <strong>Setting Off:</strong> Commencing your journey outward from <strong>${state.startCity}</strong> heading to ${day.place}. Settle into your room base and refresh.`;
       dynamicEveningStrategy = `🌙 <strong>Evening:</strong> Unwind completely from transit fatigue. Grab a relaxed meal nearby and charge up for active exploration tomorrow.`;
     } else if (isLastDay) {
       dayVibeHeaderString = "🏡 Returning Home Pass";
-      let operationalDeductionNote = (state.vehicleMode !== "No Private Vehicle") ? "Double-check your fuel meters, route bottlenecks, and car/bike oil indicators." : "Confirm your reservation timings on public transport networks and verify gate numbers.";
+      let operationalDeductionNote = (state.vehicleMode !== "No Private Vehicle") ? "Double-check your fuel meters, route bottlenecks, and car/bike oil indicators." : "Confirm your reservation timings on transport networks and verify gate numbers.";
       dynamicMorningStrategy = `🧳 <strong>Clear Accommodations:</strong> Complete room checks, pack your custom souvenirs, and finalize hotel checkout parameters. ${operationalDeductionNote}`;
       dynamicEveningStrategy = `🏡 <strong>Homeward Leg:</strong> Execute the final transferleg connection back into <strong>${state.startCity}</strong>. Trip complete!`;
     } else {
@@ -902,7 +843,6 @@ async function triggerBuiltInGeneration() {
 
     const priceVarianceMultiplier = 1 + ((index % 3) - 1) * 0.12;
     
-    // 🌟 STRICT LOGIC MATCH: ENFORCES PERFECT 10-MULTIPLE ROUNDINGS ON ALL APPROXIMATIONS WITH DEDICATED (approx.) TAGS
     const finalFood = Math.floor((singleDayFoodPool * priceVarianceMultiplier) / 10) * 10;
     const finalTransit = Math.floor((singleDayTransitPool * (1 + ((index % 2) * 0.06))) / 10) * 10;
     const finalStay = Math.floor((singleDayAccommodationPool * (1 - (((index + 1) % 3) - 1) * 0.06))) / 10) * 10;
@@ -910,13 +850,19 @@ async function triggerBuiltInGeneration() {
     
     totalComputedExpensesSum += dayCostAccumulatedTotal;
 
+    const encodedLocation = encodeURIComponent(day.place);
+    const checkInDate = day.date;
+    const liveHotelPortal = `https://www.google.com/travel/search?q=Hotels+in+${encodedLocation}+check+in+${checkInDate}`;
+    const liveFoodPortal = `https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodedLocation}`;
+    const liveExplorePortal = `https://www.google.com/maps/search/${encodedLocation}+top+attractions+things+to+do`;
+
     htmlBody += `
       <div class="daily-card" style="border-left: 5px solid var(--coral); padding: 20px; margin-bottom: 24px; background:#fff; border-radius:16px;">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--border); padding-bottom:10px; margin-bottom:15px;">
           <h3 style="color:var(--ocean-dark); font-family:'Fraunces', serif; font-size:18px;">☀️ Day ${index + 1} — ${getDayName(day.date)}, ${day.date}</h3>
           <span style="background:var(--coral-light); color:var(--coral); font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; text-transform:uppercase;">${dayVibeHeaderString}</span>
         </div>
-        <p style="margin-bottom:12px; font-size:14px;">📍 <strong>Today's Active Base Location:</strong> <span style="color:var(--ocean); font-weight:600;">${day.place}</span></p>
+        <p style="margin-bottom:12px; font-size:14px;">📍 <strong>Today's Base Location:</strong> <span style="color:var(--ocean); font-weight:600;">${day.place}</span></p>
         
         ${localCommuteInjectedHtml}
 
@@ -928,26 +874,32 @@ async function triggerBuiltInGeneration() {
             <div style="margin-bottom:6px; padding:6px; background:var(--coral-light); border-radius:6px; font-size:13px;">🎯 Objective Checklist: <em>"${day.thingsToDo || 'Discover unique attractions chosen straight from live links.'}"</em></div>
             <div id="injectedExploreBox-day-${index}" style="display:none; padding:8px; background:var(--success-bg); border-left:3px solid var(--success); border-radius:6px; font-size:13px; margin-bottom:10px; color:var(--success);"></div>
             <ul style="padding-left:18px; font-size:13px; color:var(--ocean-mid); display:flex; flex-direction:column; gap:3px;">
-              <li>🏛️ Unmissable Landmark Highlight: ${primaryFamousSight}</li>
-              <li>🌲 Hidden Regional Detour Gem: ${secondaryGemSight}</li>
+              <li>🏛️ Landmark Highlight: ${primaryFamousSight}</li>
+              <li>🌲 Hidden Detour Gem: ${secondaryGemSight}</li>
             </ul>
           </div>` : ''}
           <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);"><strong>🌙 Evening Vibes & Local Dining:</strong> <p style="margin-top:3px; color:var(--ink);">${dynamicEveningStrategy}</p></div>
         </div>
         
+        ${!isLastDay ? `
+        <div style="margin-top:18px; display:flex; flex-wrap:wrap; gap:10px; border-top:1px solid var(--border); padding-top:14px;">
+          <a href="${liveHotelPortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--ocean); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">🏨 Live Rates & Availability</a>
+          <a href="${liveFoodPortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--success); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">🍛 Live Restaurant Reviews</a>
+          <a href="${liveExplorePortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--ocean-mid); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">🗺️ Explore Live Attractions</a>
+        </div>` : ''}
+
         <div style="margin-top:18px; border-top:1px dashed var(--border); padding-top:12px; display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; font-size:12px; background:var(--sand); padding:10px; border-radius:8px;">
           <div>🍲 <strong>Local Food & Entry:</strong> (₹${finalFood} approx.)</div>
           <div>🚌 <strong>Daily Commute:</strong> (₹${finalTransit} approx.)</div>
           <div>🛌 <strong>Stay Allocation:</strong> (₹${finalStay} approx.)</div>
         </div>
         <div style="margin-top:8px; text-align:right; font-size:13px; font-weight:600; color:var(--ocean-dark);">
-          💵 Estimated Day Total Cost: <span style="color:var(--coral); font-weight:700;">(₹${dayCostAccumulatedTotal} approx.)</span>
+          Estimated Day Total Cost: <span style="color:var(--coral); font-weight:700;">(₹${dayCostAccumulatedTotal} approx.)</span>
         </div>
       </div>
     `;
   });
 
-  // 🌟 MATHEMATICAL WRAP-UP: COMPUTES WALLET SAVINGS PER HEAD TIERED TARGETS ACCURATELY
   const finalWalletSavingsPerHead = Math.max(0, totalHeadPoolCapital - totalComputedExpensesSum);
 
   htmlBody += `
@@ -955,14 +907,14 @@ async function triggerBuiltInGeneration() {
       <h3 style="font-family:'Fraunces', serif; color:var(--success); font-size:19px; margin-bottom:8px;">📊 Ultimate Trip Budget Summary</h3>
       <div style="font-size:14px; color:var(--ink); line-height:1.7; display:flex; flex-direction:column; gap:4px;">
         <div>💰 <strong>Total Allocated Holiday Capital Pool (Per Head):</strong> ₹${totalHeadPoolCapital.toLocaleString('en-IN')} INR</div>
-        <div>🚌 <strong>Core Long-Distance Transit Overhead (Leg 1):</strong> ₹${coreTransitOverheadCost.toLocaleString('en-IN')} INR</div>
-        <div>🎒 <strong>Total Day Operations Outlays (Stay/Food/Local Transit):</strong> ₹${(totalComputedExpensesSum - coreTransitOverheadCost).toLocaleString('en-IN')} INR</div>
+        <div>🚌 <strong>Core Long-Distance Transit Overhead:</strong> ₹${coreTransitOverheadCost.toLocaleString('en-IN')} INR</div>
+        <div>🎒 <strong>Total Day Operations Outlays:</strong> ₹${(totalComputedExpensesSum - coreTransitOverheadCost).toLocaleString('en-IN')} INR</div>
         <hr style="border:0; border-top:1px solid var(--border); margin:8px 0;">
         <div style="font-size:16px; font-weight:700; color:var(--ocean-dark);">
           💵 Grand Estimated Journey Cost: ₹${totalComputedExpensesSum.toLocaleString('en-IN')} INR
         </div>
         <div style="font-size:15.5px; font-weight:700; color:var(--success); margin-top:6px; padding:8px 12px; background:white; border-radius:8px; display:inline-block; border:1px solid var(--success);">
-          🌿 <strong>Trip Savings Realized (Money Saved):</strong> You have a calculated save of <span style="font-weight:800; font-size:17px; color:var(--success);">₹${finalWalletSavingsPerHead.toLocaleString('en-IN')} INR per head</span> at the end of this trip! Keep it inside your wallet!
+          🎉 <strong>Trip Savings Realized:</strong> You have a calculated save of <span style="font-weight:800; font-size:17px; color:var(--success);">₹${finalWalletSavingsPerHead.toLocaleString('en-IN')} INR per head</span> at the end of this trip! Keep it inside your wallet!
         </div>
       </div>
     </div>
