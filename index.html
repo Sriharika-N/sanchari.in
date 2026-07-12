@@ -334,7 +334,7 @@
     <div class="compulsory-feedback-card" id="compulsoryFeedbackContainer">
       <div class="feedback-title" style="font-weight:600; font-size:14px; color: var(--ocean-dark); margin-bottom: 4px;">📋 Beta Tester Portal Review</div>
       <p style="font-size: 12px; color: var(--muted); margin-bottom: 10px;">Please share how this application workflow feels and what additional details or features you think this layout page should display to advance.</p>
-      <textarea id="singleBetaFeedbackInput" rows="3" placeholder="How does the app feel, and what else should this page show?..." style="resize: none; font-family: inherit; font-size: 13px;"></textarea>
+      <textarea id="singleBetaFeedbackInput" rows="3" placeholder="How does the app feel, and what else should this page show?..." style="resize: none; font-family: inherit; font-size: 13px运行;"></textarea>
     </div>
 
     <!-- OUTPUT SCREEN -->
@@ -448,6 +448,18 @@ function showAppNotification(messageString) {
   setTimeout(() => { toast.classList.remove('show'); }, 4500);
 }
 
+window.addEventListener('load', async () => {
+  const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
+  if (session) {
+    activeUserToken = session.access_token;
+    document.getElementById('authHeaderBtn').textContent = `🟢 ${session.user.email}`;
+  }
+  updateProgressBar();
+});
+
+function openAuthModal() { document.getElementById('authOverlay').style.display = 'flex'; }
+function closeAuthModal() { document.getElementById('authOverlay').style.display = 'none'; }
+
 function setAuthInterfaceMode(mode) {
   currentAuthMode = mode;
   const errMsg = document.getElementById('authErrorMsg');
@@ -547,7 +559,6 @@ function selectThematicRandomEngine(categoryType) {
     state.startCity = baseHub;
   }
 
-  // Clear custom inputs when theme engines execute to prevent token pollution
   document.getElementById('customDest').value = "";
 
   let chipFound = false;
@@ -691,6 +702,24 @@ function updateLiveHelperMapLinks(inputElement, dateStr) {
   }
 }
 
+function validateDatesOnly() {
+  const startVal = document.getElementById('startDate').value;
+  const endVal = document.getElementById('endDate').value;
+  const errBox = document.getElementById('dateErrorBox');
+  const nextBtn = document.getElementById('btnStep3');
+
+  errBox.classList.remove('show'); nextBtn.disabled = false; nextBtn.style.opacity = '1';
+  state.startDate = startVal; state.endDate = endVal;
+
+  if (startVal && endVal) {
+    const s = new Date(startVal), e = new Date(endVal);
+    if (isNaN(s.getTime()) || isNaN(e.getTime())) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; return false; }
+    if (e < s) { errBox.classList.add('show'); nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; return false; }
+    state.days = Math.round((e - s) / 86400000) + 1;
+  } else { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; return false; }
+  return true;
+}
+
 function generateDailyVibeSelectors() {
   const container = document.getElementById('dailyVibeContainer');
   if (!container || !state.startDate || isNaN(state.days) || state.days <= 0) return;
@@ -806,7 +835,6 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
     state.startCity = document.getElementById('startCity').value.trim();
     const customInputVal = document.getElementById('customDest').value.trim();
     
-    // 🌟 FIXES VALIDATION LOGIC BREAK: Sync dynamic typed custom locations safely into state array before checker triggers
     if (customInputVal && !state.destinations.includes(customInputVal)) {
       state.destinations = [customInputVal];
     }
@@ -814,7 +842,15 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
     if (state.destinations.length === 0 || !state.startCity) { err.classList.add('show'); return; }
   }
   if (stepNum === 2 && !state.crew) { err.classList.add('show'); return; }
-  if (stepNum === 3 && (!state.startDate || !state.endDate)) { err.classList.add('show'); return; }
+  
+  /* 🌟 DIRECT REAL-TIME FORCE VALIDATION SYNC ON STEP 3 CLICK EVENT */
+  if (stepNum === 3) {
+    const datesAreValid = validateDatesOnly();
+    if (!datesAreValid || !state.startDate || !state.endDate) { 
+      if (err) err.classList.add('show'); 
+      return; 
+    }
+  }
   if (stepNum === 4 && (!state.transport || !state.vehicleMode)) { document.getElementById('err4').classList.add('show'); return; }
   
   if (stepNum === 5) {
@@ -1023,7 +1059,7 @@ function setupExclusiveChips(containerId, stateKey, callback) {
     chip.addEventListener('click', () => {
       document.getElementById(containerId).querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
       chip.classList.add('selected'); state[stateKey] = chip.dataset.val;
-      document.getElementById('customDest').value = ""; // Clear string inputs if hardware buttons are chosen
+      document.getElementById('customDest').value = "";
       if(callback) callback(chip.dataset.val);
     });
   });
@@ -1036,7 +1072,7 @@ function setupMultiSelectChips(containerId, stateKey, callback) {
       const val = chip.dataset.val;
       if (chip.classList.contains('selected')) { if(!state[stateKey].includes(val)) state[stateKey].push(val); } 
       else { state[stateKey] = state[stateKey].filter(v => v !== val); }
-      document.getElementById('customDest').value = ""; // Clear string inputs if hardware buttons are chosen
+      document.getElementById('customDest').value = "";
       if(callback) callback();
     });
   });
