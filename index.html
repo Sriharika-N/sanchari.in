@@ -69,6 +69,10 @@
     border: 1px solid var(--ocean-mid); max-width: 90%; width: 500px;
   }
   .app-notification-toast.show { top: 20px; }
+
+  .live-helper-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; font-size: 12px; }
+  .live-helper-link { color: var(--ocean); font-weight: 500; text-decoration: none; background: var(--sand); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border); }
+  .live-helper-link:hover { background: var(--coral-light); border-color: var(--coral); color: var(--coral); }
 </style>
 </head>
 <body>
@@ -206,7 +210,7 @@
       <div class="error-box" id="err3">Please choose valid dates.</div>
     </div>
 
-    <!-- STEP 4: TRANSIT LOGISTICS WITH REAL-TIME TELEMETRY -->
+    <!-- STEP 4: TRANSIT LOGISTICS -->
     <div class="step-panel" id="step4">
       <div class="step-heading">Transit & Travel Day Settings 🚗💨</div>
       <p class="step-sub">Choose your transport mode to compute distance, driving times, and finalize journey blocks.</p>
@@ -220,7 +224,6 @@
         </div>
       </div>
       
-      <!-- REAL-TIME CALCULATED ROAD METRICS ASYNC NOTIFIER -->
       <div id="distanceSuggestionBox" style="background:var(--sand); padding:16px; border-radius:12px; font-size:14px; margin-bottom:18px; display:none; color:var(--ocean-dark); border-left: 4px solid var(--gold);"></div>
 
       <div class="form-group" id="transitDaysWrapper" style="display:none;">
@@ -264,7 +267,7 @@
       <div class="error-box" id="err4">Please select your transport preferences and journey days allocation.</div>
     </div>
 
-    <!-- STEP 5: PER-DAY VIBES & MASS SCHEDULER -->
+    <!-- STEP 5: PER-DAY VIBES -->
     <div class="step-panel" id="step5">
       <div class="step-heading">Daily Customization Matrix ✨</div>
       <p class="step-sub">Select multiple preferences per day, or use the tool below to copy a pattern globally to prevent overwhelming configuration fatigue.</p>
@@ -445,18 +448,6 @@ function showAppNotification(messageString) {
   setTimeout(() => { toast.classList.remove('show'); }, 4500);
 }
 
-window.addEventListener('load', async () => {
-  const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
-  if (session) {
-    activeUserToken = session.access_token;
-    document.getElementById('authHeaderBtn').textContent = `🟢 ${session.user.email}`;
-  }
-  updateProgressBar();
-});
-
-function openAuthModal() { document.getElementById('authOverlay').style.display = 'flex'; }
-function closeAuthModal() { document.getElementById('authOverlay').style.display = 'none'; }
-
 function setAuthInterfaceMode(mode) {
   currentAuthMode = mode;
   const errMsg = document.getElementById('authErrorMsg');
@@ -581,30 +572,9 @@ function selectThematicRandomEngine(categoryType) {
 
   state.destinations.push(chosenDestinationValue);
   showAppNotification(`Theme Matrix selected: ${chosenDestinationValue}`);
-  
-  const firstPlaceInput = document.querySelector('.daily-place-input');
-  if(firstPlaceInput) { generateDailyVibeSelectors(); }
+  generateDailyVibeSelectors();
 }
 
-function validateDatesOnly() {
-  const startVal = document.getElementById('startDate').value;
-  const endVal = document.getElementById('endDate').value;
-  const errBox = document.getElementById('dateErrorBox');
-  const nextBtn = document.getElementById('btnStep3');
-
-  errBox.classList.remove('show'); nextBtn.disabled = false; nextBtn.style.opacity = '1';
-  state.startDate = startVal; state.endDate = endVal;
-
-  if (startVal && endVal) {
-    const s = new Date(startVal), e = new Date(endVal);
-    if (isNaN(s.getTime()) || isNaN(e.getTime())) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; return false; }
-    if (e < s) { errBox.classList.add('show'); nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; return false; }
-    state.days = Math.round((e - s) / 86400000) + 1;
-  } else { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; }
-  return true;
-}
-
-/* 🌟 ASYNC HIGH-PRECISION REAL TIME CALCULATOR ENGINE USING OPENSTREETMAP API OSRM ROUTERS */
 async function runGeographicalDistanceAndSpeedSuggester() {
   const suggestionBox = document.getElementById('distanceSuggestionBox');
   const transitWrapper = document.getElementById('transitDaysWrapper');
@@ -619,7 +589,6 @@ async function runGeographicalDistanceAndSpeedSuggester() {
   try {
     const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=`;
     
-    // Asynchronously pinpoint precise coordinates for start city and target destination
     const resStart = await fetch(geocodeUrl + encodeURIComponent(state.startCity));
     const dataStart = await resStart.json();
     const resDest = await fetch(geocodeUrl + encodeURIComponent(state.destinations[0]));
@@ -629,15 +598,12 @@ async function runGeographicalDistanceAndSpeedSuggester() {
       const startLonLat = `${dataStart[0].lon},${dataStart[0].lat}`;
       const destLonLat = `${dataDest[0].lon},${dataDest[0].lat}`;
       
-      // Query Open Source Routing Machine Engine
       const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startLonLat};${destLonLat}?overview=false`;
       const osrmRes = await fetch(osrmUrl);
       const osrmData = await osrmRes.json();
       
       if (osrmData.routes && osrmData.routes.length) {
         const networkRoute = osrmData.routes[0];
-        
-        // Convert OSRM meters to clean KM format
         const finalCalculatedKM = Math.round(networkRoute.distance / 1000);
         state.calculatedDistanceKM = finalCalculatedKM;
 
@@ -645,7 +611,6 @@ async function runGeographicalDistanceAndSpeedSuggester() {
         let suggestedJourneyDays = 2;
 
         if (state.transport === "Full Road Trip") {
-          // Format raw OSRM routing seconds into live driving hours
           const exactDrivingHours = Math.round(networkRoute.duration / 3600);
           const formattedMinutes = Math.round((networkRoute.duration % 3600) / 60);
           journeyPerformanceText = `🚗 <strong>Estimated Drive Time:</strong> Around ${exactDrivingHours}h ${formattedMinutes}m on real-world road networks.`;
@@ -673,7 +638,6 @@ async function runGeographicalDistanceAndSpeedSuggester() {
     }
     throw new Error("Geocoding mismatch loop popped.");
   } catch (apiError) {
-    // Elegant fallback execution loop if rate limits fire
     console.warn("API limit fallback loops engaged.", apiError);
     let fallbackKM = 320;
     if(state.destinations[0].toLowerCase().includes("manali")) fallbackKM = 499;
@@ -692,6 +656,7 @@ function updateJourneyDaysState() {
   generateDailyVibeSelectors();
 }
 
+/* 🌟 DYNAMIC GLOBAL SYNC SYNC ENGINE REPAIRED PERMANENTLY */
 function applyVibesGloballyToAllDays() {
   const globalCheckboxes = document.querySelectorAll('#globalMassSchedulerGroup input[type="checkbox"]');
   let chosenVibesList = [];
@@ -709,6 +674,37 @@ function applyVibesGloballyToAllDays() {
   });
 
   showAppNotification(`Synced [${chosenVibesList.join(', ')}] across vacation days!`);
+}
+
+function updateLiveHelperMapLinks(inputElement, dateStr) {
+  const updatedCityValue = inputElement.value.trim();
+  if(!updatedCityValue) return;
+  
+  const foodLink = document.getElementById(`live-link-food-${dateStr}`);
+  const sightsLink = document.getElementById(`live-link-sights-${dateStr}`);
+  
+  if(foodLink && sightsLink) {
+    foodLink.href = `https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(updatedCityValue)}`;
+    sightsLink.href = `https://www.google.com/maps/search/${encodeURIComponent(updatedCityValue)}+top+attractions+things+to+do`;
+  }
+}
+
+function validateDatesOnly() {
+  const startVal = document.getElementById('startDate').value;
+  const endVal = document.getElementById('endDate').value;
+  const errBox = document.getElementById('dateErrorBox');
+  const nextBtn = document.getElementById('btnStep3');
+
+  errBox.classList.remove('show'); nextBtn.disabled = false; nextBtn.style.opacity = '1';
+  state.startDate = startVal; state.endDate = endVal;
+
+  if (startVal && endVal) {
+    const s = new Date(startVal), e = new Date(endVal);
+    if (isNaN(s.getTime()) || isNaN(e.getTime())) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; return false; }
+    if (e < s) { errBox.classList.add('show'); nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; return false; }
+    state.days = Math.round((e - s) / 86400000) + 1;
+  } else { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; }
+  return true;
 }
 
 function generateDailyVibeSelectors() {
@@ -749,7 +745,11 @@ function generateDailyVibeSelectors() {
           
           <div class="form-group" style="margin-top:10px;">
             <label>Current Location Base:</label>
-            <input type="text" class="daily-place-input" data-date="${dateStr}" value="${targetDestinationValue}">
+            <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${targetDestinationValue}">
+            <div class="live-helper-bar">
+              <a href="https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(targetDestinationValue)}" target="_blank" id="live-link-food-${dateStr}" class="live-helper-link">🔍 Open Live Restaurant Reviews</a>
+              <a href="https://www.google.com/maps/search/${encodeURIComponent(targetDestinationValue)}+top+attractions+things+to+do" target="_blank" id="live-link-sights-${dateStr}" class="live-helper-link">🏛️ Open Live Sightseeing Attractions</a>
+            </div>
           </div>
 
           <div class="form-group">
@@ -777,7 +777,11 @@ function generateDailyVibeSelectors() {
           
           <div class="form-group" style="margin-top:8px;">
             <label>Target Location/Place for this Day:</label>
-            <input type="text" class="daily-place-input" data-date="${dateStr}" value="${targetDestinationValue}" placeholder="e.g. Coorg, Gokarna...">
+            <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${targetDestinationValue}" placeholder="e.g. Coorg, Gokarna...">
+            <div class="live-helper-bar">
+              <a href="https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(targetDestinationValue)}" target="_blank" id="live-link-food-${dateStr}" class="live-helper-link">🍛 Choose From Live Restaurant Links</a>
+              <a href="https://www.google.com/maps/search/${encodeURIComponent(targetDestinationValue)}+top+attractions+things+to+do" target="_blank" id="live-link-sights-${dateStr}" class="live-helper-link">🏛️ Choose From Live Sightseeing Attractions</a>
+            </div>
           </div>
 
           <div class="form-group">
@@ -792,8 +796,8 @@ function generateDailyVibeSelectors() {
           </div>
 
           <div class="form-group">
-            <label>Things you want to do here specifically:</label>
-            <input type="text" class="daily-things-input" data-date="${dateStr}" placeholder="e.g. Try local coffee, watch sunset...">
+            <label>Things you want to do here specifically (Choose from links above):</label>
+            <input type="text" class="daily-things-input" data-date="${dateStr}" placeholder="e.g. Visit Hidimba temple, dinner at Johnson's cafe...">
           </div>
         </div>
       `;
@@ -860,6 +864,10 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   currentStep = nextStepNum;
   document.getElementById(`step${nextStepNum}`).classList.add('active');
   updateProgressBar();
+  
+  /* 🌟 ELIMINATES THE BOTTOM FOCUS PAGE GLITCH NATIVELY */
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  
   if (nextStepNum === 7) buildSummary();
 }
 
@@ -867,6 +875,7 @@ function goBack(prevStep) {
   document.getElementById(`step${currentStep}`).classList.remove('active');
   currentStep = prevStep; document.getElementById(`step${prevStep}`).classList.add('active');
   updateProgressBar();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function modifyItinerary() {
@@ -874,6 +883,7 @@ function modifyItinerary() {
   document.getElementById('step7').style.display = 'block';
   document.getElementById('stepTabs').style.display = 'flex';
   currentStep = 7; updateProgressBar();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function getDayName(dateStr) { return dateStr ? new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long' }) : ''; }
@@ -883,10 +893,25 @@ function buildSummary() {
   document.getElementById('tripSummary').innerHTML = `
     🗺️ Route Blueprint: <strong>${state.destinations.join(' ➔ ')}</strong><br>
     🏁 Precision Distance Projection: <strong>~${state.calculatedDistanceKM} KM Network</strong><br>
-    📅 Timeline Breakdown: <strong>${state.days} Days</strong> (${state.transitDaysAllocation} Traveling)<br>
+    📅 Timeline Parameters: <strong>${state.startDate}</strong> to <strong>${state.endDate}</strong> (${state.days} Days Total, ${state.transitDaysAllocation} Traveling)<br>
     🚗 Transport Choice: <strong>${state.transport} (${state.vehicleMode})</strong><br>
     💰 Allotment Target: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR Per Head</strong>
   `;
+}
+
+function injectExploreTargetIntoItinerary(targetType, contentValue, targetDayIndex) {
+  const container = document.getElementById(`injectedExploreBox-day-${targetDayIndex}`);
+  if (!container) return;
+  
+  container.style.display = "block";
+  if (targetType === 'cuisine') {
+    container.innerHTML = `🍲 <strong>Injected Local Culinary Goal:</strong> Explore regional food styles highlighting: <em>${contentValue}</em>.`;
+  } else if (targetType === 'famous') {
+    container.innerHTML = `📸 <strong>Injected Iconic Sightseeing Check:</strong> Drop by the signature landmark target: <em>${contentValue}</em>.`;
+  } else {
+    container.innerHTML = `🌿 <strong>Injected Remote Trail Exploration:</strong> Venture down offbeat path tracks to discover: <em>${contentValue}</em>.`;
+  }
+  showAppNotification(`${targetType.toUpperCase()} element embedded seamlessly!`);
 }
 
 async function triggerBuiltInGeneration() {
@@ -941,6 +966,7 @@ async function triggerBuiltInGeneration() {
       dynamicMorningStrategy = `🧳 <strong>Clear Accommodations:</strong> Complete room checkouts, settle local service invoices, and initiate packing protocols. ${operationalDeductionNote}`;
       dynamicEveningStrategy = `🏡 <strong>Homeward Leg:</strong> Conclude return journey segments back into <strong>${state.startCity}</strong> via your chosen ${state.vehicleMode} setup. Trip complete!`;
     } else {
+      /* 🌟 TOP SELECTION REFLECTION INJECTION CORE RUNNING NATIVELY */
       if(day.vibes.includes("🏛️ Iconic Sights")) dynamicMorningStrategy = `🏛️ <strong>Iconic Spotlights:</strong> Beat local queues early to see: <em>"${primaryFamousSight}"</em> before peak crowd hours.`;
       if(day.vibes.includes("🏔️ Adventure Trekking")) dynamicMorningStrategy = `🏔️ <strong>Adventure Track:</strong> Pack gear early for high-energy exploration routes near ${day.place}.`;
       if(day.vibes.includes("🧘 Wellness & Slow")) dynamicEveningStrategy = `🧘 <strong>Slow Pace:</strong> Wind down at a quiet riverbank or rooftop cafe with traditional local tea blends.`;
@@ -949,6 +975,12 @@ async function triggerBuiltInGeneration() {
     const finalFood = Math.round(dailyFoodBase * (1 + ((index % 3) - 1) * 0.1));
     const finalTransit = Math.round(dailyTransitBase * (1 + ((index % 2) * 0.08)));
     const finalStay = Math.round(dailyStayBase * (1 - (((index + 1) % 3) - 1) * 0.05));
+
+    const encodedLocation = encodeURIComponent(day.place);
+    const checkInDate = day.date;
+    const liveHotelPortal = `https://www.google.com/travel/search?q=Hotels+in+${encodedLocation}+check+in+${checkInDate}`;
+    const liveFoodPortal = `https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodedLocation}`;
+    const liveExplorePortal = `https://www.google.com/maps/search/${encodedLocation}+top+attractions+things+to+do`;
 
     htmlBody += `
       <div class="daily-card" style="border-left: 5px solid var(--coral); padding: 20px; margin-bottom: 24px; background:#fff; border-radius:16px;">
@@ -962,7 +994,7 @@ async function triggerBuiltInGeneration() {
           ${!(state.transitDaysAllocation >= 1 && index === (state.days - 1)) ? `
           <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);">
             <strong>☀️ Afternoon Spotlight:</strong> 
-            <div style="margin-bottom:6px; padding:6px; background:var(--coral-light); border-radius:6px; font-size:13px;">🎯 Objective: <em>"${day.thingsToDo}"</em></div>
+            <div style="margin-bottom:6px; padding:6px; background:var(--coral-light); border-radius:6px; font-size:13px;">🎯 Objective: <em>"${day.thingsToDo || 'Explore customized attractions chosen from deep-links.'}"</em></div>
             <div id="injectedExploreBox-day-${index}" style="display:none; padding:8px; background:var(--success-bg); border-left:3px solid var(--success); border-radius:6px; font-size:13px; margin-bottom:10px; color:var(--success);"></div>
             <ul style="padding-left:18px; font-size:13px; color:var(--ocean-mid);">
               <li>📸 Famous Highlight: ${primaryFamousSight}</li>
@@ -971,6 +1003,13 @@ async function triggerBuiltInGeneration() {
           </div>` : ''}
           <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);"><strong>🌙 Evening & Nightfall:</strong> <p style="margin-top:3px; color:var(--ink);">${dynamicEveningStrategy}</p></div>
         </div>
+        
+        <div style="margin-top:18px; display:flex; flex-wrap:wrap; gap:10px; border-top:1px solid var(--border); padding-top:14px;">
+          <a href="${liveHotelPortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--ocean); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">🏨 Live Rates & Availability</a>
+          <a href="${liveFoodPortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--success); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">🍛 Live Restaurant Reviews</a>
+          <a href="${liveExplorePortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--ocean-mid); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">🗺️ Explore Live Attractions</a>
+        </div>
+
         <div style="margin-top:18px; border-top:1px dashed var(--border); padding-top:12px; display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; font-size:12px; background:var(--sand); padding:10px; border-radius:8px;">
           <div>🍲 <strong>Food/Entry:</strong> ₹${finalFood}</div><div>🚌 <strong>Local Route:</strong> ₹${finalTransit}</div><div>🛌 <strong>Stay Allocation:</strong> ₹${finalStay}</div>
         </div>
@@ -980,13 +1019,13 @@ async function triggerBuiltInGeneration() {
 
   document.getElementById('step7').style.display = 'none';
   document.getElementById('compulsoryFeedbackContainer').style.display = 'none';
-  document.getElementById('step7').style.display = 'none';
   document.getElementById('stepTabs').style.display = 'none';
   document.getElementById('itineraryExploreShowcaseHub').innerHTML = commonHubExploreItems;
   
   const outPanel = document.getElementById('outputPanel');
   outPanel.style.display = 'block';
   document.getElementById('outputBody').innerHTML = htmlBody;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function setupExclusiveChips(containerId, stateKey, callback) {
