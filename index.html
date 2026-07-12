@@ -306,7 +306,7 @@
     <div class="compulsory-feedback-card" id="compulsoryFeedbackContainer">
       <div class="feedback-title" style="font-weight:600; font-size:14px; color: var(--ocean-dark); margin-bottom: 4px;">📋 Beta Tester Portal Review</div>
       <p style="font-size: 12px; color: var(--muted); margin-bottom: 10px;">Please share how this application workflow feels and what additional details or features you think this layout page should display to advance.</p>
-      <textarea id="singleBetaFeedbackInput" rows="3" placeholder="How does the app feel, and what else should this page show?..." style="resize: none; font-family: inherit; font-size: 13px;"></textarea>
+      <textarea id="singleBetaFeedbackInput" rows="3" placeholder="How does the app feel, and what else should this page show?..." style="resize: none; font-family: inherit; font-size: 13px运行;"></textarea>
     </div>
 
     <!-- OUTPUT SCREEN -->
@@ -376,6 +376,30 @@ const travelKnowledgeBase = {
     gems: ["Langza Mountain Ridge Fossil Beds", "Mud Village Pin Valley Mountain Outpost"],
     breakfast: ["Warm butter tea paired with local Tsampa breads", "Highland barley porridges with honey matrices"],
     eats: ["The Sol Cafe local hot seabuckthorn juices", "Authentic steaming Tibetan momo street shacks"]
+  },
+  "leh ladakh": {
+    famous: ["Pangong Tso High-Altitude Saltwater Lake", "Thiksey Monastery Tiered Complex", "Khardung La World Peak Pass"],
+    gems: ["Nubra Valley Hunder Sand Dunes Track", "Basgo Castle Ruin Offbeat Paths"],
+    breakfast: ["Traditional Ladakhi Khambir skillet bread with butter tea", "Apricot jam reductions with warm cakes"],
+    eats: ["Alchi Kitchen heritage traditional recipes diner", "Leh Main Market open-air local dumpling lanes"]
+  },
+  "goa": {
+    famous: ["Fontainhas Historic Latin Quarter Walk", "Dudhsagar Jungle Waterfalls Track", "Aguada Historic Coastal Fort Outpost"],
+    gems: ["Cola Beach Hidden Fresh Lagoon Side", "Chorao Island Offbeat Mangrove Boat Paths"],
+    breakfast: ["Freshly wood-fired Goan Poi bread with local spreads", "Seaside shack continental fruit salad matrices"],
+    eats: ["Mum's Kitchen local authentic Goan fish curry", "Fisherman's Wharf classic coastal seafood dine"]
+  },
+  "varkala": {
+    famous: ["Varkala Cliffside Ocean Overlook Strip", "Janardanaswamy Ancient Coastal Temple"],
+    gems: ["Edava Beach Secluded Backwater-Sea Interface", "Kapil Lake Silent Coastal Drive Corridors"],
+    breakfast: ["Kerala style layered flaky parotta with egg roast", "Fresh tender coconut shakes on the cliff paths"],
+    eats: ["Darjeeling Cafe oceanfront slow-cooked regional dinners", "Local daily-catch fresh grill fish counters"]
+  },
+  "udaipur": {
+    famous: ["City Palace Waterfront Complex", "Lake Pichola Panoramic Shared Boat Routes", "Jagdish Historic Stone Temple Carvings"],
+    gems: ["Sajjangarh Monsoon Palace Ridge Lookout", "Badi Lake Offbeat Silent Mountain Edge Path"],
+    breakfast: ["Traditional hot Poha topped with regional sev blends", "Freshly fried Kachoris from legacy bazaar lanes"],
+    eats: ["Ambrai Restaurant absolute lakeside dining view", "Traditional Mewari royal thali slow-cooked setups"]
   },
   "default": {
     famous: ["Central Heritage Landmark Exploration", "Panoramic Valley Lookout Point", "Ancient Historical Quarter Run", "Main City Botanical Garden"],
@@ -475,7 +499,7 @@ async function handleCredentialAuth() {
   }
 }
 
-/* 🌟 DYNAMIC TRAVEL THEMATIC GENERATOR SHIFT ENGINE */
+/* 🌟 DYNAMIC TRAVEL THEMATIC GENERATOR SHIFT ENGINE WITH EXPANDED POOLS & DYNAMIC BUTTON INJECTIONS */
 function selectThematicRandomEngine(categoryType) {
   const allChips = document.querySelectorAll('#destChips .chip');
   allChips.forEach(c => c.classList.remove('selected'));
@@ -484,33 +508,56 @@ function selectThematicRandomEngine(categoryType) {
   let chosenDestinationValue = "";
   
   if (categoryType === 'mountains') {
-    // Selects Mountain nodes contextually
-    const mountainPool = ["Spiti Valley, HP", "Munnar, Kerala"];
+    const mountainPool = ["Spiti Valley, HP", "Munnar, Kerala", "Leh Ladakh, JK", "Manali, HP", "Dharamshala, HP"];
     chosenDestinationValue = mountainPool[Math.floor(Math.random() * mountainPool.length)];
-    document.getElementById('startCity').value = "Delhi";
-    state.startCity = "Delhi";
+    const baseHub = chosenDestinationValue.includes("Munnar") ? "Kochi" : "Delhi";
+    document.getElementById('startCity').value = baseHub;
+    state.startCity = baseHub;
   } else if (categoryType === 'beaches') {
-    // Selects Beach nodes contextually
-    const beachPool = ["Gokarna, Karnataka", "Coorg, Karnataka"];
+    const beachPool = ["Gokarna, Karnataka", "Goa, India", "Varkala, Kerala"];
     chosenDestinationValue = beachPool[Math.floor(Math.random() * beachPool.length)];
     document.getElementById('startCity').value = "Bangalore";
     state.startCity = "Bangalore";
   } else {
-    // Default Heritage nodes contextually
-    chosenDestinationValue = "Hampi, Karnataka";
-    document.getElementById('startCity').value = "Bangalore";
-    state.startCity = "Bangalore";
+    const heritagePool = ["Hampi, Karnataka", "Udaipur, Rajasthan", "Jaipur, Rajasthan", "Varanasi, UP"];
+    chosenDestinationValue = heritagePool[Math.floor(Math.random() * heritagePool.length)];
+    const baseHub = chosenDestinationValue.includes("Hampi") ? "Bangalore" : "Delhi";
+    document.getElementById('startCity').value = baseHub;
+    state.startCity = baseHub;
   }
 
-  // Highlight matching items inside UI panels perfectly
+  let chipFound = false;
   allChips.forEach(chip => {
     if (chip.dataset.val === chosenDestinationValue) {
       chip.classList.add('selected');
-      state.destinations.push(chosenDestinationValue);
+      chipFound = true;
     }
   });
 
-  alert(`🎲 Theme Randomizer matched Category [${categoryType.toUpperCase()}]: Assigned Destination: ${chosenDestinationValue} starting out from ${state.startCity}!`);
+  if (!chipFound) {
+    const destChipsContainer = document.getElementById('destChips');
+    const newChip = document.createElement('div');
+    newChip.className = 'chip selected';
+    newChip.dataset.val = chosenDestinationValue;
+    
+    const cleanShortTitle = chosenDestinationValue.split(',')[0];
+    newChip.innerHTML = `✨ ${cleanShortTitle}`;
+    
+    newChip.addEventListener('click', () => {
+      newChip.classList.toggle('selected');
+      if (newChip.classList.contains('selected')) {
+        state.destinations = [chosenDestinationValue];
+      } else {
+        state.destinations = [];
+      }
+      validateDates();
+    });
+
+    destChipsContainer.appendChild(newChip);
+  }
+
+  state.destinations.push(chosenDestinationValue);
+  alert(`🎲 Theme Randomizer matched Category [${categoryType.toUpperCase()}]: Assigned Destination: ${chosenDestinationValue} departing from ${state.startCity}!`);
   validateDates();
 }
 
@@ -529,12 +576,16 @@ function runGeographicalDistanceSuggester() {
   else if (combinedString.includes("gokarna")) totalDistanceBase = 490;
   else if (combinedString.includes("hampi")) totalDistanceBase = 350;
   else if (combinedString.includes("spiti")) totalDistanceBase = 1250;
+  else if (combinedString.includes("ladakh")) totalDistanceBase = 1100;
+  else if (combinedString.includes("goa")) totalDistanceBase = 590;
+  else if (combinedString.includes("varkala")) totalDistanceBase = 680;
+  else if (combinedString.includes("udaipur")) totalDistanceBase = 650;
   
   state.calculatedDistanceKM = totalDistanceBase;
   
   let suggestedBuffers = 2;
   if (totalDistanceBase < 300) suggestedBuffers = 1;
-  if (totalDistanceBase > 800) suggestedBuffers = 4;
+  if (totalDistanceBase > 800) suggestedBuffers = 3;
   
   suggestionBox.style.display = 'block';
   suggestionBox.innerHTML = `🏁 <strong>Approximate Connection Distance:</strong> ~${totalDistanceBase} KM away from primary vector hubs.<br>💡 <strong>System Suggestion:</strong> We recommend configuring exactly <strong>${suggestedBuffers} Travel Transit Day(s)</strong> for this route setup.`;
@@ -743,7 +794,6 @@ function buildSummary() {
   `;
 }
 
-/* 🌟 ACTIVE INTERACTIVE SUB-ITINERARY ACTION PANEL INJECTOR */
 function injectExploreTargetIntoItinerary(targetType, contentValue, targetDayIndex) {
   const container = document.getElementById(`injectedExploreBox-day-${targetDayIndex}`);
   if (!container) return;
