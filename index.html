@@ -547,6 +547,9 @@ function selectThematicRandomEngine(categoryType) {
     state.startCity = baseHub;
   }
 
+  // Clear custom inputs when theme engines execute to prevent token pollution
+  document.getElementById('customDest').value = "";
+
   let chipFound = false;
   allChips.forEach(chip => {
     if (chip.dataset.val === chosenDestinationValue) {
@@ -656,7 +659,6 @@ function updateJourneyDaysState() {
   generateDailyVibeSelectors();
 }
 
-/* 🌟 DYNAMIC GLOBAL SYNC SYNC ENGINE REPAIRED PERMANENTLY */
 function applyVibesGloballyToAllDays() {
   const globalCheckboxes = document.querySelectorAll('#globalMassSchedulerGroup input[type="checkbox"]');
   let chosenVibesList = [];
@@ -687,24 +689,6 @@ function updateLiveHelperMapLinks(inputElement, dateStr) {
     foodLink.href = `https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(updatedCityValue)}`;
     sightsLink.href = `https://www.google.com/maps/search/${encodeURIComponent(updatedCityValue)}+top+attractions+things+to+do`;
   }
-}
-
-function validateDatesOnly() {
-  const startVal = document.getElementById('startDate').value;
-  const endVal = document.getElementById('endDate').value;
-  const errBox = document.getElementById('dateErrorBox');
-  const nextBtn = document.getElementById('btnStep3');
-
-  errBox.classList.remove('show'); nextBtn.disabled = false; nextBtn.style.opacity = '1';
-  state.startDate = startVal; state.endDate = endVal;
-
-  if (startVal && endVal) {
-    const s = new Date(startVal), e = new Date(endVal);
-    if (isNaN(s.getTime()) || isNaN(e.getTime())) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; return false; }
-    if (e < s) { errBox.classList.add('show'); nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; return false; }
-    state.days = Math.round((e - s) / 86400000) + 1;
-  } else { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; }
-  return true;
 }
 
 function generateDailyVibeSelectors() {
@@ -820,6 +804,13 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
 
   if (stepNum === 1) {
     state.startCity = document.getElementById('startCity').value.trim();
+    const customInputVal = document.getElementById('customDest').value.trim();
+    
+    // 🌟 FIXES VALIDATION LOGIC BREAK: Sync dynamic typed custom locations safely into state array before checker triggers
+    if (customInputVal && !state.destinations.includes(customInputVal)) {
+      state.destinations = [customInputVal];
+    }
+    
     if (state.destinations.length === 0 || !state.startCity) { err.classList.add('show'); return; }
   }
   if (stepNum === 2 && !state.crew) { err.classList.add('show'); return; }
@@ -865,9 +856,9 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   document.getElementById(`step${nextStepNum}`).classList.add('active');
   updateProgressBar();
   
-  /* 🌟 ELIMINATES THE BOTTOM FOCUS PAGE GLITCH NATIVELY */
   window.scrollTo({ top: 0, behavior: 'smooth' });
   
+  if (nextStepNum === 4) runGeographicalDistanceAndSpeedSuggester();
   if (nextStepNum === 7) buildSummary();
 }
 
@@ -966,7 +957,6 @@ async function triggerBuiltInGeneration() {
       dynamicMorningStrategy = `🧳 <strong>Clear Accommodations:</strong> Complete room checkouts, settle local service invoices, and initiate packing protocols. ${operationalDeductionNote}`;
       dynamicEveningStrategy = `🏡 <strong>Homeward Leg:</strong> Conclude return journey segments back into <strong>${state.startCity}</strong> via your chosen ${state.vehicleMode} setup. Trip complete!`;
     } else {
-      /* 🌟 TOP SELECTION REFLECTION INJECTION CORE RUNNING NATIVELY */
       if(day.vibes.includes("🏛️ Iconic Sights")) dynamicMorningStrategy = `🏛️ <strong>Iconic Spotlights:</strong> Beat local queues early to see: <em>"${primaryFamousSight}"</em> before peak crowd hours.`;
       if(day.vibes.includes("🏔️ Adventure Trekking")) dynamicMorningStrategy = `🏔️ <strong>Adventure Track:</strong> Pack gear early for high-energy exploration routes near ${day.place}.`;
       if(day.vibes.includes("🧘 Wellness & Slow")) dynamicEveningStrategy = `🧘 <strong>Slow Pace:</strong> Wind down at a quiet riverbank or rooftop cafe with traditional local tea blends.`;
@@ -1033,6 +1023,7 @@ function setupExclusiveChips(containerId, stateKey, callback) {
     chip.addEventListener('click', () => {
       document.getElementById(containerId).querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
       chip.classList.add('selected'); state[stateKey] = chip.dataset.val;
+      document.getElementById('customDest').value = ""; // Clear string inputs if hardware buttons are chosen
       if(callback) callback(chip.dataset.val);
     });
   });
@@ -1045,12 +1036,13 @@ function setupMultiSelectChips(containerId, stateKey, callback) {
       const val = chip.dataset.val;
       if (chip.classList.contains('selected')) { if(!state[stateKey].includes(val)) state[stateKey].push(val); } 
       else { state[stateKey] = state[stateKey].filter(v => v !== val); }
+      document.getElementById('customDest').value = ""; // Clear string inputs if hardware buttons are chosen
       if(callback) callback();
     });
   });
 }
 
-setupMultiSelectChips('destChips', 'destinations', () => { runGeographicalDistanceAndSpeedSuggester(); });
+setupMultiSelectChips('destChips', 'destinations', () => { if(state.startCity) runGeographicalDistanceAndSpeedSuggester(); });
 setupExclusiveChips('crewChips', 'crew', (val) => {
   const sizeField = document.getElementById('groupSizeField');
   if (['Friends', 'Family'].includes(val)) { sizeField.style.display = 'block'; state.groupSize = 4; document.getElementById('groupSize').value = 4; } 
