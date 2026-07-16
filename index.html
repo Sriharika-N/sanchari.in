@@ -381,6 +381,13 @@
       <div style="background: var(--white); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
         <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🏡 Phase 4: The Homeward Cruise (Closing the Loop)</h4>
         <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Complete the full travel circle configuration to arrive back home safely.</p>
+        
+        <!-- NEW INPUT NODE: Captures specific starting hub context for precise road telemetry processing -->
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label style="color:var(--ocean-mid);">📍 Where are you starting your journey back from?</label>
+          <input type="text" id="homewardStartCityInput" placeholder="e.g. Coorg, Udaipur, Ooty..." onchange="syncHomewardStartCityValue()">
+        </div>
+
         <div class="form-group">
           <div class="chips" id="leg3TransportChips">
             <div class="chip" data-val="Flight Return">✈️ Flying Back Home</div>
@@ -531,7 +538,8 @@ let state = {
   leg1TicketCost: 0, leg1FuelPrice: 102, leg1VehicleMileage: 15,
   routeStyle: 'Single Hub', stopoverCities: [],
   leg2DailyCost: 500, hasLayover: false,
-  leg3TicketCost: 0, leg3FuelPrice: 102, leg3VehicleMileage: 15
+  leg3TicketCost: 0, leg3FuelPrice: 102, leg3VehicleMileage: 15,
+  homewardStartCity: '' // Context parameters tracker node for custom return journeys
 };
 let currentStep = 1;
 const TOTAL_STEPS = 7;
@@ -894,7 +902,13 @@ function syncStopoverValuesIntoState() {
   runGeographicalDistanceAndSpeedSuggester();
 }
 
-// Fixed UI sync logic mapping accurate dataset strings to appropriate visibility wrappers
+// NEW Context synchronization pass handler for Phase 4 tracking
+function syncHomewardStartCityValue() {
+  state.homewardStartCity = document.getElementById('homewardStartCityInput').value.trim();
+  runGeographicalDistanceAndSpeedSuggester();
+}
+
+// FIXED: Clean split pattern checking to swap labels beautifully exactly like Phase 4 
 function syncDynamicCostUIFields() {
   const leg1Group = document.getElementById('leg1CostDynamicGroup');
   const leg1FareWrap = document.getElementById('leg1FareWrapper');
@@ -905,8 +919,16 @@ function syncDynamicCostUIFields() {
     if (state.transport === 'Full Road Trip') {
       leg1FuelWrap.style.display = 'flex'; leg1FareWrap.style.display = 'none';
     } else {
-      leg1FuelWrap.style.display = 'none'; leg1FareWrap.style.display = 'block';
-      document.getElementById('leg1FareLabel').textContent = `${state.transport.split(' ')[0]} Ticket Fare per Person (INR)`;
+      leg1FuelWrap.style.display = 'none'; 
+      leg1FareWrap.style.display = 'block';
+      
+      // Clean string slice mapping matching Phase 4 perfectly
+      let parsedLabelText = "Ticket";
+      if (state.transport.includes("Flight")) parsedLabelText = "Flight Ticket";
+      if (state.transport.includes("Train")) parsedLabelText = "Train Ticket";
+      if (state.transport.includes("Bus")) parsedLabelText = "Bus Ticket";
+      
+      document.getElementById('leg1FareLabel').textContent = `${parsedLabelText} Fare per Person (INR)`;
     }
   }
 
@@ -923,13 +945,19 @@ function syncDynamicCostUIFields() {
       leg3FuelWrap.style.display = 'flex'; leg3FareWrap.style.display = 'none';
     } else {
       leg3FuelWrap.style.display = 'none'; leg3FareWrap.style.display = 'block';
-      document.getElementById('leg3FareLabel').textContent = `${state.leg3Transport.split(' ')[0]} Return Fare per Person (INR)`;
+      
+      let parsedReturnLabelText = "Return Ticket";
+      if (state.leg3Transport.includes("Flight")) parsedReturnLabelText = "Flight Return Ticket";
+      if (state.leg3Transport.includes("Train")) parsedReturnLabelText = "Train Return Ticket";
+      if (state.leg3Transport.includes("Bus")) parsedReturnLabelText = "Bus Return Ticket";
+      
+      document.getElementById('leg3FareLabel').textContent = `${parsedReturnLabelText} Fare per Person (INR)`;
     }
   }
 }
 
 async function runGeographicalDistanceAndSpeedSuggester() {
-  syncDynamicCostUIFields(); // Forced active synchronization pass on calculation recalculation cycles
+  syncDynamicCostUIFields(); 
   
   const suggestionBox = document.getElementById('distanceSuggestionBox');
   const transitWrapper = document.getElementById('transitDaysWrapper');
@@ -1008,7 +1036,7 @@ async function runGeographicalDistanceAndSpeedSuggester() {
       🏎️ <strong>Route Strategy:</strong> ${routeSummaryLabel}<br>
       🎬 <strong>The Big Launch (Outbound):</strong> ${state.transport}<br>
       🗺️ <strong>The Roaming Rhythm (Local Sights):</strong> ${localOptionsDisplay}<br>
-      🏡 <strong>The Homeward Cruise (Coming Home):</strong> ${state.leg3Transport}<br>
+      🏡 <strong>The Homeward Cruise (Coming Home):</strong> From ${state.homewardStartCity || finalEndpointCity} via ${state.leg3Transport}<br>
       ⏱️ <strong>Estimated Continuous Travel Time:</strong> ~${exactDrivingHours}h ${formattedMinutes}m ${state.hasLayover ? '( Layover buffer incorporated)' : ''}.<br>
       💵 <strong>Estimated Expenses Metrics (Per Head):</strong> Launch: ₹${outboundCostPerHead} | Cruise: ₹${returnCostPerHead} | Local Transfers: ₹${totalLocalCommuteCostPerHead}<br>
       💰 <strong>Total Route Budget Pool Baseline:</strong> <span style="color:var(--coral); font-weight:700;">₹${cumulativeTransitSpend.toLocaleString('en-IN')} INR per traveler</span>.<br>
@@ -1065,11 +1093,11 @@ function generateDailyVibeSelectors() {
       customCardHtml = `
         <div class="daily-card" style="border-left: 4px solid var(--coral);">
           <div style="font-weight:600; color:var(--ocean-dark);">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
-          <p style="color:var(--coral); font-size:12px; font-weight:600; margin-top:2px;">🏡 Homeward Cruise leg — Heading Back</p>
+          <p style="color:var(--coral); font-size:12px; font-weight:600; margin-top:2px;">🏡 Homeward Cruise leg — Heading Back from ${state.homewardStartCity || finalBaseCity}</p>
           
           <div class="form-group" style="margin-top:10px;">
             <label>Current Location Base:</label>
-            <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${finalBaseCity}">
+            <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${state.homewardStartCity || finalBaseCity}">
             <div class="live-helper-bar"></div>
           </div>
 
@@ -1310,13 +1338,13 @@ function buildSummary() {
      let formattedStops = state.stopoverCities.map(c => `${c.cityName} (${c.shiftTime.split(' ')[0]})`);
      routePathStr += formattedStops.join(' ➔ ') + ' ➔ ';
   }
-  routePathStr += `${state.destinations[0]} ➔ ${state.startCity}`;
+  routePathStr += `${state.destinations[0]} ➔ Home to ${state.startCity}`;
 
   document.getElementById('tripSummary').innerHTML = `
     🗺️ Route Blueprint: <strong>${routePathStr}</strong><br>
     🏁 Full Loop Map Distance: <strong>~${state.calculatedDistanceKM} KM Track Mapped</strong><br>
     📅 Timeline Breakdown: <strong>${state.days} Days / ${state.nights} Nights Total</strong> ${state.hasLayover ? '(Scenic Layovers Blocked)' : ''}<br>
-    ⏱️ Timing Windows: Launch Departure at <strong>${state.startTime}</strong> on Day 1 | Returning Home Cruise by <strong>${state.endTime}</strong> on the Final Day<br>
+    ⏱️ Timing Windows: Launch Departure at <strong>${state.startTime}</strong> on Day 1 | Returning Home Cruise by <strong>${state.endTime}</strong> from ${state.homewardStartCity || state.destinations[0]}<br>
     🚗 Fleet Configuration: <strong>Launch via [${state.transport}] ➔ Roaming with [${localSummaryStr}] ➔ Cruise Return via [${state.leg3Transport}]</strong><br>
     ⛽ Consolidated Transit Expenses: <strong>₹${aggregateTransitExpense.toLocaleString('en-IN')} INR per head</strong><br>
     💰 Target Destination Budget Allocation: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR Per Traveler</strong>
