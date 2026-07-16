@@ -326,7 +326,7 @@
         </div>
       </div>
 
-      <!-- SECTION 2: CHOOSE YOUR PACE -->
+      <!-- SECTION 2: CHOOSE YOUR PACE (OPTION B BUILDER WITH HIGH-VIBE FLAGS SYSTEM) -->
       <div style="background: var(--white); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
         <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🏎️ Phase 2: Choose Your Pace</h4>
         <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Are you staying at one main destination, or building a multi-city road trip adventure?</p>
@@ -340,6 +340,15 @@
           <label style="color: var(--coral); margin-bottom:8px;">📍 Custom Stopover Corridor Scheduler:</label>
           <div id="stopoverRowsContainer"></div>
           <button class="btn btn-ghost" style="padding: 6px 12px; font-size: 12px; margin-top: 6px; background: white;" onclick="addNewStopoverRow()">➕ Add Another Stopover Town</button>
+        </div>
+
+        <!-- NEW RE-ENGINEERED PROPOSAL 2 HIGH-VIBE FLAGS BLOCK: Removes confusing hardcoded dropdown dropdown systems entirely -->
+        <div style="border-top: 1px dashed var(--border); margin-top: 16px; padding-top: 14px;">
+          <label style="color:var(--ocean-dark); font-weight:700; font-size:12px; margin-bottom:6px;">⏱️ Transit Pacing: Flag Pure Road Trip/Travel-Only Days</label>
+          <div class="vibe-checkbox-group">
+            <label class="vibe-checkbox-label"><input type="checkbox" id="flagDay1TransitCb" checked onchange="runGeographicalDistanceAndSpeedSuggester()"> 🛣️ Day 1 is a pure Travel-Only day (No sights planned)</label>
+            <label class="vibe-checkbox-label"><input type="checkbox" id="flagLastDayTransitCb" checked onchange="runGeographicalDistanceAndSpeedSuggester()"> 🏡 Last Day is a pure Travel-Only day (Heading home)</label>
+          </div>
         </div>
       </div>
 
@@ -416,15 +425,6 @@
       
       <!-- Interactive Summary Output Card Container -->
       <div id="distanceSuggestionBox" style="background:var(--sand); padding:16px; border-radius:12px; font-size:14px; margin-bottom:18px; display:none; color:var(--ocean-dark); border-left: 4px solid var(--gold);"></div>
-
-      <div class="form-group" id="transitDaysWrapper" style="display:none;">
-        <label style="color:var(--coral);">How many days will be spent purely on the road / traveling inter-city?</label>
-        <select id="transitDaysCount" onchange="updateJourneyDaysState()">
-          <option value="2">2 Days (Day 1 traveling there + Last Day traveling home)</option>
-          <option value="1">1 Day (Quick morning travel / only traveling one way)</option>
-          <option value="0">0 Days (I am already at the destination location / exploring from Day 1)</option>
-        </select>
-      </div>
 
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="goBack(3)">← Back</button>
@@ -801,7 +801,6 @@ function syncHomewardStartCityValue() {
   runGeographicalDistanceAndSpeedSuggester();
 }
 
-// COMPLETE UNIFIED RESOLUTION PASS: Solves dynamic input swaps perfectly for Phase 1 and 4
 function syncDynamicCostUIFields() {
   const leg1Group = document.getElementById('leg1CostDynamicGroup');
   const leg1FareWrap = document.getElementById('leg1FareWrapper');
@@ -853,10 +852,9 @@ async function runGeographicalDistanceAndSpeedSuggester() {
   syncDynamicCostUIFields(); 
   
   const suggestionBox = document.getElementById('distanceSuggestionBox');
-  const transitWrapper = document.getElementById('transitDaysWrapper');
   
   if (!state.destinations.length || !state.transport) {
-    suggestionBox.style.display = 'none'; transitWrapper.style.display = 'none'; return;
+    suggestionBox.style.display = 'none'; return;
   }
 
   suggestionBox.style.display = 'block';
@@ -872,6 +870,15 @@ async function runGeographicalDistanceAndSpeedSuggester() {
   state.leg3TicketCost = parseInt(document.getElementById('leg3TicketCostInput').value) || 0;
   state.leg3FuelPrice = parseInt(document.getElementById('leg3FuelPrice').value) || 102;
   state.leg3VehicleMileage = parseInt(document.getElementById('leg3VehicleMileage').value) || 15;
+
+  // Read Proposal 2 Checkbox Configurations to set dynamic pace settings flags natively
+  const isDay1PureTravel = document.getElementById('flagDay1TransitCb').checked;
+  const isLastDayPureTravel = document.getElementById('flagLastDayTransitCb').checked;
+  
+  let dynamicPaceAllocationSum = 0;
+  if (isDay1PureTravel) dynamicPaceAllocationSum += 1;
+  if (isLastDayPureTravel) dynamicPaceAllocationSum += 1;
+  state.transitDaysAllocation = dynamicPaceAllocationSum;
 
   try {
     const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=`;
@@ -920,10 +927,6 @@ async function runGeographicalDistanceAndSpeedSuggester() {
     
     let localOptionsDisplay = state.leg2Transport.length > 0 ? state.leg2Transport.join(", ") : "None chosen";
     
-    let suggestedJourneyDays = finalCalculatedKM > 500 ? 2 : 1;
-    if (state.hasLayover) suggestedJourneyDays += 1;
-
-    transitWrapper.style.display = 'block';
     suggestionBox.innerHTML = `
       🗺️ <strong>Total Map Distance:</strong> ~${finalCalculatedKM} KM total loop route mapping.<br>
       🏎️ <strong>Route Strategy:</strong> ${routeSummaryLabel}<br>
@@ -933,23 +936,13 @@ async function runGeographicalDistanceAndSpeedSuggester() {
       ⏱️ <strong>Estimated Continuous Travel Time:</strong> ~${exactDrivingHours}h ${formattedMinutes}m ${state.hasLayover ? '( Layover buffer incorporated)' : ''}.<br>
       💵 <strong>Estimated Expenses Metrics (Per Head):</strong> Launch: ₹${outboundCostPerHead} | Cruise: ₹${returnCostPerHead} | Local Transfers: ₹${totalLocalCommuteCostPerHead}<br>
       💰 <strong>Total Route Budget Pool Baseline:</strong> <span style="color:var(--coral); font-weight:700;">₹${cumulativeTransitSpend.toLocaleString('en-IN')} INR per traveler</span>.<br>
-      💡 <strong>Our Recommendation:</strong> We suggest allocating exactly <strong>${suggestedJourneyDays} Travel Day(s)</strong> total.
+      💡 <strong>Our Pacing:</strong> Calculated cleanly using your travel day checkboxes below.
     `;
-
-    document.getElementById('transitDaysCount').value = suggestedJourneyDays;
-    state.transitDaysAllocation = suggestedJourneyDays;
-    generateDailyVibeSelectors();
 
   } catch (apiError) {
     console.warn("API map fallback sequence run.", apiError);
-    transitWrapper.style.display = 'block';
-    suggestionBox.innerHTML = `🏁 <strong>Transit Map Configuration Resolution complete.</strong> Progress safely forward to daily setup.`;
+    suggestionBox.innerHTML = `🏁 <strong>Transit Map Configuration Loop resolved safely.</strong>`;
   }
-}
-
-function updateJourneyDaysState() {
-  state.transitDaysAllocation = parseInt(document.getElementById('transitDaysCount').value) || 0;
-  generateDailyVibeSelectors();
 }
 
 function broadcastVibesLiveToTimeline() {
@@ -960,8 +953,11 @@ function broadcastVibesLiveToTimeline() {
   });
 
   document.querySelectorAll('.daily-card').forEach((card, idx) => {
-    const isLastCardElement = (state.transitDaysAllocation >= 1 && idx === (state.days - 1));
-    if (isLastCardElement) return; 
+    const isDay1TravelOnly = document.getElementById('flagDay1TransitCb').checked;
+    const isLastDayTravelOnly = document.getElementById('flagLastDayTransitCb').checked;
+    
+    if (isDay1TravelOnly && idx === 0) return;
+    if (isLastDayTravelOnly && idx === (state.days - 1)) return; 
 
     card.querySelectorAll('.daily-vibe-cb').forEach(cb => {
       cb.checked = globallySelectedVibes.includes(cb.value);
@@ -1028,16 +1024,21 @@ function generateDailyVibeSelectors() {
   }
   if (inheritedVibes.length === 0) inheritedVibes.push("🍛 Local Foodie");
 
+  const isDay1PureTravel = document.getElementById('flagDay1TransitCb').checked;
+  const isLastDayPureTravel = document.getElementById('flagLastDayTransitCb').checked;
+
   for (let i = 0; i < state.days; i++) {
     const current = new Date(start.getTime());
     current.setDate(start.getDate() + i);
     const dayName = current.toLocaleDateString('en-US', { weekday: 'long' });
     const dateStr = current.toISOString().split('T')[0];
 
-    const isLastDayOfTravel = (state.transitDaysAllocation >= 1 && i === (state.days - 1));
+    const isFirstDayTransitNode = (isDay1PureTravel && i === 0);
+    const isLastDayTransitNode = (isLastDayPureTravel && i === (state.days - 1));
+    
     let customCardHtml = "";
 
-    if (isLastDayOfTravel) {
+    if (isLastDayTransitNode) {
       let platformLogisticsCheckboxes = "";
       if(state.vehicleMode === "No Private Vehicle") {
         platformLogisticsCheckboxes = `
@@ -1054,7 +1055,7 @@ function generateDailyVibeSelectors() {
       customCardHtml = `
         <div class="daily-card" style="border-left: 4px solid var(--coral);">
           <div style="font-weight:600; color:var(--ocean-dark);">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
-          <p style="color:var(--coral); font-size:12px; font-weight:600; margin-top:2px;">🏡 Homeward Cruise leg — Heading Back from ${state.homewardStartCity || finalBaseCity}</p>
+          <p style="color:var(--coral); font-size:12px; font-weight:600; margin-top:2px;">🏡 Homeward Cruise Day — Heading Back from ${state.homewardStartCity || finalBaseCity}</p>
           
           <div class="form-group" style="margin-top:10px;">
             <label>Current Location Base:</label>
@@ -1065,8 +1066,7 @@ function generateDailyVibeSelectors() {
           <div class="form-group">
             <label style="color:var(--ocean-dark);">📋 Departure Travel Checklist:</label>
             <div style="display:flex; flex-direction:column; gap:4px; margin-top:5px;">
-              <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🛌 Clear accommodations locker inventories, pick up credentials packs</label>
-              <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🧾 Clear local dining vouchers, settle boutique property clearings</label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🛌 Clear property lockers, complete check-out sequences packs</label>
               ${platformLogisticsCheckboxes}
             </div>
           </div>
@@ -1075,12 +1075,27 @@ function generateDailyVibeSelectors() {
           <input type="hidden" class="daily-transit-mode-select" value="Return Home">
         </div>
       `;
-    } else {
-      let conditionalInputLayout = "";
-      if (state.transitDaysAllocation >= 2 && i === 0) {
-        conditionalInputLayout = `<p style="color:var(--coral); font-size:12px; font-weight:600;">🛣️ Day 1: The Big Launch — Kicking Off the Journey</p>`;
-      }
+    } else if (isFirstDayTransitNode) {
+      customCardHtml = `
+        <div class="daily-card" style="border-left: 4px solid var(--ocean-mid);">
+          <div style="font-weight:600; color:var(--ocean-dark);">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
+          <p style="color:var(--ocean-mid); font-size:12px; font-weight:600; margin-top:2px;">🛫 The Big Launch Travel Day — Departing from ${state.startCity}</p>
+          
+          <div class="form-group" style="margin-top:10px;">
+            <label>Heading Towards Destination:</label>
+            <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${state.startCity}">
+            <div class="live-helper-bar"></div>
+          </div>
 
+          <div class="form-group" style="background:#f0f4f8; padding:12px; border-radius:8px; border:1px solid #d0e0f0; font-size:13.5px; color:var(--ocean-dark);">
+            🚀 <strong>Cruising Outbound:</strong> Today is tracked as an active transit day traveling towards your destination hub via <strong>${state.transport}</strong>. Check into your arrival accommodations tonight and rest up for tomorrow's exploration!
+          </div>
+
+          <input type="hidden" class="daily-things-input" data-date="${dateStr}" value="Launch travel sectors day.">
+          <input type="hidden" class="daily-transit-mode-select" value="${state.transport}">
+        </div>
+      `;
+    } else {
       let computedDefaultPlace = finalBaseCity;
       let stopoverNoticeString = "";
       let automaticPlaceholderStrategyText = "e.g. Roam around local markets, explore top attractions...";
@@ -1123,7 +1138,6 @@ function generateDailyVibeSelectors() {
       customCardHtml = `
         <div class="daily-card">
           <div style="font-weight:600; color:var(--ocean-dark); margin-bottom:4px;">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
-          ${conditionalInputLayout}
           ${stopoverNoticeString}
           
           <div class="form-group" style="margin-top:8px;">
@@ -1219,12 +1233,20 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
       const placeInp = card.querySelector('.daily-place-input');
       const dateStr = placeInp.dataset.date;
       const placeVal = placeInp.value.trim();
-      const transitVal = card.querySelector('.daily-transit-mode-select').value;
+      
+      const selectEl = card.querySelector('.daily-transit-mode-select');
+      const transitVal = selectEl ? selectEl.value : "Pure Travel Outbound";
+      
       const thingsVal = card.querySelector('.daily-things-input') ? card.querySelector('.daily-things-input').value.trim() : "Return logistics blueprint.";
       
       let selectedVibes = [];
-      if(state.transitDaysAllocation >= 1 && idx === (state.days - 1)) {
-        selectedVibes.push("🏡 Return Logistics Hub");
+      const isDay1TravelOnly = document.getElementById('flagDay1TransitCb').checked;
+      const isLastDayTravelOnly = document.getElementById('flagLastDayTransitCb').checked;
+
+      if(isLastDayTravelOnly && idx === (state.days - 1)) {
+        selectedVibes.push("🏡 Homeward Cruise Logistics");
+      } else if (isDay1TravelOnly && idx === 0) {
+        selectedVibes.push("🛫 Outbound Launch Transit");
       } else {
         card.querySelectorAll('.daily-vibe-cb:checked').forEach(cb => selectedVibes.push(cb.value));
         if(selectedVibes.length === 0) selectedVibes.push("🍛 Local Foodie");
@@ -1340,7 +1362,7 @@ function buildSummary() {
   document.getElementById('tripSummary').innerHTML = `
     🗺️ Route Blueprint: <strong>${routePathStr}</strong><br>
     🏁 Full Loop Map Distance: <strong>~${state.calculatedDistanceKM} KM Track Mapped</strong><br>
-    📅 Timeline Breakdown: <strong>${state.days} Days / ${state.nights} Nights Total</strong> ${state.hasLayover ? '(Scenic Layovers Blocked)' : ''}<br>
+    📅 Timeline Breakdown: <strong>${state.days} Days / ${state.nights} Nights Total</strong><br>
     ⏱️ Timing Windows: Launch Departure at <strong>${state.startTime}</strong> on Day 1 | Returning Home Cruise by <strong>${state.endTime}</strong> from ${state.homewardStartCity || state.destinations[0]}<br>
     🚗 Fleet Configuration: <strong>Launch via [${state.transport}] ➔ Roaming with [${localSummaryStr}] ➔ Cruise Return via [${state.leg3Transport}]</strong><br>
     ⛽ Consolidated Transit Expenses: <strong>₹${aggregateTransitExpense.toLocaleString('en-IN')} INR per head</strong><br>
@@ -1388,22 +1410,17 @@ async function triggerBuiltInGeneration() {
     let dynamicMorningStrategy = `🥞 <strong>Breakfast Spotting:</strong> Try local options near your room: <em>"${morningBreakfastVibe}"</em>.`;
     let dynamicEveningStrategy = `🌙 <strong>Evening Highlights:</strong> Head out to explore local markets and try: <em>"${eveningCulinaryVibe}"</em>.`;
 
-    const isLastDay = (state.transitDaysAllocation >= 1 && index === (state.days - 1));
+    const isDay1TravelOnly = document.getElementById('flagDay1TransitCb').checked;
+    const isLastDayTravelOnly = document.getElementById('flagLastDayTransitCb').checked;
+    
+    const isFirstDayPureTransit = (isDay1TravelOnly && index === 0);
+    const isLastDayPureTransit = (isLastDayTravelOnly && index === (state.days - 1));
 
-    let transitCardLogisticsHtml = "";
-    if (day.dailyTransit && day.dailyTransit !== "Local Sightseeing" && !isLastDay) {
-      transitCardLogisticsHtml = `
-        <div style="margin: 10px 0; padding: 10px 14px; background: #fff8e6; color: #856404; font-size: 13.5px; border-radius: 8px; border: 1px solid #ffeeba; display: flex; flex-direction: column; gap: 4px;">
-          <div>🔀 <strong>Transit Connection Active:</strong> Moving locations today utilizing: <strong>${day.dailyTransit}</strong>.</div>
-        </div>
-      `;
-    }
-
-    if (state.transitDaysAllocation >= 2 && index === 0) {
+    if (isFirstDayPureTransit) {
       dayVibeHeaderString = "🛣️ The Big Launch Day (Heading Out)";
       dynamicMorningStrategy = `🛫 <strong>Launch Departure [Leaving at: ${state.startTime}]:</strong> Commencing your journey outward from <strong>${state.startCity}</strong> towards ${day.place} via ${state.transport}. Check into your arrival stay.`;
       dynamicEveningStrategy = `🌙 <strong>Evening:</strong> Settle down from travel hours. Grab a casual dinner nearby and rest up for tomorrow.`;
-    } else if (isLastDay) {
+    } else if (isLastDayPureTransit) {
       dayVibeHeaderString = "🏡 The Homeward Cruise Day (Closing the Loop)";
       let operationalDeductionNote = (state.vehicleMode !== "No Private Vehicle") ? "Double-check fuel levels, route maps for mountain bottlenecks, and engine vitals." : "Confirm your public transport booking times and double check baggage clearances.";
       dynamicMorningStrategy = `🧳 <strong>Packing Up:</strong> Complete your hotel check-out, settle outstanding bills, and pack your luggage. ${operationalDeductionNote}`;
@@ -1436,7 +1453,7 @@ async function triggerBuiltInGeneration() {
 
         <div style="display:flex; flex-direction:column; gap:12px; font-size:14px;">
           <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);"><strong>🌅 Morning plan:</strong> <p style="margin-top:3px; color:var(--ink);">${dynamicMorningStrategy}</p></div>
-          ${!(isLastDay) ? `
+          ${(!isFirstDayPureTransit && !isLastDayPureTransit) ? `
           <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);">
             <strong>☀️ Afternoon Sightseeing:</strong> 
             <div style="margin-bottom:6px; padding:6px; background:var(--coral-light); border-radius:6px; font-size:13px;">🎯 Your Plan: <em>"${day.thingsToDo || 'Explore local spots and attractions.'}"</em></div>
@@ -1449,7 +1466,7 @@ async function triggerBuiltInGeneration() {
           <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);"><strong>🌙 Evening plan:</strong> <p style="margin-top:3px; color:var(--ink);">${dynamicEveningStrategy}</p></div>
         </div>
         
-        ${!isLastDay ? `
+        ${(!isFirstDayPureTransit && !isLastDayPureTransit) ? `
         <div style="margin-top:18px; display:flex; flex-wrap:wrap; gap:10px; border-top:1px solid var(--border); padding-top:14px;">
           <a href="${liveHotelPortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--ocean); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">🏨 Live Stays & Prices</a>
           <a href="${liveFoodPortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--success); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">🍛 Top Restaurants Reviews</a>
