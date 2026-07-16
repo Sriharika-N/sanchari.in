@@ -905,9 +905,7 @@ function syncHomewardStartCityValue() {
   runGeographicalDistanceAndSpeedSuggester();
 }
 
-// FULLY UNIFIED SYNC LOGIC ENGINE: Matches labels perfectly for Phase 1 & Phase 4 dynamically
 function syncDynamicCostUIFields() {
-  // Phase 1 Optimization
   const leg1Group = document.getElementById('leg1CostDynamicGroup');
   const leg1FareWrap = document.getElementById('leg1FareWrapper');
   const leg1FuelWrap = document.getElementById('leg1FuelWrapper');
@@ -929,11 +927,9 @@ function syncDynamicCostUIFields() {
     }
   }
 
-  // Phase 3 Optimization
   const leg2Group = document.getElementById('leg2CostDynamicGroup');
   leg2Group.style.display = state.leg2Transport.length > 0 ? 'block' : 'none';
 
-  // Phase 4 Optimization (Perfect mirror of Phase 1 layout wrappers)
   const leg3Group = document.getElementById('leg3CostDynamicGroup');
   const leg3FareWrap = document.getElementById('leg3FareWrapper');
   const leg3FuelWrap = document.getElementById('leg3FuelWrapper');
@@ -1076,6 +1072,51 @@ function broadcastVibesLiveToTimeline() {
   });
 }
 
+/* Free Route-Checking API Integration Wrapper Function */
+async function queryInAppRealtimeDistance(dateKey) {
+  const startLoc = document.getElementById(`local-route-start-${dateKey}`).value.trim();
+  const endLoc = document.getElementById(`local-route-end-${dateKey}`).value.trim();
+  const feedbackNode = document.getElementById(`local-route-result-${dateKey}`);
+  
+  if(!startLoc || !endLoc) {
+    feedbackNode.innerHTML = `<span style="color:red;">⚠️ Please enter both starting and ending spots to compute metric channels.</span>`;
+    return;
+  }
+  
+  feedbackNode.innerHTML = `⏳ Checking OpenStreetMap vector corridors...`;
+  
+  try {
+    const geocodeBase = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=`;
+    const resA = await fetch(geocodeBase + encodeURIComponent(startLoc));
+    const dataA = await resA.json();
+    const resB = await fetch(geocodeBase + encodeURIComponent(endLoc));
+    const dataB = await resB.json();
+    
+    if(dataA.length && dataB.length) {
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${dataA[0].lon},${dataA[0].lat};${dataB[0].lon},${dataB[0].lat}?overview=false`;
+      const osrmRes = await fetch(osrmUrl);
+      const osrmData = await osrmRes.json();
+      
+      if (osrmData.routes && osrmData.routes.length) {
+        const routeData = osrmData.routes[0];
+        const distanceKM = (routeData.distance / 1000).toFixed(1);
+        const durationMins = Math.round(routeData.duration / 60);
+        
+        feedbackNode.innerHTML = `
+          <div style="background:var(--success-bg); color:var(--success); padding:8px; border-radius:6px; font-size:13px; margin-top:8px; border-left:3px solid var(--success);">
+            🏁 <strong>In-App Distance Matrix:</strong> ~${distanceKM} KM | ⏱️ <strong>Drive Duration:</strong> ~${durationMins} mins<br>
+            <a href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startLoc)}&destination=${encodeURIComponent(endLoc)}&travelmode=driving" target="_blank" style="color:var(--ocean); font-weight:600; text-decoration:underline; font-size:12px; display:inline-block; margin-top:4px;">🗺️ View Complete Map Track & Live Layovers</a>
+          </div>
+        `;
+        return;
+      }
+    }
+    throw new Error("Coordinates mismatch.");
+  } catch(e) {
+    feedbackNode.innerHTML = `<span style="color:var(--muted); font-size:12.5px;">🏁 Fallback: <a href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startLoc)}&destination=${encodeURIComponent(endLoc)}" target="_blank" style="text-decoration:underline; font-weight:600; color:var(--coral);">Launch free external directional routing loops on Google Maps</a></span>`;
+  }
+}
+
 function generateDailyVibeSelectors() {
   const container = document.getElementById('dailyVibeContainer');
   if (!container || !state.startDate || isNaN(state.days) || state.days <= 0) return;
@@ -1160,13 +1201,30 @@ function generateDailyVibeSelectors() {
          }
       }
 
-      let initialTransitOptions = "";
+      // Populate loop selections options dynamically matching active configurations chosen from Step 4
+      let transitOptionsMarkup = "";
+      let recommendedOptionValue = "Local Sightseeing";
+      
+      if(stopoverNoticeString !== "") {
+         // Migration day priority logic selection parameters
+         let contextHopObj = (i === 0) ? state.stopoverCities[0] : state.stopoverCities[1];
+         let firstPrimaryMode = contextHopObj.transitModes[0] || "Hired Outstation Cab";
+         recommendedOptionValue = firstPrimaryMode;
+         transitOptionsMarkup += `<option value="${firstPrimaryMode}" selected>⭐ [AI Best Choice per Route Shift]: ${firstPrimaryMode}</option>`;
+      } else {
+         transitOptionsMarkup += `<option value="Local Sightseeing" selected>⭐ [AI Best Choice for Sightseeing]: Local Shuttles & Cabs</option>`;
+      }
+
       if (state.leg2Transport.length > 0) {
          state.leg2Transport.forEach(opt => {
-            initialTransitOptions += `<option value="${opt}">Keep option: ${opt}</option>`;
+            if(opt !== recommendedOptionValue) {
+               transitOptionsMarkup += `<option value="${opt}">Alternative Mode Option: ${opt}</option>`;
+            }
          });
       }
-      initialTransitOptions += `<option value="Local Sightseeing">Stay at current destination hub area</option>`;
+      if(recommendedOptionValue !== "Local Sightseeing") {
+         transitOptionsMarkup += `<option value="Local Sightseeing">Alternative Mode Option: Local Shuttles & Cabs</option>`;
+      }
 
       customCardHtml = `
         <div class="daily-card">
@@ -1178,20 +1236,31 @@ function generateDailyVibeSelectors() {
             <label>Target Location/City for this Day:</label>
             <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${computedDefaultPlace}" placeholder="e.g. Jaipur, Udaipur...">
             <div class="live-helper-bar">
-              <a href="https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(computedDefaultPlace)}" target="_blank" id="live-link-food-${dateStr}" class="live-helper-link">🍛 Choose From Live Restaurant Links</a>
-              <a href="https://www.google.com/maps/search/${encodeURIComponent(computedDefaultPlace)}+top+attractions+things+to+do" target="_blank" id="live-link-sights-${dateStr}" class="live-helper-link">🏛️ Choose From Live Sightseeing Attractions</a>
-              <a href="https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(computedDefaultPlace)}" target="_blank" id="live-link-stay-${dateStr}" class="live-helper-link">🏨 Choose From Live Stays</a>
+              <a href="https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(computedDefaultPlace)}" target="_blank" id="live-link-food-${dateStr}" class="live-helper-link">🍛 Live Restaurant Deals nearby</a>
+              <a href="https://www.google.com/maps/search/${encodeURIComponent(computedDefaultPlace)}+top+attractions+things+to+do" target="_blank" id="live-link-sights-${dateStr}" class="live-helper-link">🏛️ Top Attractions List</a>
+              <a href="https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(computedDefaultPlace)}" target="_blank" id="live-link-stay-${dateStr}" class="live-helper-link">🏨 Live Room Stays</a>
             </div>
           </div>
 
           <div class="form-group" style="margin-top: 14px; background: var(--paper); padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
             <label style="color: var(--coral); font-size: 11px;">🔀 Active Route Choice For This Day:</label>
             <select class="daily-transit-mode-select" style="padding: 6px 10px; font-size: 13px;">
-              ${initialTransitOptions}
+              ${transitOptionsMarkup}
             </select>
           </div>
 
-          <div class="form-group">
+          <!-- FREE GOOGLE MAPS LINKED IN-APP TELEMETRY BUILDER PANEL NODE -->
+          <div class="form-group" style="background:#f9f6f0; border:1px dashed var(--gold); border-radius:10px; padding:12px; margin-top:14px;">
+            <label style="font-size:10.5px; color:var(--ocean-dark); font-weight:700;">🗺️ Free In-App Distance & Layover Checker</label>
+            <div style="display:flex; gap:8px; margin-top:5px;">
+              <input type="text" id="local-route-start-${dateStr}" placeholder="Starting point (e.g. Hotel / Station)" value="${computedDefaultPlace}" style="font-size:12px; padding:6px 10px;">
+              <input type="text" id="local-route-end-${dateStr}" placeholder="Ending viewpoint (e.g. Abbey Falls / Monument)" style="font-size:12px; padding:6px 10px;">
+            </div>
+            <button class="btn btn-ghost" onclick="queryInAppRealtimeDistance('${dateStr}')" style="width:100%; font-size:12px; padding:6px; margin-top:8px; background:white; border-color:var(--gold); color:var(--gold);">Calculate Distance & Route Vectors 🔄</button>
+            <div id="local-route-result-${dateStr}"></div>
+          </div>
+
+          <div class="form-group" style="margin-top:14px;">
             <label>Select Daily Vibes (Full Traveler Control / Autonomy Active):</label>
             <div class="vibe-checkbox-group">
               <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🏛️ Iconic Sights" ${inheritedVibes.includes("🏛️ Iconic Sights") ? 'checked' : ''}> 🏛️ Iconic Sights</label>
@@ -1203,8 +1272,15 @@ function generateDailyVibeSelectors() {
           </div>
 
           <div class="form-group">
-            <label>Things you want to do here specifically (Choose from links above):</label>
+            <label>Things you want to do here specifically:</label>
             <input type="text" class="daily-things-input" data-date="${dateStr}" value="${stopoverNoticeString ? automaticPlaceholderStrategyText : ''}" placeholder="${automaticPlaceholderStrategyText}">
+          </div>
+          
+          <!-- LIVE COMPANION TICKET SEARCH HELPERS LINKS BAR -->
+          <div style="display:flex; gap:6px; margin-top:12px; border-top:1px solid var(--border); padding-top:10px;">
+            <a href="https://www.google.com/travel/flights" target="_blank" style="flex:1; font-size:11px; color:white; background:var(--ocean-mid); padding:6px; border-radius:6px; text-align:center; text-decoration:none; font-weight:600;">✈️ Search Flights</a>
+            <a href="https://www.irctc.co.in" target="_blank" style="flex:1; font-size:11px; color:white; background:var(--success); padding:6px; border-radius:6px; text-align:center; text-decoration:none; font-weight:600;">🚂 Book IRCTC Rail</a>
+            <a href="https://www.redbus.in" target="_blank" style="flex:1; font-size:11px; color:white; background:var(--coral); padding:6px; border-radius:6px; text-align:center; text-decoration:none; font-weight:600;">🚌 Book Bus Seats</a>
           </div>
         </div>
       `;
