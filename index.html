@@ -101,7 +101,10 @@
   .duration-metric { font-size: 18px; font-weight: 700; color: var(--ocean-dark); }
   .duration-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
   
-  .stopover-row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+  .stopover-card-block { 
+    background: var(--white); border: 1.5px solid var(--border); border-radius: 14px; 
+    padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+  }
 </style>
 </head>
 <body>
@@ -323,7 +326,7 @@
         </div>
       </div>
 
-      <!-- SECTION 2: CHOOSE YOUR PACE (OPTION B BUILDER) -->
+      <!-- SECTION 2: CHOOSE YOUR PACE -->
       <div style="background: var(--white); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
         <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🏎️ Phase 2: Choose Your Pace</h4>
         <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Are you staying at one main destination, or building a multi-city road trip adventure?</p>
@@ -333,17 +336,14 @@
           <div class="chip" data-val="Multi-City" onclick="toggleRouteStyle('Multi-City')">🚀 Multi-City Road Trip Stopovers</div>
         </div>
 
-        <!-- Dynamic Multi-City Stopover List Container -->
         <div id="multiCityBuilderPanel" style="display: none; background: var(--paper); padding: 16px; border-radius: 10px; margin-bottom: 12px;">
-          <label style="color: var(--coral);">📍 Map Your Stopover Destinations Corridor:</label>
-          <div id="stopoverRowsContainer">
-            <!-- Dynamic stopover input rows spawn here -->
-          </div>
+          <label style="color: var(--coral); margin-bottom:8px;">📍 Custom Stopover Corridor Scheduler:</label>
+          <div id="stopoverRowsContainer"></div>
           <button class="btn btn-ghost" style="padding: 6px 12px; font-size: 12px; margin-top: 6px; background: white;" onclick="addNewStopoverRow()">➕ Add Another Stopover Town</button>
         </div>
       </div>
 
-      <!-- SECTION 3: THE ROAMING RHYTHM (MULTI SELECT) -->
+      <!-- SECTION 3: THE ROAMING RHYTHM -->
       <div style="background: var(--white); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
         <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🗺️ Phase 3: The Roaming Rhythm (Exploring Town)</h4>
         <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Select all options you'll use to explore and commute locally within city hubs.</p>
@@ -364,9 +364,15 @@
         </div>
 
         <div class="form-group" style="margin-top:14px;">
-          <label>Layovers & Delays</label>
-          <div class="vibe-checkbox-group">
+          <label>Layovers & Highway Pitstop Vibes</label>
+          <div class="vibe-checkbox-group" style="margin-bottom:10px;">
             <label class="vibe-checkbox-label"><input type="checkbox" id="layoverToggle" value="Yes" onchange="runGeographicalDistanceAndSpeedSuggester()"> Account for a scenic stopover or long delay layover window?</label>
+          </div>
+          <label style="font-size:11px; color:var(--muted);">🚙 Route Pitstop Filters (Things you want along the highway):</label>
+          <div class="vibe-checkbox-group">
+            <label class="vibe-checkbox-label"><input type="checkbox" checked value="🍛 Dhabas"> 🍛 Highway Dhabas</label>
+            <label class="vibe-checkbox-label"><input type="checkbox" value="📸 Viewpoints"> 📸 Scenic Viewpoints</label>
+            <label class="vibe-checkbox-label"><input type="checkbox" value="🏛️ Detours"> 🏛️ Heritage Detours</label>
           </div>
         </div>
       </div>
@@ -402,7 +408,7 @@
         </div>
       </div>
       
-      <!-- Interactive Summary Matrix Output Card Container -->
+      <!-- Interactive Summary Output Card Container -->
       <div id="distanceSuggestionBox" style="background:var(--sand); padding:16px; border-radius:12px; font-size:14px; margin-bottom:18px; display:none; color:var(--ocean-dark); border-left: 4px solid var(--gold);"></div>
 
       <div class="form-group" id="transitDaysWrapper" style="display:none;">
@@ -518,7 +524,6 @@ const travelPlannerSupabaseClient = window.supabase.createClient(SUPABASE_URL, S
 let activeUserToken = null;
 let currentAuthMode = 'signin'; 
 
-// Master configuration state metrics tracking map
 let state = { 
   destinations: [], startCity: '', intermediateHub: '', startDate: '', endDate: '', startTime: '06:00', endTime: '22:00', days: 0, nights: 0, transitDaysAllocation: 2,
   crew: '', groupSize: 1, transport: 'Full Road Trip', leg2Transport: [], leg3Transport: 'Drive Return', vehicleMode: 'Own Private Car', dailyPlanData: [], budgetVal: 0, budgetScope: '' ,
@@ -805,7 +810,6 @@ function validateDatesOnly() {
   return true;
 }
 
-// Option B View Helpers: Handles the toggle selection behavior natively
 function toggleRouteStyle(chosenStyle) {
   state.routeStyle = chosenStyle;
   const chips = document.querySelectorAll('#routePaceChips .chip');
@@ -823,14 +827,41 @@ function toggleRouteStyle(chosenStyle) {
 
 function addNewStopoverRow() {
   const container = document.getElementById('stopoverRowsContainer');
-  const rowId = 'stopover-row-' + Date.now();
+  const uniqueTimestampIndex = Date.now();
+  const rowId = 'stopover-row-' + uniqueTimestampIndex;
   
   const div = document.createElement('div');
-  div.className = 'stopover-row';
+  div.className = 'stopover-card-block';
   div.id = rowId;
   div.innerHTML = `
-    <input type="text" class="stopover-city-input" placeholder="Enter stopover city name..." style="flex:1;" onchange="syncStopoverValuesIntoState()">
-    <button class="btn btn-ghost" style="padding: 10px; color: var(--coral); font-weight: bold; background: white;" onclick="removeStopoverRow('${rowId}')">×</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span style="font-size:12px; font-weight:700; color:var(--coral);">📍 Stopover Hub Slot</span>
+      <button style="background:none; border:none; color:var(--muted); cursor:pointer; font-size:16px;" onclick="removeStopoverRow('${rowId}')">×</button>
+    </div>
+    <div class="form-group">
+      <label>City/Town Name:</label>
+      <input type="text" class="stopover-city-input text-field-node" placeholder="e.g. Mysore, Wayanad" onchange="syncStopoverValuesIntoState()">
+    </div>
+    
+    <div class="form-group">
+      <label>⏱️ Shift Timing (When do you want to hit the road?):</label>
+      <select class="stopover-timing-select" onchange="syncStopoverValuesIntoState()" style="font-size:13px; padding:6px 10px;">
+        <option value="🌅 Sunrise Rollout (06:00 AM)">🌅 Sunrise Rollout (06:00 AM)</option>
+        <option value="☀️ Mid-Day Cruise (11:00 AM)">☀️ Mid-Day Cruise (11:00 AM)</option>
+        <option value="🌇 Sunset Dash (04:00 PM)">🌇 Sunset Dash (04:00 PM)</option>
+        <option value="🌙 Night Owl Ride (09:00 PM)">🌙 Night Owl Ride (09:00 PM)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>🚗 How are you making this specific jump? (Multi-Select):</label>
+      <div class="vibe-checkbox-group stopover-transit-chips-group">
+        <label class="vibe-checkbox-label"><input type="checkbox" checked value="🚗 Personal Drive" onchange="syncStopoverValuesIntoState()"> 🚗 Private Drive</label>
+        <label class="vibe-checkbox-label"><input type="checkbox" value="🚕 Hired Cab" onchange="syncStopoverValuesIntoState()"> 🚕 Hired Cab</label>
+        <label class="vibe-checkbox-label"><input type="checkbox" value="🚌 Volvo Bus" onchange="syncStopoverValuesIntoState()"> 🚌 Volvo Bus</label>
+        <label class="vibe-checkbox-label"><input type="checkbox" value="🚂 Rail Link" onchange="syncStopoverValuesIntoState()"> 🚂 Rail Link</label>
+      </div>
+    </div>
   `;
   container.appendChild(div);
 }
@@ -843,13 +874,27 @@ function removeStopoverRow(rowId) {
 
 function syncStopoverValuesIntoState() {
   state.stopoverCities = [];
-  document.querySelectorAll('.stopover-city-input').forEach(inp => {
-    const val = inp.value.trim();
-    if(val) state.stopoverCities.push(val);
+  document.querySelectorAll('.stopover-card-block').forEach(block => {
+    const cityInp = block.querySelector('.stopover-city-input').value.trim();
+    const timeVal = block.querySelector('.stopover-timing-select').value;
+    
+    let hopTransitModes = [];
+    block.querySelectorAll('.stopover-transit-chips-group input:checked').forEach(cb => {
+      hopTransitModes.push(cb.value);
+    });
+    
+    if(cityInp) {
+      state.stopoverCities.push({
+        cityName: cityInp,
+        shiftTime: timeVal,
+        transitModes: hopTransitModes
+      });
+    }
   });
   runGeographicalDistanceAndSpeedSuggester();
 }
 
+// Fixed UI sync logic mapping accurate dataset strings to appropriate visibility wrappers
 function syncDynamicCostUIFields() {
   const leg1Group = document.getElementById('leg1CostDynamicGroup');
   const leg1FareWrap = document.getElementById('leg1FareWrapper');
@@ -884,6 +929,8 @@ function syncDynamicCostUIFields() {
 }
 
 async function runGeographicalDistanceAndSpeedSuggester() {
+  syncDynamicCostUIFields(); // Forced active synchronization pass on calculation recalculation cycles
+  
   const suggestionBox = document.getElementById('distanceSuggestionBox');
   const transitWrapper = document.getElementById('transitDaysWrapper');
   
@@ -910,7 +957,6 @@ async function runGeographicalDistanceAndSpeedSuggester() {
     const resStart = await fetch(geocodeUrl + encodeURIComponent(state.startCity));
     const dataStart = await resStart.json();
     
-    // Resolve primary target endpoint node contextually
     const finalEndpointCity = state.destinations[0];
     const resFinal = await fetch(geocodeUrl + encodeURIComponent(finalEndpointCity));
     const dataFinal = await resFinal.json();
@@ -935,10 +981,13 @@ async function runGeographicalDistanceAndSpeedSuggester() {
       }
     }
     
-    // Account for added stopover loops nodes if Multi-City is checked active
+    let routeSummaryLabel = 'Single Base Hub';
     if (state.routeStyle === 'Multi-City' && state.stopoverCities.length > 0) {
-      finalCalculatedKM += (state.stopoverCities.length * 110); 
+      finalCalculatedKM += (state.stopoverCities.length * 115); 
       exactDrivingHours += (state.stopoverCities.length * 2);
+      
+      let stopNamesList = state.stopoverCities.map(c => `${c.cityName} (${c.shiftTime.split(' ')[0]})`);
+      routeSummaryLabel = `Stopovers Active [${stopNamesList.join(' ➔ ')}]`;
     }
 
     state.calculatedDistanceKM = finalCalculatedKM;
@@ -949,7 +998,6 @@ async function runGeographicalDistanceAndSpeedSuggester() {
     let cumulativeTransitSpend = outboundCostPerHead + returnCostPerHead + totalLocalCommuteCostPerHead;
     
     let localOptionsDisplay = state.leg2Transport.length > 0 ? state.leg2Transport.join(", ") : "None chosen";
-    let routePaceLabelDisplay = state.routeStyle === 'Multi-City' ? `Stopovers Tracker Active [${state.stopoverCities.join(' ➔ ')}]` : 'Single Base Hub';
     
     let suggestedJourneyDays = finalCalculatedKM > 500 ? 2 : 1;
     if (state.hasLayover) suggestedJourneyDays += 1;
@@ -957,7 +1005,7 @@ async function runGeographicalDistanceAndSpeedSuggester() {
     transitWrapper.style.display = 'block';
     suggestionBox.innerHTML = `
       🗺️ <strong>Total Map Distance:</strong> ~${finalCalculatedKM} KM total loop route mapping.<br>
-      🏎️ <strong>Route Strategy:</strong> ${routePaceLabelDisplay}<br>
+      🏎️ <strong>Route Strategy:</strong> ${routeSummaryLabel}<br>
       🎬 <strong>The Big Launch (Outbound):</strong> ${state.transport}<br>
       🗺️ <strong>The Roaming Rhythm (Local Sights):</strong> ${localOptionsDisplay}<br>
       🏡 <strong>The Homeward Cruise (Coming Home):</strong> ${state.leg3Transport}<br>
@@ -972,9 +1020,9 @@ async function runGeographicalDistanceAndSpeedSuggester() {
     generateDailyVibeSelectors();
 
   } catch (apiError) {
-    console.warn("API map rendering bypass loop triggered.", apiError);
+    console.warn("API map fallback sequence run.", apiError);
     transitWrapper.style.display = 'block';
-    suggestionBox.innerHTML = `🏁 <strong>Transit Map Configuration Resolution complete.</strong> Adjust pacing drop down fields below manually.`;
+    suggestionBox.innerHTML = `🏁 <strong>Transit Map Configuration Resolution complete.</strong> Progress safely forward to daily setup.`;
   }
 }
 
@@ -989,7 +1037,6 @@ function generateDailyVibeSelectors() {
   container.innerHTML = '';
   
   const start = new Date(state.startDate);
-  const initialBaseCity = state.stopoverCities[0] || state.destinations[0] || "Manali, HP";
   const finalBaseCity = state.destinations[0] || "Udaipur, Rajasthan";
   
   for (let i = 0; i < state.days; i++) {
@@ -1045,11 +1092,16 @@ function generateDailyVibeSelectors() {
         conditionalInputLayout = `<p style="color:var(--coral); font-size:12px; font-weight:600;">🛣️ Day 1: The Big Launch — Kicking Off the Journey</p>`;
       }
 
-      // Pre-populate logical intermediate step stops from state matrices natively
       let computedDefaultPlace = finalBaseCity;
+      let stopoverNoticeString = "";
       if (state.routeStyle === 'Multi-City' && state.stopoverCities.length > 0) {
-         if (i === 0) computedDefaultPlace = state.stopoverCities[0];
-         else if (i === 1 && state.stopoverCities[1]) computedDefaultPlace = state.stopoverCities[1];
+         if (i === 0 && state.stopoverCities[0]) {
+           computedDefaultPlace = state.stopoverCities[0].cityName;
+           stopoverNoticeString = `<p style="color:var(--gold); font-size:12px; font-weight:600;">⚡ Shift Active: Scheduled for ${state.stopoverCities[0].shiftTime} via [${state.stopoverCities[0].transitModes.join(' / ')}]</p>`;
+         } else if (i === 1 && state.stopoverCities[1]) {
+           computedDefaultPlace = state.stopoverCities[1].cityName;
+           stopoverNoticeString = `<p style="color:var(--gold); font-size:12px; font-weight:600;">⚡ Shift Active: Scheduled for ${state.stopoverCities[1].shiftTime} via [${state.stopoverCities[1].transitModes.join(' / ')}]</p>`;
+         }
       }
 
       let initialTransitOptions = "";
@@ -1064,6 +1116,7 @@ function generateDailyVibeSelectors() {
         <div class="daily-card">
           <div style="font-weight:600; color:var(--ocean-dark); margin-bottom:4px;">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
           ${conditionalInputLayout}
+          ${stopoverNoticeString}
           
           <div class="form-group" style="margin-top:8px;">
             <label>Target Location/City for this Day:</label>
@@ -1254,7 +1307,8 @@ function buildSummary() {
 
   let routePathStr = `${state.startCity} ➔ `;
   if(state.routeStyle === 'Multi-City' && state.stopoverCities.length > 0) {
-     routePathStr += state.stopoverCities.join(' ➔ ') + ' ➔ ';
+     let formattedStops = state.stopoverCities.map(c => `${c.cityName} (${c.shiftTime.split(' ')[0]})`);
+     routePathStr += formattedStops.join(' ➔ ') + ' ➔ ';
   }
   routePathStr += `${state.destinations[0]} ➔ ${state.startCity}`;
 
@@ -1444,17 +1498,14 @@ setupExclusiveChips('crewChips', 'crew', (val) => {
 
 setupExclusiveChips('leg1TransportChips', 'transport', (val) => {
   document.getElementById('firstHubFieldGroup').style.display = (val === 'Full Road Trip') ? 'none' : 'block';
-  syncDynamicCostUIFields();
   runGeographicalDistanceAndSpeedSuggester();
 });
 
 setupMultiSelectTransportChips('leg2TransportChips', 'leg2Transport', () => {
-  syncDynamicCostUIFields();
   runGeographicalDistanceAndSpeedSuggester();
 });
 
 setupExclusiveChips('leg3TransportChips', 'leg3Transport', (val) => {
-  syncDynamicCostUIFields();
   runGeographicalDistanceAndSpeedSuggester();
 });
 
