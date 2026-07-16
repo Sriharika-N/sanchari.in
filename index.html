@@ -326,7 +326,7 @@
         </div>
       </div>
 
-      <!-- SECTION 2: CHOOSE YOUR PACE (OPTION B BUILDER WITH HIGH-VIBE FLAGS SYSTEM) -->
+      <!-- SECTION 2: CHOOSE YOUR PACE -->
       <div style="background: var(--white); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
         <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🏎️ Phase 2: Choose Your Pace</h4>
         <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Are you staying at one main destination, or building a multi-city road trip adventure?</p>
@@ -342,7 +342,6 @@
           <button class="btn btn-ghost" style="padding: 6px 12px; font-size: 12px; margin-top: 6px; background: white;" onclick="addNewStopoverRow()">➕ Add Another Stopover Town</button>
         </div>
 
-        <!-- NEW RE-ENGINEERED PROPOSAL 2 HIGH-VIBE FLAGS BLOCK: Removes confusing hardcoded dropdown dropdown systems entirely -->
         <div style="border-top: 1px dashed var(--border); margin-top: 16px; padding-top: 14px;">
           <label style="color:var(--ocean-dark); font-weight:700; font-size:12px; margin-bottom:6px;">⏱️ Transit Pacing: Flag Pure Road Trip/Travel-Only Days</label>
           <div class="vibe-checkbox-group">
@@ -801,6 +800,7 @@ function syncHomewardStartCityValue() {
   runGeographicalDistanceAndSpeedSuggester();
 }
 
+// BULLETPROOF CORRECTION PASS: Checks keywords with absolute security profiles to swap dynamic inputs
 function syncDynamicCostUIFields() {
   const leg1Group = document.getElementById('leg1CostDynamicGroup');
   const leg1FareWrap = document.getElementById('leg1FareWrapper');
@@ -808,7 +808,7 @@ function syncDynamicCostUIFields() {
   
   if (state.transport) {
     leg1Group.style.display = 'block';
-    if (state.transport.includes('Road') || state.transport.includes('Driving')) {
+    if (state.transport.includes('Road') || state.transport.includes('Driving') || state.transport.includes('Trip')) {
       leg1FuelWrap.style.display = 'flex'; leg1FareWrap.style.display = 'none';
     } else {
       leg1FuelWrap.style.display = 'none'; 
@@ -832,7 +832,7 @@ function syncDynamicCostUIFields() {
   
   if (state.leg3Transport) {
     leg3Group.style.display = 'block';
-    if (state.leg3Transport.includes('Drive') || state.leg3Transport.includes('Road')) {
+    if (state.leg3Transport.includes('Drive') || state.leg3Transport.includes('Road') || state.leg3Transport.includes('Trip')) {
       leg3FuelWrap.style.display = 'flex'; leg3FareWrap.style.display = 'none';
     } else {
       leg3FuelWrap.style.display = 'none'; 
@@ -852,7 +852,6 @@ async function runGeographicalDistanceAndSpeedSuggester() {
   syncDynamicCostUIFields(); 
   
   const suggestionBox = document.getElementById('distanceSuggestionBox');
-  
   if (!state.destinations.length || !state.transport) {
     suggestionBox.style.display = 'none'; return;
   }
@@ -871,7 +870,6 @@ async function runGeographicalDistanceAndSpeedSuggester() {
   state.leg3FuelPrice = parseInt(document.getElementById('leg3FuelPrice').value) || 102;
   state.leg3VehicleMileage = parseInt(document.getElementById('leg3VehicleMileage').value) || 15;
 
-  // Read Proposal 2 Checkbox Configurations to set dynamic pace settings flags natively
   const isDay1PureTravel = document.getElementById('flagDay1TransitCb').checked;
   const isLastDayPureTravel = document.getElementById('flagLastDayTransitCb').checked;
   
@@ -945,6 +943,11 @@ async function runGeographicalDistanceAndSpeedSuggester() {
   }
 }
 
+function updateJourneyDaysState() {
+  state.transitDaysAllocation = parseInt(document.getElementById('transitDaysCount').value) || 0;
+  generateDailyVibeSelectors();
+}
+
 function broadcastVibesLiveToTimeline() {
   const globalContainer = document.getElementById('globalMassSchedulerGroup');
   let globallySelectedVibes = [];
@@ -1007,6 +1010,57 @@ async function queryInAppRealtimeDistance(dateKey) {
   } catch(e) {
     feedbackNode.innerHTML = `<span style="color:var(--muted); font-size:12.5px;">🏁 Fallback: <a href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startLoc)}&destination=${encodeURIComponent(endLoc)}" target="_blank" style="text-decoration:underline; font-weight:600; color:var(--coral);">Launch free external directional routing loops on Google Maps</a></span>`;
   }
+}
+
+// VALIDATION SYNTAX ERROR RESOLVED PASS: Perfectly counts calendar boundaries
+function validateDatesOnly() {
+  const startVal = document.getElementById('startDate').value;
+  const endVal = document.getElementById('endDate').value;
+  const startTimeVal = document.getElementById('startTime').value;
+  const endTimeVal = document.getElementById('endTime').value;
+  
+  const errBox = document.getElementById('dateErrorBox');
+  const nextBtn = document.getElementById('btnStep3');
+  const durationCard = document.getElementById('durationSummaryCard');
+
+  if (errBox) errBox.classList.remove('show');
+  if (nextBtn) { nextBtn.disabled = false; nextBtn.style.opacity = '1'; }
+  
+  state.startDate = startVal; 
+  state.endDate = endVal;
+  state.startTime = startTimeVal;
+  state.endTime = endTimeVal;
+
+  if (startVal && endVal) {
+    const s = new Date(startVal), e = new Date(endVal);
+    if (isNaN(s.getTime()) || isNaN(e.getTime())) { 
+      if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } 
+      durationCard.style.display = 'none';
+      return false; 
+    }
+    if (e < s) { 
+      if(errBox) errBox.classList.add('show'); 
+      if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } 
+      durationCard.style.display = 'none';
+      return false; 
+    }
+    
+    // Clear dynamic counters injection logic
+    const totalDays = Math.round((e - s) / 86400000) + 1;
+    const totalNights = totalDays - 1;
+    
+    state.days = totalDays;
+    state.nights = totalNights;
+
+    document.getElementById('computedDaysCount').textContent = totalDays;
+    document.getElementById('computedNightsCount').textContent = totalNights;
+    durationCard.style.display = 'flex';
+  } else { 
+    if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } 
+    durationCard.style.display = 'none';
+    return false; 
+  }
+  return true;
 }
 
 function generateDailyVibeSelectors() {
