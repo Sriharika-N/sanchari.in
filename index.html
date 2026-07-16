@@ -285,10 +285,10 @@
       <div class="error-box" id="err3">Please choose valid dates and journey scheduling metrics.</div>
     </div>
 
-    <!-- STEP 4: TRANSIT LOGISTICS & VEHICLE SETTINGS -->
+    <!-- STEP 4: TRANSIT LOGISTICS & VEHICLE SETTINGS (WITH COST PREDICTORS) -->
     <div class="step-panel" id="step4">
       <div class="step-heading">Transit & Travel Settings 🚗💨</div>
-      <p class="step-sub">Choose how you want to handle your transport from start to finish.</p>
+      <p class="step-sub">Choose your transportation modes and configure structural cost details for the route engine.</p>
       
       <!-- SECTION 1: THE LONG DISTANCE LAUNCH -->
       <div style="background: var(--white); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
@@ -302,13 +302,28 @@
             <div class="chip" data-val="Full Road Trip">🚗 Driving All the Way</div>
           </div>
         </div>
+        
         <div class="form-group" id="firstHubFieldGroup" style="display:none;">
           <label>Where are you arriving first? (Intermediate Stop / Entry City)</label>
           <input type="text" id="intermediateHubInput" placeholder="e.g. Jaipur (Before moving to Udaipur)">
         </div>
-        <div class="form-group" id="leg1FlightCostGroup" style="display:none;">
-          <label>Estimated Flight Ticket Cost per Head (INR)</label>
-          <input type="number" id="leg1FlightTicketCost" value="0" min="0">
+
+        <!-- Dynamic Leg 1 Fields -->
+        <div id="leg1CostDynamicGroup" style="display:none; background: var(--paper); padding: 12px; border-radius: 8px; margin-top: 10px;">
+          <div class="form-group" id="leg1FareWrapper" style="display:none;">
+            <label id="leg1FareLabel">Ticket Fare per Person (INR)</label>
+            <input type="number" id="leg1TicketCostInput" value="0" min="0" onchange="runGeographicalDistanceAndSpeedSuggester()">
+          </div>
+          <div id="leg1FuelWrapper" style="display:none;" class="form-row">
+            <div class="form-group">
+              <label>Outbound Petrol Price per Litre (INR)</label>
+              <input type="number" id="leg1FuelPrice" value="102" min="0" onchange="runGeographicalDistanceAndSpeedSuggester()">
+            </div>
+            <div class="form-group">
+              <label>Vehicle Mileage (KM/Litre)</label>
+              <input type="number" id="leg1VehicleMileage" value="15" min="1" onchange="runGeographicalDistanceAndSpeedSuggester()">
+            </div>
+          </div>
         </div>
       </div>
 
@@ -326,22 +341,16 @@
             <div class="chip" data-val="Local Cabs & Shuttles">❌ Local Cabs & Shuttles Only</div>
           </div>
         </div>
-        <div class="form-group">
-          <label>Vehicle Options Configuration</label>
-          <div class="chips" id="vehicleChips">
-            <div class="chip" data-val="Own Private Car">🚗 Personal Car</div>
-            <div class="chip" data-val="Own Private Bike">🏍️ Personal Bike</div>
-            <div class="chip" data-val="No Private Vehicle">❌ Public/Rental Vehicles Only</div>
-          </div>
+
+        <div class="form-group" id="leg2CostDynamicGroup" style="display:none; background: var(--paper); padding: 12px; border-radius: 8px;">
+          <label>Estimated Daily Spending Pool Allocation for Local Commuting (INR/Day)</label>
+          <input type="number" id="leg2DailyCostInput" value="500" min="0" onchange="runGeographicalDistanceAndSpeedSuggester()">
         </div>
-        <div id="mileageInputGroup" style="display:none;">
-          <div class="form-group">
-            <label>Estimated Fuel Price per Litre (INR)</label>
-            <input type="number" id="fuelPrice" value="102" min="0">
-          </div>
-          <div class="form-group">
-            <label>Vehicle Mileage / Fuel Economy (KM per Litre)</label>
-            <input type="number" id="vehicleMileage" value="15" min="1">
+
+        <div class="form-group" style="margin-top:14px;">
+          <label>Buffer Parameter Setup</label>
+          <div class="vibe-checkbox-group">
+            <label class="vibe-checkbox-label"><input type="checkbox" id="layoverToggle" value="Yes" onchange="runGeographicalDistanceAndSpeedSuggester()"> Includes long layover or scenic stopover along the route?</label>
           </div>
         </div>
       </div>
@@ -358,8 +367,27 @@
             <div class="chip" data-val="Drive Return">🚗 Driving All the Way Back</div>
           </div>
         </div>
+
+        <!-- Dynamic Leg 3 Fields -->
+        <div id="leg3CostDynamicGroup" style="display:none; background: var(--paper); padding: 12px; border-radius: 8px; margin-top: 10px;">
+          <div class="form-group" id="leg3FareWrapper" style="display:none;">
+            <label id="leg3FareLabel">Return Ticket Fare per Person (INR)</label>
+            <input type="number" id="leg3TicketCostInput" value="0" min="0" onchange="runGeographicalDistanceAndSpeedSuggester()">
+          </div>
+          <div id="leg3FuelWrapper" style="display:none;" class="form-row">
+            <div class="form-group">
+              <label>Return Petrol Price per Litre (INR)</label>
+              <input type="number" id="leg3FuelPrice" value="102" min="0" onchange="runGeographicalDistanceAndSpeedSuggester()">
+            </div>
+            <div class="form-group">
+              <label>Vehicle Mileage (KM/Litre)</label>
+              <input type="number" id="leg3VehicleMileage" value="15" min="1" onchange="runGeographicalDistanceAndSpeedSuggester()">
+            </div>
+          </div>
+        </div>
       </div>
       
+      <!-- Interactive TeTelemetry suggestion box -->
       <div id="distanceSuggestionBox" style="background:var(--sand); padding:16px; border-radius:12px; font-size:14px; margin-bottom:18px; display:none; color:var(--ocean-dark); border-left: 4px solid var(--gold);"></div>
 
       <div class="form-group" id="transitDaysWrapper" style="display:none;">
@@ -475,11 +503,15 @@ const travelPlannerSupabaseClient = window.supabase.createClient(SUPABASE_URL, S
 let activeUserToken = null;
 let currentAuthMode = 'signin'; 
 
-// Tracks selections for transport configurations
+// Master configuration state tracking parameters
 let state = { 
   destinations: [], startCity: '', intermediateHub: '', startDate: '', endDate: '', startTime: '06:00', endTime: '22:00', days: 0, nights: 0, transitDaysAllocation: 2,
   crew: '', groupSize: 1, transport: 'Full Road Trip', leg2Transport: [], leg3Transport: 'Drive Return', vehicleMode: 'Own Private Car', dailyPlanData: [], budgetVal: 0, budgetScope: '' ,
-  flightTicketCost: 0, fuelPrice: 102, vehicleMileage: 15, calculatedDistanceKM: 0
+  flightTicketCost: 0, fuelPrice: 102, vehicleMileage: 15, calculatedDistanceKM: 0,
+  // Added custom cost configuration state variables
+  leg1TicketCost: 0, leg1FuelPrice: 102, leg1VehicleMileage: 15,
+  leg2DailyCost: 500, hasLayover: false,
+  leg3TicketCost: 0, leg3FuelPrice: 102, leg3VehicleMileage: 15
 };
 let currentStep = 1;
 const TOTAL_STEPS = 7;
@@ -758,6 +790,43 @@ function validateDatesOnly() {
   return true;
 }
 
+// Custom view helper function to render out dynamic financial control inputs smoothly
+function syncDynamicCostUIFields() {
+  // Parse Leg 1 Mode UI configurations
+  const leg1Group = document.getElementById('leg1CostDynamicGroup');
+  const leg1FareWrap = document.getElementById('leg1FareWrapper');
+  const leg1FuelWrap = document.getElementById('leg1FuelWrapper');
+  
+  if (state.transport) {
+    leg1Group.style.display = 'block';
+    if (state.transport === 'Full Road Trip') {
+      leg1FuelWrap.style.display = 'flex'; leg1FareWrap.style.display = 'none';
+    } else {
+      leg1FuelWrap.style.display = 'none'; leg1FareWrap.style.display = 'block';
+      document.getElementById('leg1FareLabel').textContent = `${state.transport.split(' ')[0]} Ticket Fare per Person (INR)`;
+    }
+  }
+
+  // Parse Leg 2 Mode UI configurations
+  const leg2Group = document.getElementById('leg2CostDynamicGroup');
+  leg2Group.style.display = state.leg2Transport.length > 0 ? 'block' : 'none';
+
+  // Parse Leg 3 Mode UI configurations
+  const leg3Group = document.getElementById('leg3CostDynamicGroup');
+  const leg3FareWrap = document.getElementById('leg3FareWrapper');
+  const leg3FuelWrap = document.getElementById('leg3FuelWrapper');
+  
+  if (state.leg3Transport) {
+    leg3Group.style.display = 'block';
+    if (state.leg3Transport === 'Drive Return') {
+      leg3FuelWrap.style.display = 'flex'; leg3FareWrap.style.display = 'none';
+    } else {
+      leg3FuelWrap.style.display = 'none'; leg3FareWrap.style.display = 'block';
+      document.getElementById('leg3FareLabel').textContent = `${state.leg3Transport.split(' ')[0]} Return Fare per Person (INR)`;
+    }
+  }
+}
+
 async function runGeographicalDistanceAndSpeedSuggester() {
   const suggestionBox = document.getElementById('distanceSuggestionBox');
   const transitWrapper = document.getElementById('transitDaysWrapper');
@@ -769,9 +838,20 @@ async function runGeographicalDistanceAndSpeedSuggester() {
   suggestionBox.style.display = 'block';
   suggestionBox.innerHTML = `⏳ Figuring out the best route options and mapping driving distances...`;
 
+  // Update dynamic values from fields into current active state metrics safely
+  state.leg1TicketCost = parseInt(document.getElementById('leg1TicketCostInput').value) || 0;
+  state.leg1FuelPrice = parseInt(document.getElementById('leg1FuelPrice').value) || 102;
+  state.leg1VehicleMileage = parseInt(document.getElementById('leg1VehicleMileage').value) || 15;
+  
+  state.leg2DailyCost = parseInt(document.getElementById('leg2DailyCostInput').value) || 500;
+  state.hasLayover = document.getElementById('layoverToggle').checked;
+  
+  state.leg3TicketCost = parseInt(document.getElementById('leg3TicketCostInput').value) || 0;
+  state.leg3FuelPrice = parseInt(document.getElementById('leg3FuelPrice').value) || 102;
+  state.leg3VehicleMileage = parseInt(document.getElementById('leg3VehicleMileage').value) || 15;
+
   try {
     const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=`;
-    
     const resStart = await fetch(geocodeUrl + encodeURIComponent(state.startCity));
     const dataStart = await resStart.json();
     
@@ -782,6 +862,10 @@ async function runGeographicalDistanceAndSpeedSuggester() {
     const resFinal = await fetch(geocodeUrl + encodeURIComponent(state.destinations[0]));
     const dataFinal = await resFinal.json();
     
+    let finalCalculatedKM = 420;
+    let exactDrivingHours = 8;
+    let formattedMinutes = 30;
+
     if (dataStart.length && dataMid.length && dataFinal.length) {
       const startPoint = `${dataStart[0].lon},${dataStart[0].lat}`;
       const midPoint = `${dataMid[0].lon},${dataMid[0].lat}`;
@@ -793,44 +877,43 @@ async function runGeographicalDistanceAndSpeedSuggester() {
       
       if (osrmData.routes && osrmData.routes.length) {
         const networkRoute = osrmData.routes[0];
-        const finalCalculatedKM = Math.round(networkRoute.distance / 1000);
-        state.calculatedDistanceKM = finalCalculatedKM;
-
-        const exactDrivingHours = Math.round(networkRoute.duration / 3600);
-        const formattedMinutes = Math.round((networkRoute.duration % 3600) / 60);
-        
-        let localOptionsDisplay = state.leg2Transport.length > 0 ? state.leg2Transport.join(", ") : "None chosen";
-        let journeyPerformanceText = `🛣️ <strong>Leg 1 (Going There):</strong> ${state.transport}<br>🔄 <strong>Leg 2 (Local Sights):</strong> ${localOptionsDisplay}<br>🏡 <strong>Leg 3 (Coming Home):</strong> ${state.leg3Transport}`;
-        let suggestedJourneyDays = finalCalculatedKM > 500 ? 2 : 1;
-
-        transitWrapper.style.display = 'block';
-        suggestionBox.innerHTML = `
-          🗺️ <strong>Total Map Distance:</strong> ~${finalCalculatedKM} KM cumulative route mapping.<br>
-          ${journeyPerformanceText}<br>
-          ⏱️ <strong>Estimated Continuous Driving Time:</strong> ~${exactDrivingHours}h ${formattedMinutes}m.<br>
-          💡 <strong>Our Recommendation:</strong> We suggest allocating exactly <strong>${suggestedJourneyDays} Travel Day(s)</strong> total on the road.
-        `;
-
-        document.getElementById('transitDaysCount').value = suggestedJourneyDays;
-        state.transitDaysAllocation = suggestedJourneyDays;
-        generateDailyVibeSelectors();
-        return;
+        finalCalculatedKM = Math.round(networkRoute.distance / 1000);
+        exactDrivingHours = Math.round(networkRoute.duration / 3600);
+        formattedMinutes = Math.round((networkRoute.duration % 3600) / 60);
       }
     }
-    throw new Error("Geocoding coordinates mismatch.");
+    
+    state.calculatedDistanceKM = finalCalculatedKM;
+    
+    // Live Cost Estimation Calculations
+    let outboundCostPerHead = state.transport === 'Full Road Trip' ? Math.round((finalCalculatedKM / state.leg1VehicleMileage) * state.leg1FuelPrice / state.groupSize) : state.leg1TicketCost;
+    let returnCostPerHead = state.leg3Transport === 'Drive Return' ? Math.round((finalCalculatedKM / state.leg3VehicleMileage) * state.leg3FuelPrice / state.groupSize) : state.leg3TicketCost;
+    let totalLocalCommuteCostPerHead = Math.round((state.leg2DailyCost * (state.days || 1)) / state.groupSize);
+    let cumulativeTransitSpend = outboundCostPerHead + returnCostPerHead + totalLocalCommuteCostPerHead;
+    
+    let localOptionsDisplay = state.leg2Transport.length > 0 ? state.leg2Transport.join(", ") : "None chosen";
+    let journeyPerformanceText = `🛣️ <strong>Leg 1 (Going There):</strong> ${state.transport}<br>🔄 <strong>Leg 2 (Local Sights):</strong> ${localOptionsDisplay}<br>🏡 <strong>Leg 3 (Coming Home):</strong> ${state.leg3Transport}`;
+    let suggestedJourneyDays = finalCalculatedKM > 500 ? 2 : 1;
+    if (state.hasLayover) suggestedJourneyDays += 1;
+
+    transitWrapper.style.display = 'block';
+    suggestionBox.innerHTML = `
+      🗺️ <strong>Total Map Distance:</strong> ~${finalCalculatedKM} KM cumulative route mapping.<br>
+      ${journeyPerformanceText}<br>
+      ⏱️ <strong>Estimated Continuous Travel Time:</strong> ~${exactDrivingHours}h ${formattedMinutes}m ${state.hasLayover ? '( Layover buffer incorporated)' : ''}.<br>
+      💵 <strong>Estimated Route Costs (Per Traveler):</strong> Outbound: ₹${outboundCostPerHead} | Return: ₹${returnCostPerHead} | Local Transfers: ₹${totalLocalCommuteCostPerHead}<br>
+      💰 <strong>Total Transport Overhead baseline:</strong> <span style="color:var(--coral); font-weight:700;">₹${cumulativeTransitSpend.toLocaleString('en-IN')} INR per head</span>.<br>
+      💡 <strong>Our Recommendation:</strong> We suggest allocating exactly <strong>${suggestedJourneyDays} Travel Day(s)</strong> total.
+    `;
+
+    document.getElementById('transitDaysCount').value = suggestedJourneyDays;
+    state.transitDaysAllocation = suggestedJourneyDays;
+    generateDailyVibeSelectors();
+
   } catch (apiError) {
     console.warn("API fallback loops triggered safely.", apiError);
-    let fallbackKM = 420;
-    const destLower = state.destinations[0].toLowerCase();
-    if(destLower.includes("manali")) fallbackKM = 530;
-    if(destLower.includes("udaipur")) fallbackKM = 780;
-    
-    state.calculatedDistanceKM = fallbackKM;
     transitWrapper.style.display = 'block';
-    suggestionBox.innerHTML = `🏁 <strong>Estimated Travel Distance:</strong> ~${fallbackKM} KM across combined journey segments.<br>💡 Recommended: Allocate 2 Travel Days for the road route loops.`;
-    document.getElementById('transitDaysCount').value = 2;
-    state.transitDaysAllocation = 2;
-    generateDailyVibeSelectors();
+    suggestionBox.innerHTML = `🏁 <strong>Transit Map Configuration Resolution complete.</strong> Adjust days drop down field parameter details down below manually.`;
   }
 }
 
@@ -986,9 +1069,6 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   if (stepNum === 4) {
     if (!state.transport || state.leg2Transport.length === 0 || !state.leg3Transport || !state.vehicleMode) { document.getElementById('err4').classList.add('show'); return; }
     state.intermediateHub = document.getElementById('intermediateHubInput').value.trim();
-    state.flightTicketCost = parseInt(document.getElementById('leg1FlightTicketCost').value) || 0;
-    state.fuelPrice = parseInt(document.getElementById('fuelPrice').value) || 102;
-    state.vehicleMileage = parseInt(document.getElementById('vehicleMileage').value) || 15;
   }
   
   if (stepNum === 5) {
@@ -1102,13 +1182,20 @@ function buildSummary() {
   const perPersonCost = (state.budgetScope === 'Per-Person Scope') ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
   let localSummaryStr = state.leg2Transport.join(" + ");
   
+  // Dynamic summary cost mapping variables
+  let outboundCostPerHead = state.transport === 'Full Road Trip' ? Math.round((state.calculatedDistanceKM / state.leg1VehicleMileage) * state.leg1FuelPrice / state.groupSize) : state.leg1TicketCost;
+  let returnCostPerHead = state.leg3Transport === 'Drive Return' ? Math.round((state.calculatedDistanceKM / state.leg3VehicleMileage) * state.leg3FuelPrice / state.groupSize) : state.leg3TicketCost;
+  let totalLocalCommuteCostPerHead = Math.round((state.leg2DailyCost * state.days) / state.groupSize);
+  let aggregateTransitExpense = outboundCostPerHead + returnCostPerHead + totalLocalCommuteCostPerHead;
+
   document.getElementById('tripSummary').innerHTML = `
     🗺️ Route Blueprint: <strong>${state.startCity} ➔ ${state.intermediateHub ? state.intermediateHub + ' ➔ ' : ''}${state.destinations[0]} ➔ ${state.startCity}</strong><br>
-    🏁 Full Route Journey Distance: <strong>~${state.calculatedDistanceKM} KM Total Loop</strong><br>
-    📅 Plan Breakdown: <strong>${state.days} Days / ${state.nights} Nights Total</strong><br>
+    🏁 Full Route Journey Distance: <strong>~${state.calculatedDistanceKM} KM Total Loop Mapped</strong><br>
+    📅 Plan Breakdown: <strong>${state.days} Days / ${state.nights} Nights Total</strong> ${state.hasLayover ? '(Scenic Layover Flagged)' : ''}<br>
     ⏱️ Timing Schedules: Departure at <strong>${state.startTime}</strong> on Day 1 | Returning Arrival home by <strong>${state.endTime}</strong> on the Last Day<br>
     🚗 Transport Configuration: <strong>${state.transport} ➔ [${localSummaryStr}] ➔ ${state.leg3Transport}</strong><br>
-    💰 Budget Tracking: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR Per Traveler</strong>
+    ⛽ Estimated Route Commuting Overhead: <strong>₹${aggregateTransitExpense.toLocaleString('en-IN')} INR per head</strong><br>
+    💰 Target Accommodation/Activity Pool: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR Per Traveler</strong>
   `;
 }
 
@@ -1116,15 +1203,13 @@ async function triggerBuiltInGeneration() {
   const statusEl = document.getElementById('apiStatusMessage');
   statusEl.style.color = "green"; statusEl.textContent = "Processing layout configurations...";
 
-  let loggedFuelOverheadPerHead = 0;
-  if (state.transport === "Full Road Trip" && state.vehicleMode !== "No Private Vehicle") {
-    loggedFuelOverheadPerHead = Math.round(((state.calculatedDistanceKM * 2 / state.vehicleMileage) * state.fuelPrice) / state.groupSize);
-  } else if (state.transport === "Flight Connected") {
-    loggedFuelOverheadPerHead = state.flightTicketCost;
-  }
+  let outboundCostPerHead = state.transport === 'Full Road Trip' ? Math.round((state.calculatedDistanceKM / state.leg1VehicleMileage) * state.leg1FuelPrice / state.groupSize) : state.leg1TicketCost;
+  let returnCostPerHead = state.leg3Transport === 'Drive Return' ? Math.round((state.calculatedDistanceKM / state.leg3VehicleMileage) * state.leg3FuelPrice / state.groupSize) : state.leg3TicketCost;
+  let totalLocalCommuteCostPerHead = Math.round((state.leg2DailyCost * state.days) / state.groupSize);
+  let aggregateTransitExpense = outboundCostPerHead + returnCostPerHead + totalLocalCommuteCostPerHead;
 
   const perHeadBudget = (state.budgetScope === 'Per-Person Scope') ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
-  const adjustedSpendablePool = Math.max(2000, perHeadBudget - loggedFuelOverheadPerHead);
+  const adjustedSpendablePool = Math.max(2000, perHeadBudget - aggregateTransitExpense);
   
   const dailyFoodBase = Math.round((adjustedSpendablePool * 0.35) / state.days); 
   const dailyTransitBase = Math.round((adjustedSpendablePool * 0.25) / state.days);
@@ -1171,7 +1256,7 @@ async function triggerBuiltInGeneration() {
       dynamicEveningStrategy = `🌙 <strong>Evening:</strong> Settle down from travel hours. Grab a casual dinner nearby and rest up for tomorrow.`;
     } else if (isLastDay) {
       dayVibeHeaderString = "🏡 Leg 3: Travel Day (Heading Home)";
-      let operationalDeductionNote = (state.vehicleMode !== "No Private Vehicle") ? "Double-check fuel levels, route maps for mountain bottlenecks, and engine vitals." : "Confirm your public transport booking times and double check baggage clearances.";
+      let operationalDeductionNote = (state.vehicleMode !== "No Private Vehicle") ? "Double-check fuel levels, route maps for bottlenecks, and engine vitals." : "Confirm your public transport booking times and double check baggage clearances.";
       dynamicMorningStrategy = `🧳 <strong>Packing Up:</strong> Complete your hotel check-out, settle outstanding bills, and pack your luggage. ${operationalDeductionNote}`;
       dynamicEveningStrategy = `🏡 <strong>Arrival Home [Target Time: ${state.endTime}]:</strong> Conclude your return leg back into <strong>${state.startCity}</strong> via ${state.leg3Transport}. Full loop complete!`;
     } else {
@@ -1251,7 +1336,6 @@ function setupExclusiveChips(containerId, stateKey, callback) {
   });
 }
 
-// Custom handler built specifically for Leg 2 Multi-Select Operations
 function setupMultiSelectTransportChips(containerId, stateKey, callback) {
   document.getElementById(containerId).querySelectorAll('.chip').forEach(chip => {
     chip.addEventListener('click', () => {
@@ -1290,16 +1374,17 @@ setupExclusiveChips('crewChips', 'crew', (val) => {
 
 setupExclusiveChips('leg1TransportChips', 'transport', (val) => {
   document.getElementById('firstHubFieldGroup').style.display = (val === 'Full Road Trip') ? 'none' : 'block';
-  document.getElementById('leg1FlightCostGroup').style.display = (val === 'Flight Connected') ? 'block' : 'none';
+  syncDynamicCostUIFields();
   runGeographicalDistanceAndSpeedSuggester();
 });
 
-// Registers multi-select capability cleanly for the inner city transfers
 setupMultiSelectTransportChips('leg2TransportChips', 'leg2Transport', () => {
+  syncDynamicCostUIFields();
   runGeographicalDistanceAndSpeedSuggester();
 });
 
 setupExclusiveChips('leg3TransportChips', 'leg3Transport', (val) => {
+  syncDynamicCostUIFields();
   runGeographicalDistanceAndSpeedSuggester();
 });
 
