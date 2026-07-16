@@ -47,6 +47,39 @@
   .vibe-checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
   .vibe-checkbox-label { font-size: 13px; display: flex; align-items: center; gap: 4px; background: var(--paper); padding: 4px 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); }
   
+  .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13,17,23,0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; }
+  .auth-modal { background: white; border-radius: 20px; max-width: 400px; width: 90%; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+  .auth-toggle-link { color: var(--coral); font-weight: 600; cursor: pointer; text-decoration: underline; font-size: 13px; }
+
+  .auth-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
+  .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .auth-tab.active { color: var(--coral); border-bottom: 2px solid var(--coral); }
+  
+  .discovery-hub { display: flex; flex-direction: column; gap: 8px; background: var(--sand); padding: 12px; border-radius: 8px; margin-top: 8px; }
+  .discovery-item { background: var(--white); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: space-between; }
+  .discovery-item:hover { border-color: var(--coral); background: var(--coral-light); color: var(--coral); }
+  .discovery-tag { font-size: 10px; text-transform: uppercase; background: var(--paper); padding: 2px 6px; border-radius: 4px; font-weight: 600; color: var(--muted); }
+
+  .app-notification-toast {
+    position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+    background: var(--ocean-dark); color: white; padding: 14px 24px;
+    border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    z-index: 2000; font-size: 14px; font-weight: 500; display: flex;
+    align-items: center; gap: 10px; transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid var(--ocean-mid); max-width: 90%; width: 500px;
+  }
+  .app-notification-toast.show { top: 20px; }
+
+  .live-helper-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+  .live-helper-link { 
+    color: var(--white); font-weight: 600; text-decoration: none; 
+    background: var(--coral); padding: 8px 16px; border-radius: 8px; 
+    border: 1px solid var(--coral); font-size: 18px; display: inline-flex; 
+    align-items: center; gap: 6px; transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 10px rgba(232, 99, 58, 0.15);
+  }
+  .live-helper-link:hover { background: var(--ocean); border-color: var(--ocean); color: var(--white); transform: translateY(-1px); }
+
   .injection-modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(15, 35, 64, 0.6); backdrop-filter: blur(4px);
@@ -58,16 +91,6 @@
     border: 1px solid var(--border); animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
   @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-  .app-notification-toast {
-    position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-    background: var(--ocean-dark); color: white; padding: 14px 24px;
-    border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-    z-index: 2000; font-size: 14px; font-weight: 500; display: flex;
-    align-items: center; gap: 10px; transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    border: 1px solid var(--ocean-mid); max-width: 90%; width: 500px;
-  }
-  .app-notification-toast.show { top: 20px; }
 </style>
 </head>
 <body>
@@ -91,7 +114,43 @@
 
 <nav>
   <a class="nav-brand" href="#">✈️ AI Travel Planner</a>
+  <button id="authHeaderBtn" class="btn" style="background: var(--coral); color: white; padding: 6px 16px; font-size: 13px;" onclick="openAuthModal()">🔑 Account Access</button>
 </nav>
+
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-modal">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+      <h3 id="authModalTitle" style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark);">Account Portal</h3>
+      <button style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted);" onclick="closeAuthModal()">×</button>
+    </div>
+
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="authTabSignin" onclick="setAuthInterfaceMode('signin')">Sign In (New User)</div>
+      <div class="auth-tab" id="authTabLogin" onclick="setAuthInterfaceMode('login')">Log In (Existing User)</div>
+    </div>
+    
+    <div id="authFormContainer">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="authEmail" placeholder="name@example.com">
+      </div>
+      <div class="form-group" id="passwordGroup">
+        <label>Password</label>
+        <input type="password" id="authPassword" placeholder="••••••••">
+      </div>
+      
+      <button class="btn btn-primary" id="mainAuthSubmitBtn" style="width:100%; margin-bottom:12px;" onclick="handleCredentialAuth()">Continue</button>
+      <button class="btn btn-ghost" style="width:100%; gap:8px; margin-bottom:16px;" onclick="loginWithGoogle()">
+        <img src="https://www.google.com/favicon.ico" width="16" height="16" alt="G"> Continue via Google
+      </button>
+
+      <div style="text-align:center; font-size:13px; color:var(--muted);">
+        <span class="auth-toggle-link" style="color:var(--muted); font-size:12px;" id="forgotPasswordLink" onclick="triggerForgotPasswordRecovery()">Forgot your password?</span>
+      </div>
+    </div>
+    <div class="error-box" id="authErrorMsg" style="margin-top:12px;"></div>
+  </div>
+</div>
 
 <div class="main">
   <div class="card">
@@ -174,7 +233,9 @@
       <p class="step-sub">Provide your absolute holiday calendar start and end dates below.</p>
       <div class="form-group"><label>Holiday Start Date</label><input type="date" id="startDate" onchange="validateDatesOnly()"></div>
       <div class="form-group"><label>Holiday Return Date</label><input type="date" id="endDate" onchange="validateDatesOnly()"></div>
+      
       <div class="error-box" id="dateErrorBox">⚠️ Danger: The return date cannot be set chronologically prior to your departure date!</div>
+      
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="goBack(2)">← Back</button>
         <button class="btn btn-primary" id="btnStep3" onclick="submitStepAndProgress(3, 4, 'Date Setup')">Next — Transit Options →</button>
@@ -182,12 +243,12 @@
       <div class="error-box" id="err3">Please choose valid dates.</div>
     </div>
 
-    <!-- STEP 4: MULTI-SELECT TRANSIT SETTINGS -->
+    <!-- STEP 4: ELABORATED TRANSIT SETTINGS -->
     <div class="step-panel" id="step4">
       <div class="step-heading">Transit & Travel Day Settings 🚗💨</div>
-      <p class="step-sub">Configure your multi-modal choices. Select your transport choices per leg below.</p>
+      <p class="step-sub">Configure your multi-modal transition legs to map exact connection metrics.</p>
       
-      <!-- SECTION 1: LONG DISTANCE LAUNCH -->
+      <!-- SECTION 1: THE LONG DISTANCE LAUNCH -->
       <div style="background: var(--paper); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
         <h4 style="font-family:'Fraunces', serif; font-size:15px; color:var(--ocean-dark); margin-bottom:8px;">🛫 Leg 1: Heading Out (Home to First Stop)</h4>
         <div class="form-group">
@@ -210,7 +271,7 @@
         </div>
       </div>
 
-      <!-- SECTION 2: REGIONAL TRANSFERS -->
+      <!-- SECTION 2: INTERNAL SHIFTS & COMMUTES -->
       <div style="background: var(--paper); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
         <h4 style="font-family:'Fraunces', serif; font-size:15px; color:var(--ocean-dark); margin-bottom:8px;">🔀 Leg 2: Moving Around Locally</h4>
         <div class="form-group">
@@ -262,7 +323,7 @@
       <div class="error-box" id="err4">Please select your transport preferences across both segments.</div>
     </div>
 
-    <!-- STEP 5: PER-DAY VIBES (AUTOMATED SYNC LINKED NATIVELY) -->
+    <!-- STEP 5: PER-DAY VIBES -->
     <div class="step-panel" id="step5">
       <div class="step-heading">Daily Customization Matrix ✨</div>
       <p class="step-sub">Select multiple preferences per day below. Checking any option in Fast Pass instantly copies it to all days automatically.</p>
@@ -298,7 +359,7 @@
         <input type="number" id="budgetAmount" placeholder="e.g. 20000" min="1000">
       </div>
       <div class="form-group">
-        <label>Budget Calculation Scope Focus</label>
+        <label>Budget Scope Focus Calculation Focus</label>
         <div class="chips" id="budgetScopeChips">
           <div class="chip" data-val="Per-Person Scope" id="scopeIndividual">Individual Basis Budget</div>
           <div class="chip" data-val="Entire Group Scope" id="scopeTotal">Total Consolidated Budget</div>
@@ -436,6 +497,15 @@ const travelKnowledgeBase = {
   }
 };
 
+function showAppNotification(messageString) {
+  const toast = document.getElementById('appNotificationToast');
+  if (toast) {
+    toast.innerHTML = `✨ ${messageString}`;
+    toast.classList.add('show');
+    setTimeout(() => { toast.classList.remove('show'); }, 4500);
+  }
+}
+
 function selectThematicRandomEngine(categoryType) {
   const allChips = document.querySelectorAll('#destChips .chip');
   allChips.forEach(c => c.classList.remove('selected'));
@@ -467,7 +537,7 @@ function selectThematicRandomEngine(categoryType) {
   });
 
   state.destinations.push(chosenDestinationValue);
-  showAppNotification(`Theme selected: ${chosenDestinationValue}`);
+  showAppNotification(`Theme Selected: ${chosenDestinationValue}`);
   generateDailyVibeSelectors();
 }
 
@@ -551,14 +621,12 @@ function validateDatesOnly() {
   return true;
 }
 
-/* 🌟 AUTOMATED SYNC LISTENERS DETECTING SELECTIONS ON FAST PASS ELEMENTS EXCLUSIVELY */
 function hookAutomatedFastPassSyncListeners() {
   document.querySelectorAll('.fast-pass-cb').forEach(cb => {
     cb.addEventListener('change', () => {
       const value = cb.value;
       const isChecked = cb.checked;
       
-      // Update all generated daily cards on the fly without button triggers
       document.querySelectorAll('.daily-card').forEach((card, idx) => {
         if(state.transitDaysAllocation >= 1 && idx === (state.days - 1)) return; 
         const matchCardCb = card.querySelector(`.daily-vibe-cb[value="${value}"]`);
@@ -578,7 +646,6 @@ function generateDailyVibeSelectors() {
   const initialBaseCity = state.intermediateHub || state.destinations[0] || "Jaipur, Rajasthan";
   const finalBaseCity = state.destinations[0] || "Udaipur, Rajasthan";
 
-  // Build temporary cache list of fast-pass boxes to initialize default matching layers natively
   let preCheckedFastPassValues = [];
   document.querySelectorAll('.fast-pass-cb:checked').forEach(cb => preCheckedFastPassValues.push(cb.value));
   
@@ -617,14 +684,14 @@ function generateDailyVibeSelectors() {
           </div>
 
           <div class="form-group" style="margin-top: 14px; background: var(--paper); padding: 12px; border-radius: 10px; border: 1px solid var(--border);">
-            <label style="color: var(--coral); font-size: 11px;">🔀 Moving Cities or Local Commuting Choices Today?</label>
+            <label style="color: var(--coral); font-size: 11px;">🔀 Moving Cities or Local Commuting Choices Today? (Select all that apply):</label>
             <div style="display:flex; flex-direction:column; gap:6px; margin-top:5px;">
               <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Local Sightseeing" checked> Stay at current destination (local cabs / wandering on foot)</label>
               <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Pre-booked Train Link"> 🚂 Shift Cities: Take a Train</label>
               <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Hired Inter-city Cab"> 🚕 Shift Cities: Hire an Inter-City Private Cab</label>
-              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Private Sleeper Bus Link"> 🚌 Shift Cities: Private Sleeper/AC Bus</label>
-              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Govt State Bus Link"> 🚍 Shift Cities: Govt State Bus (KSRTC/RSRTC)</label>
-              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Self-Drive Commute"> 🚗 Shift Cities: Continuous Road Trip Drive/Ride Leg</label>
+              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Private Sleeper Bus Link"> 🚌 Booking a Private Sleeper/AC Bus Ticket</label>
+              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Govt State Bus Link"> 🚍 Regional State Transport Bus (RSRTC/KSRTC)</label>
+              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Self-Drive Commute"> 🚗 Cruising via Local Self-Drive Car/Bike Rental</label>
             </div>
           </div>
 
@@ -641,7 +708,7 @@ function generateDailyVibeSelectors() {
 
           <div class="form-group">
             <label>Things you want to do here specifically:</label>
-            <input type="text" class="daily-things-input" data-date="${dateStr}" placeholder="e.g. Try local dishes, check lakeside architecture maps...">
+            <input type="text" class="daily-things-input" data-date="${dateStr}" placeholder="e.g. Try special dishes, check lakeside architecture maps...">
           </div>
         </div>
       `;
@@ -651,6 +718,7 @@ function generateDailyVibeSelectors() {
     elementWrapper.innerHTML = customCardHtml;
     container.appendChild(elementWrapper.firstElementChild);
   }
+  hookAutomatedFastPassSyncListeners();
 }
 
 function submitTransitStepAndProgress() {
@@ -864,6 +932,12 @@ async function triggerBuiltInGeneration() {
     
     totalComputedExpensesSum += dayCostAccumulatedTotal;
 
+    const encodedLocation = encodeURIComponent(day.place);
+    const checkInDate = day.date;
+    const liveHotelPortal = `https://www.google.com/travel/search?q=Hotels+in+${encodedLocation}+check+in+${checkInDate}`;
+    const liveFoodPortal = `https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodedLocation}`;
+    const liveExplorePortal = `https://www.google.com/maps/search/${encodedLocation}+top+attractions+things+to+do`;
+
     htmlBody += `
       <div class="daily-card" style="border-left: 5px solid var(--coral); padding: 20px; margin-bottom: 24px; background:#fff; border-radius:16px;">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--border); padding-bottom:10px; margin-bottom:15px;">
@@ -975,9 +1049,6 @@ setupExclusiveChips('vehicleChips', 'vehicleMode', (val) => {
 });
 
 setupExclusiveChips('budgetScopeChips', 'budgetScope');
-
-// Initialize real-time Fast Pass automation triggers
-hookAutomatedFastPassSyncListeners();
 </script>
 </body>
 </html>
