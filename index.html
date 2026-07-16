@@ -433,12 +433,11 @@
       <div class="error-box" id="err4">Please select your transport preferences across all three journey steps.</div>
     </div>
 
-    <!-- STEP 5: PER-DAY VIBES (CLEANED REAL-TIME AUTO-SYNC ENGINE) -->
+    <!-- STEP 5: PER-DAY VIBES -->
     <div class="step-panel" id="step5">
       <div class="step-heading">Daily Customization Matrix ✨</div>
       <p class="step-sub">Your adjustments below instantly broadcast live to the full timeline list for seamless scheduling autonomy.</p>
       
-      <!-- REMOVED BUTTON SYSTEM: Interactive checkboxes broadcast updates to all cards via onchange directly -->
       <div style="background: var(--paper); border: 1.5px dashed var(--coral); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
         <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--ocean-dark); margin-bottom: 8px;">⚡ Global Live Auto-Sync Vibe Templates</div>
         <div class="vibe-checkbox-group" id="globalMassSchedulerGroup">
@@ -586,7 +585,7 @@ const travelKnowledgeBase = {
     famous: ["Pangong Tso High-Altitude Saltwater Lake", "Thiksey Monastery Tiered Complex", "Khardung La World Peak Pass"],
     gems: ["Nubra Valley Hunder Sand Dunes Track", "Basgo Castle Ruin Offbeat Paths"],
     breakfast: ["Traditional Ladakhi Khambir skillet bread with butter tea", "Apricot jam reductions with warm cakes"],
-    eats: ["Alchi Kitchen heritage traditional recipes diner", "Leh Market open-air local dumpling lanes"]
+    eats: ["Alchi Kitchen heritage traditional recipes diner", "Leh Main Market open-air local dumpling lanes"]
   },
   "goa": {
     famous: ["Fontainhas Historic Latin Quarter Walk", "Dudhsagar Jungle Waterfalls Track", "Aguada Historic Coastal Fort Outpost"],
@@ -906,7 +905,9 @@ function syncHomewardStartCityValue() {
   runGeographicalDistanceAndSpeedSuggester();
 }
 
+// FULLY UNIFIED SYNC LOGIC ENGINE: Matches labels perfectly for Phase 1 & Phase 4 dynamically
 function syncDynamicCostUIFields() {
+  // Phase 1 Optimization
   const leg1Group = document.getElementById('leg1CostDynamicGroup');
   const leg1FareWrap = document.getElementById('leg1FareWrapper');
   const leg1FuelWrap = document.getElementById('leg1FuelWrapper');
@@ -928,9 +929,11 @@ function syncDynamicCostUIFields() {
     }
   }
 
+  // Phase 3 Optimization
   const leg2Group = document.getElementById('leg2CostDynamicGroup');
   leg2Group.style.display = state.leg2Transport.length > 0 ? 'block' : 'none';
 
+  // Phase 4 Optimization (Perfect mirror of Phase 1 layout wrappers)
   const leg3Group = document.getElementById('leg3CostDynamicGroup');
   const leg3FareWrap = document.getElementById('leg3FareWrapper');
   const leg3FuelWrap = document.getElementById('leg3FuelWrapper');
@@ -940,7 +943,8 @@ function syncDynamicCostUIFields() {
     if (state.leg3Transport === 'Drive Return') {
       leg3FuelWrap.style.display = 'flex'; leg3FareWrap.style.display = 'none';
     } else {
-      leg3FuelWrap.style.display = 'none'; leg3FareWrap.style.display = 'block';
+      leg3FuelWrap.style.display = 'none'; 
+      leg3FareWrap.style.display = 'block';
       
       let parsedReturnLabelText = "Return Ticket";
       if (state.leg3Transport.includes("Flight")) parsedReturnLabelText = "Flight Return Ticket";
@@ -1055,7 +1059,6 @@ function updateJourneyDaysState() {
   generateDailyVibeSelectors();
 }
 
-// NEW REAL-TIME BROADCASTER ENGINE: Sweeps across timeline cards on field updates automatically
 function broadcastVibesLiveToTimeline() {
   const globalContainer = document.getElementById('globalMassSchedulerGroup');
   let globallySelectedVibes = [];
@@ -1063,10 +1066,9 @@ function broadcastVibesLiveToTimeline() {
     globallySelectedVibes.push(cb.value);
   });
 
-  // Dynamically map updates into timeline checkbox lists without disturbing user custom text parameters
   document.querySelectorAll('.daily-card').forEach((card, idx) => {
     const isLastCardElement = (state.transitDaysAllocation >= 1 && idx === (state.days - 1));
-    if (isLastCardElement) return; // Retain system security configurations for the last homeward day
+    if (isLastCardElement) return; 
 
     card.querySelectorAll('.daily-vibe-cb').forEach(cb => {
       cb.checked = globallySelectedVibes.includes(cb.value);
@@ -1082,7 +1084,6 @@ function generateDailyVibeSelectors() {
   const start = new Date(state.startDate);
   const finalBaseCity = state.destinations[0] || "Udaipur, Rajasthan";
   
-  // Read baseline parameters from global scheduler panel ahead of generation pass
   const globalContainer = document.getElementById('globalMassSchedulerGroup');
   let inheritedVibes = [];
   if (globalContainer) {
@@ -1143,7 +1144,6 @@ function generateDailyVibeSelectors() {
         conditionalInputLayout = `<p style="color:var(--coral); font-size:12px; font-weight:600;">🛣️ Day 1: The Big Launch — Kicking Off the Journey</p>`;
       }
 
-      // INTEGRATED SMART DEFAULTS LAYER: Ingest city loops metrics safely from Step 4 data matrix
       let computedDefaultPlace = finalBaseCity;
       let stopoverNoticeString = "";
       let automaticPlaceholderStrategyText = "e.g. Roam around local markets, explore top attractions...";
@@ -1292,7 +1292,7 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   
   if (nextStepNum === 4) runGeographicalDistanceAndSpeedSuggester();
-  if (nextStepNum === 5) generateDailyVibeSelectors(); // Refreshes alignment natively from previous step states
+  if (nextStepNum === 5) generateDailyVibeSelectors(); 
   if (nextStepNum === 7) buildSummary();
 }
 
@@ -1329,7 +1329,6 @@ function injectExploreTargetIntoItinerary(targetType, contentValue) {
 
 function closeInAppModal() { document.getElementById('injectionModal').style.display = 'none'; }
 
-// Preserves destination spot additions mechanism completely
 function confirmInAppModalInjection() {
   const targetDayVal = parseInt(document.getElementById('injectionDayInput').value);
   const parsedDayIndex = targetDayVal - 1;
