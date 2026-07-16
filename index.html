@@ -420,7 +420,7 @@
           </div>
         </div>
 
-        <div class="form-group" id="leg2CostDynamicGroup" style="display:none; background: var(--paper); padding: 12px; border-radius: 8px;">
+        <div class="form-group" id="leg2DailyCostGroup" style="display:none; background: var(--paper); padding: 12px; border-radius: 8px;">
           <label>Estimated Daily Cost Allocation for Local Commuting (INR/Day)</label>
           <input type="number" id="leg2DailyCostInput" value="500" min="0" onchange="runGeographicalDistanceAndSpeedSuggester()">
         </div>
@@ -576,120 +576,23 @@
   </div>
 </div>
 
+<!-- ==========================================
+     CORE MODULE SEPARATION BRIDGE LINK
+     ========================================== -->
+<script src="generate.js"></script>
+
 <script>
-// Supabase Credentials Layout Keys
-const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlic3FsbGdpdG50d2EiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNzEwNTE4OSwiZXhwIjoyMDUyNjgxMTg5fQ.q0zM8gK1M0k4q0m1_K0k4q0m1_K0k4q0m1_K0k4q0m1"; 
-
-const travelPlannerSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let activeUserToken = null;
-let currentAuthMode = 'signin'; 
-let securityPasswordBuffer = ""; // Caches plain password during signup chain to check matching inputs
-
-let state = { 
-  destinations: [], startCity: '', startDate: '', endDate: '', startTime: '06:00', endTime: '22:00', days: 0, nights: 0, transitDaysAllocation: 2,
-  crew: '', groupSize: 1, transport: 'Full Road Trip', leg2Transport: [], leg3Transport: 'Drive Return', vehicleMode: 'Own Private Car', dailyPlanData: [], budgetVal: 0, budgetScope: '' ,
-  calculatedDistanceKM: 0,
-  leg1TicketCost: 0, leg1FuelPrice: 102, leg1VehicleMileage: 15,
-  routeStyle: 'Single Hub', stopoverCities: [],
-  leg2DailyCost: 500, hasLayover: false,
-  leg3TicketCost: 0, leg3FuelPrice: 102, leg3VehicleMileage: 15,
-  homewardStartCity: ''
-};
+// Global UI State Management
 let currentStep = 1;
 const TOTAL_STEPS = 7;
-
+let securityPasswordBuffer = ""; 
 let modalContextItem = { type: '', value: '' };
 
-const travelKnowledgeBase = {
-  "coorg": {
-    famous: ["Abbey Falls Scenic Estate Walk", "Namdroling Golden Temple", "Madikeri Historic Fort Grounds", "Raja's Seat Hanging Gardens"],
-    gems: ["Chelavara Falls Ridge Trek", "Kote Betta Mountain Trail", "Sanapur Whispering Streams", "Nishani Motte Hidden Offbeat Outpost"],
-    breakfast: ["Local filter coffee paired with Akki Roti", "Fresh plantation-side spice tea spreads"],
-    eats: ["Coorg Cuisine Restaurant for authentic Pandi Curry", "Tiger Tiger Cafe specialty local plates"]
-  },
-  "munnar": {
-    famous: ["Eravikulam High Plateau Valley", "Mattupetty Lake Boating Gates", "Top Station Horizon Peak", "Tea Museum Heritage Walk"],
-    gems: ["Lockhart Gap Panoramic Ridge Way", "Attukad Waterfalls Secluded Glade", "Anamudi Foothill Secret Trails", "Pothamedu Hidden Clouds Viewpoint"],
-    breakfast: ["Freshly picked Munnar leaf blends with local idlis", "Highland cardamon tea with appam variants"],
-    eats: ["Rapsy Restaurant regional specialty dishes", "Guru's Malabar spice parotta counters"]
-  },
-  "gokarna": {
-    famous: ["Om Beach Rocky Waterfront Trail", "Mahabaleshwar Temple Courtyard", "Kudle Beach Main Surfer Strip", "Half Moon Beach Ridge Overlook"],
-    gems: ["Paradise Beach Secluded Jungle Spot", "Belekan Beach Offbeat Bay Trail", "Nirvana Coastal Meadow Path", "God's Own Beach Cliffside Overlook"],
-    breakfast: ["Beachside shack continental items & banana buns", "Traditional South Kannada style dosa plates"],
-    eats: ["Prema Restaurant legendary local ice cream & meals", "Namaste Cafe absolute oceanfront seafood dinner"]
-  },
-  "hampi": {
-    famous: ["Virupaksha Temple Sacred Courtyard", "Vittala Temple Stone Chariot Monument", "Hemakuta Hill Historic Complex View"],
-    gems: ["Sanapur Lake Offbeat Coracle Boat Run", "Anegundi Ancient Heritage Village Walk"],
-    breakfast: ["Local crisp ghee roast dosas from rural setups", "Traditional filter decoctions with idlis"],
-    eats: ["Mango Tree Restaurant river-facing dishes", "Local organic banana flower curries hub"]
-  },
-  "spiti valley": {
-    famous: ["Key Monastery Mountain Cliffside Retreat", "Chandratal High-Altitude Emerald Lake", "Dhankar Monastery Fort Lookout"],
-    gems: ["Langza Mountain Ridge Fossil Beds", "Mud Village Pin Valley Mountain Outpost"],
-    breakfast: ["Warm butter tea paired with local Tsampa breads", "Highland barley porridges with honey matrices"],
-    eats: ["The Sol Cafe local hot seabuckthorn juices", "Authentic steaming Tibetan momo street shacks"]
-  },
-  "manali": {
-    famous: ["Hidimba Devi Temple Pagoda Shrine", "Solang Valley Adventure Meadows", "Rohtang Pass Himalayan Snow View", "Old Manali Heritage Village"],
-    gems: ["Jogni Waterfall Cedar Trek Route", "Naggar Castle Timber Palace Lookout", "Vashisht Natural Sulphur Hot Springs"],
-    breakfast: ["Freshly steamed Himachali Siddu platter", "Mall Road masala omelette and spiced chai buns"],
-    eats: ["Johnson's Cafe wood-fired valley trout fillets", "The Lazy Dog continental backpacker spreads"]
-  },
-  "leh ladakh": {
-    famous: ["Pangong Tso High-Altitude Saltwater Lake", "Thiksey Monastery Tiered Complex", "Khardung La World Peak Pass"],
-    gems: ["Nubra Valley Hunder Sand Dunes Track", "Basgo Castle Ruin Offbeat Paths"],
-    breakfast: ["Traditional Ladakhi Khambir skillet bread with butter tea", "Apricot jam reductions with warm cakes"],
-    eats: ["Alchi Kitchen heritage traditional recipes diner", "Leh Main Market open-air local dumpling lanes"]
-  },
-  "goa": {
-    famous: ["Fontainhas Historic Latin Quarter Walk", "Dudhsagar Jungle Waterfalls Track", "Aguada Historic Coastal Fort Outpost"],
-    gems: ["Cola Beach Hidden Fresh Lagoon Side", "Chorao Island Offbeat Mangrove Boat Paths"],
-    breakfast: ["Freshly wood-fired Goan Poi bread with local spreads", "Seaside shack continental fruit salad matrices"],
-    eats: ["Mum's Kitchen local authentic Goan fish curry", "Fisherman's Wharf classic coastal seafood dine"]
-  },
-  "varkala": {
-    famous: ["Varkala Cliffside Ocean Overlook Strip", "Janardanaswamy Ancient Coastal Temple"],
-    gems: ["Edava Beach Secluded Backwater-Sea Interface", "Kapil Lake Silent Coastal Drive Corridors"],
-    breakfast: ["Kerala style layered flaky parotta with egg roast", "Fresh tender coconut shakes on the cliff paths"],
-    eats: ["Darjeeling Cafe oceanfront slow-cooked regional dinners", "Local daily-catch fresh grill fish counters"]
-  },
-  "udaipur": {
-    famous: ["City Palace Waterfront Complex", "Lake Pichola Panoramic Shared Boat Routes", "Jagdish Historic Stone Temple Carvings"],
-    gems: ["Sajjangarh Monsoon Palace Ridge Lookout", "Badi Lake Offbeat Silent Mountain Edge Path"],
-    breakfast: ["Traditional hot Poha topped with regional sev blends", "Freshly fried Kachoris from legacy bazaar lanes"],
-    eats: ["Ambrai Restaurant absolute lakeside dining view", "Traditional Mewari royal thali slow-cooked setups"]
-  },
-  "jaipur": {
-    famous: ["Amer Fort Hilltop Palace", "Hawa Mahal Palace of Winds", "City Palace Royal Residence", "Jantar Mantar Historic Observatory"],
-    gems: ["Nahargarh Fort Sunset Ridge", "Panna Meena ka Kund Stepwell", "Galta Ji Monkey Temple"],
-    breakfast: ["Traditional Pyaz Kachori with sweet lassi", "Legacy market Pandit kulfi blends"],
-    eats: ["LMB Restaurant authentic Rajasthani Thali", "Chokhi Dhani ethnic village dining spread"]
-  },
-  "default": {
-    famous: ["Central Heritage Landmark Exploration", "Panoramic Valley Lookout Point", "Ancient Historical Quarter Run", "Main City Botanical Garden"],
-    gems: ["Hidden Eco Forest Trail Pathway", "Offbeat River Stream Overlook", "Rustic Artisanal Heritage District Walk", "Secluded Sunset Cliff Outpost"],
-    breakfast: ["Traditional prepared local morning spread", "Freshly sorted marketplace food choices"],
-    eats: ["Acclaimed local diner choice", "Vibrant food street alleyways"]
-  }
-};
-
-function showAppNotification(messageString) {
-  const toast = document.getElementById('appNotificationToast');
-  toast.innerHTML = `✨ ${messageString}`;
-  toast.classList.add('show');
-  setTimeout(() => { toast.classList.remove('show'); }, 4500);
-}
-
-// Global state hook syncing user authentication state updates
+// Global Watcher hooking session tracking changes to greet travelers dynamically
 travelPlannerSupabaseClient.auth.onAuthStateChange(async (event, session) => {
   const authContainer = document.getElementById('navAuthGroup');
   if (session) {
     activeUserToken = session.access_token;
-    
-    // Fetch the name directly from profile records
     const { data: profile } = await travelPlannerSupabaseClient
       .from('profiles')
       .select('full_name')
@@ -791,7 +694,6 @@ async function handleCredentialAuth() {
     else {
       activeUserToken = data.session.access_token;
       closeAuthModal();
-      
       const { data: profileCheck } = await travelPlannerSupabaseClient.from('profiles').select('*').eq('id', data.user.id).single();
       if(!profileCheck) {
          openProfileCompletionWindow();
@@ -864,95 +766,6 @@ async function submitTravelerProfileDetails() {
   }
 }
 
-function toggleRouteStyle(chosenStyle) {
-  state.routeStyle = chosenStyle;
-  const chips = document.querySelectorAll('#routePaceChips .chip');
-  chips.forEach(c => c.classList.toggle('selected', c.dataset.val === chosenStyle));
-  
-  const builderPanel = document.getElementById('multiCityBuilderPanel');
-  if (chosenStyle === 'Multi-City') {
-    builderPanel.style.display = 'block';
-    if (state.stopoverCities.length === 0) { addNewStopoverRow(); }
-  } else {
-    builderPanel.style.display = 'none';
-  }
-  runGeographicalDistanceAndSpeedSuggester();
-}
-
-function addNewStopoverRow() {
-  const container = document.getElementById('stopoverRowsContainer');
-  const uniqueTimestampIndex = Date.now();
-  const rowId = 'stopover-row-' + uniqueTimestampIndex;
-  
-  const div = document.createElement('div');
-  div.className = 'stopover-card-block';
-  div.id = rowId;
-  div.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-      <span style="font-size:12px; font-weight:700; color:var(--coral);">📍 Stopover Destination</span>
-      <button style="background:none; border:none; color:var(--muted); cursor:pointer; font-size:16px;" onclick="removeStopoverRow('${rowId}')">×</button>
-    </div>
-    <div class="form-group">
-      <label>City/Town Name:</label>
-      <input type="text" class="stopover-city-input text-field-node" placeholder="e.g. Mysore, Wayanad" onchange="syncStopoverValuesIntoState()">
-    </div>
-    
-    <div class="form-group">
-      <label>⏱️ Shift Timing (When do you want to head out?):</label>
-      <select class="stopover-timing-select" onchange="syncStopoverValuesIntoState()" style="font-size:13px; padding:6px 10px;">
-        <option value="🌅 Sunrise Rollout (06:00 AM)">🌅 Sunrise Rollout (06:00 AM)</option>
-        <option value="☀️ Mid-Day Cruise (11:00 AM)">☀️ Mid-Day Cruise (11:00 AM)</option>
-        <option value="🌇 Sunset Dash (04:00 PM)">🌇 Sunset Dash (04:00 PM)</option>
-        <option value="🌙 Night Owl Ride (09:00 PM)">🌙 Night Owl Ride (09:00 PM)</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>🚗 How are you making this specific jump? (Multi-Select):</label>
-      <div class="vibe-checkbox-group stopover-transit-chips-group">
-        <label class="vibe-checkbox-label"><input type="checkbox" checked value="🚗 Personal Drive" onchange="syncStopoverValuesIntoState()"> 🚗 Private Drive</label>
-        <label class="vibe-checkbox-label"><input type="checkbox" value="🚕 Hired Cab" onchange="syncStopoverValuesIntoState()"> 🚕 Hired Cab</label>
-        <label class="vibe-checkbox-label"><input type="checkbox" value="🚌 Volvo Bus" onchange="syncStopoverValuesIntoState()"> 🚌 Volvo Bus</label>
-        <label class="vibe-checkbox-label"><input type="checkbox" value="🚂 Rail Link" onchange="syncStopoverValuesIntoState()"> 🚂 Rail Link</label>
-      </div>
-    </div>
-  `;
-  container.appendChild(div);
-}
-
-function removeStopoverRow(rowId) {
-  const el = document.getElementById(rowId);
-  if(el) el.remove();
-  syncStopoverValuesIntoState();
-}
-
-function syncStopoverValuesIntoState() {
-  state.stopoverCities = [];
-  document.querySelectorAll('.stopover-card-block').forEach(block => {
-    const cityInp = block.querySelector('.stopover-city-input').value.trim();
-    const timeVal = block.querySelector('.stopover-timing-select').value;
-    
-    let hopTransitModes = [];
-    block.querySelectorAll('.stopover-transit-chips-group input:checked').forEach(cb => {
-      hopTransitModes.push(cb.value);
-    });
-    
-    if(cityInp) {
-      state.stopoverCities.push({
-        cityName: cityInp,
-        shiftTime: timeVal,
-        transitModes: hopTransitModes
-      });
-    }
-  });
-  runGeographicalDistanceAndSpeedSuggester();
-}
-
-function syncHomewardStartCityValue() {
-  state.homewardStartCity = document.getElementById('homewardStartCityInput').value.trim();
-  runGeographicalDistanceAndSpeedSuggester();
-}
-
 function syncDynamicCostUIFields() {
   const leg1Group = document.getElementById('leg1CostDynamicGroup');
   const leg1FareWrap = document.getElementById('leg1FareWrapper');
@@ -965,17 +778,15 @@ function syncDynamicCostUIFields() {
     } else {
       leg1FuelWrap.style.display = 'none'; 
       leg1FareWrap.style.display = 'block';
-      
       let labelMappingValue = "Ticket";
       if (state.transport.includes("Flight")) labelMappingValue = "Flight Ticket";
       if (state.transport.includes("Train")) labelMappingValue = "Train Ticket";
       if (state.transport.includes("Bus")) labelMappingValue = "Bus Ticket";
-      
       document.getElementById('leg1FareLabel').textContent = `${labelMappingValue} Cost per Traveler (INR)`;
     }
   }
 
-  const leg2Group = document.getElementById('leg2CostDynamicGroup');
+  const leg2Group = document.getElementById('leg2DailyCostGroup');
   leg2Group.style.display = state.leg2Transport.length > 0 ? 'block' : 'none';
 
   const leg3Group = document.getElementById('leg3CostDynamicGroup');
@@ -989,422 +800,21 @@ function syncDynamicCostUIFields() {
     } else {
       leg3FuelWrap.style.display = 'none'; 
       leg3FareWrap.style.display = 'block';
-      
       let labelReturnMappingValue = "Return Ticket";
       if (state.leg3Transport.includes("Flight")) labelReturnMappingValue = "Flight Return Ticket";
       if (state.leg3Transport.includes("Train")) labelReturnMappingValue = "Train Return Ticket";
       if (state.leg3Transport.includes("Bus")) labelReturnMappingValue = "Bus Return Ticket";
-      
       document.getElementById('leg3FareLabel').textContent = `${labelReturnMappingValue} Cost per Traveler (INR)`;
     }
-  }
-}
-
-async function runGeographicalDistanceAndSpeedSuggester() {
-  syncDynamicCostUIFields(); 
-  
-  const suggestionBox = document.getElementById('distanceSuggestionBox');
-  if (!state.destinations.length || !state.transport) {
-    suggestionBox.style.display = 'none'; return;
-  }
-
-  suggestionBox.style.display = 'block';
-  suggestionBox.innerHTML = `⏳ Figuring out the best route choices and calculating map loops...`;
-
-  state.leg1TicketCost = parseInt(document.getElementById('leg1TicketCostInput').value) || 0;
-  state.leg1FuelPrice = parseInt(document.getElementById('leg1FuelPrice').value) || 102;
-  state.leg1VehicleMileage = parseInt(document.getElementById('leg1VehicleMileage').value) || 15;
-  
-  state.leg2DailyCost = parseInt(document.getElementById('leg2DailyCostInput').value) || 500;
-  state.hasLayover = document.getElementById('layoverToggle').checked;
-  
-  state.leg3TicketCost = parseInt(document.getElementById('leg3TicketCostInput').value) || 0;
-  state.leg3FuelPrice = parseInt(document.getElementById('leg3FuelPrice').value) || 102;
-  state.leg3VehicleMileage = parseInt(document.getElementById('leg3VehicleMileage').value) || 15;
-
-  const isDay1PureTravel = document.getElementById('flagDay1TransitCb').checked;
-  const isLastDayPureTravel = document.getElementById('flagLastDayTransitCb').checked;
-  
-  let dynamicPaceAllocationSum = 0;
-  if (isDay1PureTravel) dynamicPaceAllocationSum += 1;
-  if (isLastDayPureTravel) dynamicPaceAllocationSum += 1;
-  state.transitDaysAllocation = dynamicPaceAllocationSum;
-
-  try {
-    const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=`;
-    const resStart = await fetch(geocodeUrl + encodeURIComponent(state.startCity || 'Bangalore'));
-    const dataStart = await resStart.json();
-    
-    const finalEndpointCity = state.destinations[0] || 'Coorg, Karnataka';
-    const resFinal = await fetch(geocodeUrl + encodeURIComponent(finalEndpointCity));
-    const dataFinal = await resFinal.json();
-    
-    let finalCalculatedKM = 310;
-    let exactDrivingHours = 6;
-    let formattedMinutes = 45;
-
-    if (dataStart.length && dataFinal.length) {
-      const startPoint = `${dataStart[0].lon},${dataStart[0].lat}`;
-      const finalPoint = `${dataFinal[0].lon},${dataFinal[0].lat}`;
-      
-      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startPoint};${finalPoint}?overview=false`;
-      const osrmRes = await fetch(osrmUrl);
-      const osrmData = await osrmRes.json();
-      
-      if (osrmData.routes && osrmData.routes.length) {
-        const networkRoute = osrmData.routes[0];
-        finalCalculatedKM = Math.round(networkRoute.distance / 1000);
-        exactDrivingHours = Math.round(networkRoute.duration / 3600);
-        formattedMinutes = Math.round((networkRoute.duration % 3600) / 60);
-      }
-    }
-    
-    let routeSummaryLabel = 'Single Base Hub';
-    if (state.routeStyle === 'Multi-City' && state.stopoverCities.length > 0) {
-      finalCalculatedKM += (state.stopoverCities.length * 90); 
-      exactDrivingHours += (state.stopoverCities.length * 2);
-      
-      let stopNamesList = state.stopoverCities.map(c => `${c.cityName} (${c.shiftTime.split(' ')[0]})`);
-      routeSummaryLabel = `Stopovers Active [${stopNamesList.join(' ➔ ')}]`;
-    }
-
-    state.calculatedDistanceKM = finalCalculatedKM;
-    
-    let outboundCostPerHead = (state.transport === 'Full Road Trip') ? Math.round((finalCalculatedKM / state.leg1VehicleMileage) * state.leg1FuelPrice / state.groupSize) : state.leg1TicketCost;
-    let returnCostPerHead = (state.leg3Transport === 'Drive Return') ? Math.round((finalCalculatedKM / state.leg3VehicleMileage) * state.leg3FuelPrice / state.groupSize) : state.leg3TicketCost;
-    let totalLocalCommuteCostPerHead = Math.round((state.leg2DailyCost * (state.days || 1)) / state.groupSize);
-    let cumulativeTransitSpend = outboundCostPerHead + returnCostPerHead + totalLocalCommuteCostPerHead;
-    
-    let localOptionsDisplay = state.leg2Transport.length > 0 ? state.leg2Transport.join(", ") : "None chosen";
-    
-    suggestionBox.innerHTML = `
-      🗺️ <strong>Total Map Distance:</strong> ~${finalCalculatedKM} KM loop route mapping.<br>
-      🏎️ <strong>Route Strategy:</strong> ${routeSummaryLabel}<br>
-      🎬 <strong>Traveling There:</strong> ${state.transport}<br>
-      🗺️ <strong>Exploring Town:</strong> ${localOptionsDisplay}<br>
-      🏡 <strong>Heading Back Home:</strong> From ${state.homewardStartCity || finalEndpointCity} via ${state.leg3Transport}<br>
-      ⏱️ <strong>Estimated Continuous Travel Time:</strong> ~${exactDrivingHours}h ${formattedMinutes}m ${state.hasLayover ? '(Scenic layover incorporated)' : ''}.<br>
-      💵 <strong>Estimated Expenses Metrics (Per Head):</strong> Heading There: ₹${outboundCostPerHead} | Heading Home: ₹${returnCostPerHead} | Exploring Town: ₹${totalLocalCommuteCostPerHead}<br>
-      💰 <strong>Total Route Budget Baseline:</strong> <span style="color:var(--coral); font-weight:700;">₹${cumulativeTransitSpend.toLocaleString('en-IN')} INR per traveler</span>.<br>
-      💡 <strong>Our Pacing:</strong> Calculated cleanly using your travel day checkboxes below.
-    `;
-
-  } catch (apiError) {
-    console.warn("API map fallback sequence run.", apiError);
-    suggestionBox.innerHTML = `🏁 <strong>Transit Map Configuration Loop resolved safely.</strong>`;
-  }
-}
-
-function broadcastVibesLiveToTimeline() {
-  const globalContainer = document.getElementById('globalMassSchedulerGroup');
-  let globallySelectedVibes = [];
-  globalContainer.querySelectorAll('input:checked').forEach(cb => {
-    globallySelectedVibes.push(cb.value);
-  });
-
-  document.querySelectorAll('.daily-card').forEach((card, idx) => {
-    const isDay1TravelOnly = document.getElementById('flagDay1TransitCb').checked;
-    const isLastDayTravelOnly = document.getElementById('flagLastDayTransitCb').checked;
-    
-    if (isDay1TravelOnly && idx === 0) return;
-    if (isLastDayTravelOnly && idx === (state.days - 1)) return; 
-
-    card.querySelectorAll('.daily-vibe-cb').forEach(cb => {
-      cb.checked = globallySelectedVibes.includes(cb.value);
-    });
-  });
-}
-
-async function queryInAppRealtimeDistance(dateKey) {
-  const startLoc = document.getElementById(`local-route-start-${dateKey}`).value.trim();
-  const endLoc = document.getElementById(`local-route-end-${dateKey}`).value.trim();
-  const feedbackNode = document.getElementById(`local-route-result-${dateKey}`);
-  
-  if(!startLoc || !endLoc) {
-    feedbackNode.innerHTML = `<span style="color:red;">⚠️ Please enter both starting and ending spots to calculate.</span>`;
-    return;
-  }
-  
-  feedbackNode.innerHTML = `⏳ Checking OpenStreetMap grids...`;
-  
-  try {
-    const geocodeBase = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=`;
-    const resA = await fetch(geocodeBase + encodeURIComponent(startLoc));
-    const dataA = await resA.json();
-    const resB = await fetch(geocodeBase + encodeURIComponent(endLoc));
-    const dataB = await resB.json();
-    
-    if(dataA.length && dataB.length) {
-      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${dataA[0].lon},${dataA[0].lat};${dataB[0].lon},${dataB[0].lat}?overview=false`;
-      const osrmRes = await fetch(osrmUrl);
-      const osrmData = await osrmRes.json();
-      
-      if (osrmData.routes && osrmData.routes.length) {
-        const routeData = osrmData.routes[0];
-        const distanceKM = (routeData.distance / 1000).toFixed(1);
-        const durationMins = Math.round(routeData.duration / 60);
-        
-        feedbackNode.innerHTML = `
-          <div style="background:var(--success-bg); color:var(--success); padding:8px; border-radius:6px; font-size:13px; margin-top:8px; border-left:3px solid var(--success);">
-            🏁 <strong>In-App Distance Matrix:</strong> ~${distanceKM} KM | ⏱️ <strong>Drive Duration:</strong> ~${durationMins} mins<br>
-            <a href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startLoc)}&destination=${encodeURIComponent(endLoc)}&travelmode=driving" target="_blank" style="color:var(--ocean); font-weight:600; text-decoration:underline; font-size:12px; display:inline-block; margin-top:4px;">🗺️ View Complete Map Track</a>
-          </div>
-        `;
-        return;
-      }
-    }
-    throw new Error("Coordinates mismatch.");
-  } catch(e) {
-    feedbackNode.innerHTML = `<span style="color:var(--muted); font-size:12.5px;">🏁 Fallback: <a href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startLoc)}&destination=${encodeURIComponent(endLoc)}" target="_blank" style="text-decoration:underline; font-weight:600; color:var(--coral);">Launch direct routing loops on Google Maps</a></span>`;
-  }
-}
-
-function validateDatesOnly() {
-  const startVal = document.getElementById('startDate').value;
-  const endVal = document.getElementById('endDate').value;
-  const startTimeVal = document.getElementById('startTime').value;
-  const endTimeVal = document.getElementById('endTime').value;
-  
-  const errBox = document.getElementById('dateErrorBox');
-  const nextBtn = document.getElementById('btnStep3');
-  const durationCard = document.getElementById('durationSummaryCard');
-
-  if (errBox) errBox.classList.remove('show');
-  if (nextBtn) { nextBtn.disabled = false; nextBtn.style.opacity = '1'; }
-  
-  state.startDate = startVal; 
-  state.endDate = endVal;
-  state.startTime = startTimeVal;
-  state.endTime = endTimeVal;
-
-  if (startVal && endVal) {
-    const s = new Date(startVal), e = new Date(endVal);
-    if (isNaN(s.getTime()) || isNaN(e.getTime())) { 
-      if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } 
-      durationCard.style.display = 'none';
-      return false; 
-    }
-    if (e < s) { 
-      if(errBox) errBox.classList.add('show'); 
-      if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } 
-      durationCard.style.display = 'none';
-      return false; 
-    }
-    
-    const totalDays = Math.round((e - s) / 86400000) + 1;
-    const totalNights = totalDays - 1;
-    
-    state.days = totalDays;
-    state.nights = totalNights;
-
-    document.getElementById('computedDaysCount').textContent = totalDays;
-    document.getElementById('computedNightsCount').textContent = totalNights;
-    durationCard.style.display = 'flex';
-  } else { 
-    if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } 
-    durationCard.style.display = 'none';
-    return false; 
-  }
-  return true;
-}
-
-function generateDailyVibeSelectors() {
-  const container = document.getElementById('dailyVibeContainer');
-  if (!container || !state.startDate || isNaN(state.days) || state.days <= 0) return;
-  container.innerHTML = '';
-  
-  const start = new Date(state.startDate);
-  const finalBaseCity = state.destinations[0] || "Udaipur, Rajasthan";
-  
-  const globalContainer = document.getElementById('globalMassSchedulerGroup');
-  let inheritedVibes = [];
-  if (globalContainer) {
-    globalContainer.querySelectorAll('input:checked').forEach(cb => inheritedVibes.push(cb.value));
-  }
-  if (inheritedVibes.length === 0) inheritedVibes.push("🍛 Local Foodie");
-
-  const isDay1PureTravel = document.getElementById('flagDay1TransitCb').checked;
-  const isLastDayPureTravel = document.getElementById('flagLastDayTransitCb').checked;
-
-  for (let i = 0; i < state.days; i++) {
-    const current = new Date(start.getTime());
-    current.setDate(start.getDate() + i);
-    const dayName = current.toLocaleDateString('en-US', { weekday: 'long' });
-    const dateStr = current.toISOString().split('T')[0];
-
-    const isFirstDayTransitNode = (isDay1PureTravel && i === 0);
-    const isLastDayTransitNode = (isLastDayPureTravel && i === (state.days - 1));
-    
-    let customCardHtml = "";
-
-    if (isLastDayTransitNode) {
-      let platformLogisticsCheckboxes = "";
-      if(state.vehicleMode === "No Private Vehicle") {
-        platformLogisticsCheckboxes = `
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 📱 Confirm return travel choices early morning</label>
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🚕 Schedule local transfer cab directly to airport or station gates</label>
-        `;
-      } else {
-        platformLogisticsCheckboxes = `
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> ⛽ Gas Station Top-Up: Refuel vehicle completely before exiting final stops</label>
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🔧 Quick vital fluid check and tire verification before launch</label>
-        `;
-      }
-
-      customCardHtml = `
-        <div class="daily-card" style="border-left: 4px solid var(--coral);">
-          <div style="font-weight:600; color:var(--ocean-dark);">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
-          <p style="color:var(--coral); font-size:12px; font-weight:600; margin-top:2px;">🏡 Traveling Home Leg — Heading Back from ${state.homewardStartCity || finalBaseCity}</p>
-          
-          <div class="form-group" style="margin-top:10px;">
-            <label>Current Location Base:</label>
-            <input type="text" class="daily-place-input" data-date="${dateStr}" value="${state.homewardStartCity || finalBaseCity}">
-            <div class="live-helper-bar"></div>
-          </div>
-
-          <div class="form-group">
-            <label style="color:var(--ocean-dark);">📋 Departure Checklist:</label>
-            <div style="display:flex; flex-direction:column; gap:4px; margin-top:5px;">
-              <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🛌 Complete stay inventory check & clear room lockers</label>
-              ${platformLogisticsCheckboxes}
-            </div>
-          </div>
-
-          <input type="hidden" class="daily-things-input" data-date="${dateStr}" value="Execute final return travel sequence safely.">
-          <input type="hidden" class="daily-transit-mode-select" value="Return Home">
-        </div>
-      `;
-    } else if (isFirstDayTransitNode) {
-      customCardHtml = `
-        <div class="daily-card" style="border-left: 4px solid var(--ocean-mid);">
-          <div style="font-weight:600; color:var(--ocean-dark);">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
-          <p style="color:var(--ocean-mid); font-size:12px; font-weight:600; margin-top:2px;">🛫 Setting Off — Departing from ${state.startCity}</p>
-          
-          <div class="form-group" style="margin-top:10px;">
-            <label>Heading Towards Destination:</label>
-            <input type="text" class="daily-place-input" data-date="${dateStr}" value="${state.startCity}">
-            <div class="live-helper-bar"></div>
-          </div>
-
-          <div class="form-group" style="background:#f0f4f8; padding:12px; border-radius:8px; border:1px solid #d0e0f0; font-size:13.5px; color:var(--ocean-dark);">
-            🚀 <strong>Cruising Outbound:</strong> Today is tracked as an active travel day heading toward your playground via <strong>${state.transport}</strong>. Check into your stays tonight and rest up!
-          </div>
-
-          <input type="hidden" class="daily-things-input" data-date="${dateStr}" value="Launch travel sectors day.">
-          <input type="hidden" class="daily-transit-mode-select" value="${state.transport}">
-        </div>
-      `;
-    } else {
-      let computedDefaultPlace = finalBaseCity;
-      let stopoverNoticeString = "";
-      let automaticPlaceholderStrategyText = "e.g. Roam around local markets, explore top spots...";
-      
-      if (state.routeStyle === 'Multi-City' && state.stopoverCities.length > 0) {
-         if (i === 0 && state.stopoverCities[0]) {
-           computedDefaultPlace = state.stopoverCities[0].cityName;
-           stopoverNoticeString = `<p style="color:var(--gold); font-size:12px; font-weight:600;">⚡ Shift Active: Scheduled for ${state.stopoverCities[0].shiftTime} via [${state.stopoverCities[0].transitModes.join(' / ')}]</p>`;
-           automaticPlaceholderStrategyText = `Travel day. Explore stopover points inside ${computedDefaultPlace}.`;
-         } else if (i === 1 && state.stopoverCities[1]) {
-           computedDefaultPlace = state.stopoverCities[1].cityName;
-           stopoverNoticeString = `<p style="color:var(--gold); font-size:12px; font-weight:600;">⚡ Shift Active: Scheduled for ${state.stopoverCities[1].shiftTime} via [${state.stopoverCities[1].transitModes.join(' / ')}]</p>`;
-           automaticPlaceholderStrategyText = `Travel day. Explore stopover points inside ${computedDefaultPlace}.`;
-         }
-      }
-
-      let transitOptionsMarkup = "";
-      let recommendedOptionValue = "Local Sightseeing";
-      
-      if(stopoverNoticeString !== "") {
-         let contextHopObj = (i === 0) ? state.stopoverCities[0] : state.stopoverCities[1];
-         let firstPrimaryMode = contextHopObj.transitModes[0] || "Hired Outstation Cab";
-         recommendedOptionValue = firstPrimaryMode;
-         transitOptionsMarkup += `<option value="${firstPrimaryMode}" selected>⭐ [AI Best Choice]: ${firstPrimaryMode}</option>`;
-      } else {
-         transitOptionsMarkup += `<option value="Local Sightseeing" selected>⭐ [AI Best Choice]: Local Cabs & Shuttles</option>`;
-      }
-
-      if (state.leg2Transport.length > 0) {
-          state.leg2Transport.forEach(opt => {
-             if(opt !== recommendedOptionValue) {
-                 transitOptionsMarkup += `<option value="${opt}">Alternative Choice: ${opt}</option>`;
-             }
-          });
-      }
-      if(recommendedOptionValue !== "Local Sightseeing") {
-         transitOptionsMarkup += `<option value="Local Sightseeing">Alternative Choice: Local Cabs & Shuttles</option>`;
-      }
-
-      customCardHtml = `
-        <div class="daily-card">
-          <div style="font-weight:600; color:var(--ocean-dark); margin-bottom:4px;">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
-          ${stopoverNoticeString}
-          
-          <div class="form-group" style="margin-top:8px;">
-            <label>Target Location/City for this Day:</label>
-            <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${computedDefaultPlace}" placeholder="e.g. Jaipur, Udaipur...">
-            <div class="live-helper-bar" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
-              <a href="https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(computedDefaultPlace)}" target="_blank" id="live-link-food-${dateStr}" class="live-helper-link">🍛 Live Restaurants</a>
-              <a href="https://www.google.com/maps/search/${encodeURIComponent(computedDefaultPlace)}+top+attractions+things+to+do" target="_blank" id="live-link-sights-${dateStr}" class="live-helper-link">🏛️ Top Sights</a>
-              <a href="https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(computedDefaultPlace)}" target="_blank" id="live-link-stay-${dateStr}" class="live-helper-link">🏨 Live Room Stays</a>
-            </div>
-          </div>
-
-          <div class="form-group" style="margin-top: 14px; background: var(--paper); padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
-            <label style="color: var(--coral); font-size: 11px;">🔀 Active Transport Choice For This Day:</label>
-            <select class="daily-transit-mode-select" style="padding: 6px 10px; font-size: 13px;">
-              ${transitOptionsMarkup}
-            </select>
-          </div>
-
-          <div class="form-group" style="background:#f9f6f0; border:1px dashed var(--gold); border-radius:10px; padding:12px; margin-top:14px;">
-            <label style="font-size:10.5px; color:var(--ocean-dark); font-weight:700;">🗺️ Free In-App Distance & Layover Checker</label>
-            <div style="display:flex; gap:8px; margin-top:5px;">
-              <input type="text" id="local-route-start-${dateStr}" placeholder="Starting point" value="${computedDefaultPlace}" style="font-size:12px; padding:6px 10px;">
-              <input type="text" id="local-route-end-${dateStr}" placeholder="Ending point" style="font-size:12px; padding:6px 10px;">
-            </div>
-            <button class="btn btn-ghost" onclick="queryInAppRealtimeDistance('${dateStr}')" style="width:100%; font-size:12px; padding:6px; margin-top:8px; background:white; border-color:var(--gold); color:var(--gold);">Calculate Distance & Route Options 🔄</button>
-            <div id="local-route-result-${dateStr}"></div>
-          </div>
-
-          <div class="form-group" style="margin-top:14px;">
-            <label>Select Daily Vibes (Mix & Match Control Enabled):</label>
-            <div class="vibe-checkbox-group">
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🏛️ Iconic Sights" ${inheritedVibes.includes("🏛️ Iconic Sights") ? 'checked' : ''}> 🏛️ Iconic Sights</label>
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🌿 Offbeat Gems" ${inheritedVibes.includes("🌿 Offbeat Gems") ? 'checked' : ''}> 🌿 Offbeat Gems</label>
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🏔️ Adventure Trekking" ${inheritedVibes.includes("🏔️ Adventure Trekking") ? 'checked' : ''}> 🏔️ Adventure Trekking</label>
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🍛 Local Foodie" ${inheritedVibes.includes("🍛 Local Foodie") ? 'checked' : ''}> 🍛 Local Foodie</label>
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🧘 Wellness & Slow" ${inheritedVibes.includes("🧘 Wellness & Slow") ? 'checked' : ''}> 🧘 Slow & Wellness</label>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Things you want to do here specifically:</label>
-            <input type="text" class="daily-things-input" data-date="${dateStr}" value="${stopoverNoticeString ? automaticPlaceholderStrategyText : ''}" placeholder="${automaticPlaceholderStrategyText}">
-          </div>
-          
-          <div style="display:flex; gap:6px; margin-top:12px; border-top:1px solid var(--border); padding-top:10px;">
-            <a href="https://www.google.com/travel/flights" target="_blank" style="flex:1; font-size:11px; color:white; background:var(--ocean-mid); padding:6px; border-radius:6px; text-align:center; text-decoration:none; font-weight:600;">✈️ Search Flights</a>
-            <a href="https://www.irctc.co.in" target="_blank" style="flex:1; font-size:11px; color:white; background:var(--success); padding:6px; border-radius:6px; text-align:center; text-decoration:none; font-weight:600;">🚂 Book Trains</a>
-            <a href="https://www.redbus.in" target="_blank" style="flex:1; font-size:11px; color:white; background:var(--coral); padding:6px; border-radius:6px; text-align:center; text-decoration:none; font-weight:600;">🚌 Book Buses</a>
-          </div>
-        </div>
-      `;
-    }
-
-    const elementWrapper = document.createElement('div');
-    elementWrapper.innerHTML = customCardHtml;
-    container.appendChild(elementWrapper.firstElementChild);
   }
 }
 
 function updateLiveHelperMapLinks(inputNode, dateKey) {
   const currentVal = inputNode.value.trim();
   if(!currentVal) return;
-  
   const foodLink = document.getElementById(`live-link-food-${dateKey}`);
   const sightsLink = document.getElementById(`live-link-sights-${dateKey}`);
   const stayLink = document.getElementById(`live-link-stay-${dateKey}`);
-  
   if(foodLink) foodLink.href = `https://www.google.com/maps/search/Top+Restaurants+in+${encodeURIComponent(currentVal)}`;
   if(sightsLink) sightsLink.href = `https://www.google.com/maps/search/${encodeURIComponent(currentVal)}+attractions`;
   if(stayLink) stayLink.href = `https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(currentVal)}`;
@@ -1434,21 +844,17 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
       return; 
     }
   }
-  
   if (stepNum === 4) {
     if (!state.transport || state.leg2Transport.length === 0 || !state.leg3Transport) { document.getElementById('err4').classList.add('show'); return; }
   }
-  
   if (stepNum === 5) {
     state.dailyPlanData = [];
     document.querySelectorAll('.daily-card').forEach((card, idx) => {
       const placeInp = card.querySelector('.daily-place-input');
       const dateStr = placeInp.dataset.date;
       const placeVal = placeInp.value.trim();
-      
       const selectEl = card.querySelector('.daily-transit-mode-select');
       const transitVal = selectEl ? selectEl.value : "Local Travel Outbound";
-      
       const thingsVal = card.querySelector('.daily-things-input') ? card.querySelector('.daily-things-input').value.trim() : "Relax and explore local spots.";
       
       let selectedVibes = [];
@@ -1463,7 +869,6 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
         card.querySelectorAll('.daily-vibe-cb:checked').forEach(cb => selectedVibes.push(cb.value));
         if(selectedVibes.length === 0) selectedVibes.push("🍛 Local Foodie");
       }
-
       state.dailyPlanData.push({ date: dateStr, place: placeVal, vibes: selectedVibes, thingsToDo: thingsVal, dailyTransit: transitVal });
     });
   }
@@ -1482,17 +887,13 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   } catch(e) { console.warn("Feedback recorded safely."); }
 
   document.getElementById('singleBetaFeedbackInput').value = '';
-  
-  const activePanel = document.getElementById(`step${stepNum}`);
-  if(activePanel) activePanel.classList.remove('active');
+  document.getElementById(`step${stepNum}`).classList.remove('active');
   
   currentStep = nextStepNum;
-  const nextPanel = document.getElementById(`step${nextStepNum}`);
-  if(nextPanel) nextPanel.classList.add('active');
+  document.getElementById(`step${nextStepNum}`).classList.add('active');
   updateProgressBar();
   
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  
   if (nextStepNum === 4) runGeographicalDistanceAndSpeedSuggester();
   if (nextStepNum === 5) generateDailyVibeSelectors(); 
   if (nextStepNum === 7) buildSummary();
@@ -1518,14 +919,11 @@ function getDayName(dateStr) { return dateStr ? new Date(dateStr).toLocaleDateSt
 function injectExploreTargetIntoItinerary(targetType, contentValue) {
   modalContextItem.type = targetType;
   modalContextItem.value = contentValue;
-  
   const modalLabel = document.getElementById('injectionModalLabel');
-  modalLabel.innerHTML = `Enter the day number (<strong>1 to ${state.days}</strong>) where you want to add <em>"${contentValue}"</em> to your generated itinerary layout structure:`;
-  
+  modalLabel.innerHTML = `Enter the day number (<strong>1 to ${state.days}</strong>) where you want to add <em>"${contentValue}"</em> to your custom itinerary:`;
   const dayInputField = document.getElementById('injectionDayInput');
   dayInputField.max = state.days;
   dayInputField.value = 1;
-  
   document.getElementById('injectionModal').style.display = 'flex';
 }
 
@@ -1534,13 +932,11 @@ function closeInAppModal() { document.getElementById('injectionModal').style.dis
 function confirmInAppModalInjection() {
   const targetDayVal = parseInt(document.getElementById('injectionDayInput').value);
   const parsedDayIndex = targetDayVal - 1;
-
   if (isNaN(parsedDayIndex) || parsedDayIndex < 0 || parsedDayIndex >= state.days) {
-    alert(`Invalid day target allocation value. Drop a number between 1 and ${state.days}.`); return;
+    alert(`Invalid day. Choose a number between 1 and ${state.days}.`); return;
   }
-
   const container = document.getElementById(`injectedExploreBox-day-${parsedDayIndex}`);
-  if (!container) { alert("This elements day card cannot handle additions."); closeInAppModal(); return; }
+  if (!container) { alert("This day card cannot handle additions."); closeInAppModal(); return; }
 
   container.style.display = "block";
   if (modalContextItem.type === 'cuisine') {
@@ -1548,46 +944,31 @@ function confirmInAppModalInjection() {
   } else if (modalContextItem.type === 'famous') {
     container.innerHTML = `📸 <strong>Added Iconic Sightseeing Check:</strong> Drop by the signature landmark target: <em>${modalContextItem.value}</em>.`;
   } else {
-    container.innerHTML = `🌿 <strong>Added Remote Trail Exploration:</strong> Venture down offbeat path tracks to discover: <em>${modalContextItem.value}</em>.`;
+    container.innerHTML = `🌿 <strong>Added Remote Trail Exploration:</strong> Venture down offbeat paths to discover: <em>${modalContextItem.value}</em>.`;
   }
-  
   closeInAppModal();
-  showAppNotification(`${modalContextItem.type.toUpperCase()} option added to Day ${targetDayVal} safely inside layout.`);
+  showAppNotification(`${modalContextItem.type.toUpperCase()} option added to Day ${targetDayVal} safely.`);
 }
 
-// Secure Data Storage Pipeline saving travel structures to cloud tables
 async function saveCurrentTripToAccount() {
   const { data: { user }, error: authError } = await travelPlannerSupabaseClient.auth.getUser();
-
   if (authError || !user) {
-    showAppNotification("Please sign up or log in above to save this trip to your dashboard profile!");
-    openAuthModal('signin');
-    return;
+    showAppNotification("Please sign up or log in above to save this trip to your profile!");
+    openAuthModal('signin'); return;
   }
-
   const generatedTripName = `Trip to ${state.destinations[0] || 'Uncharted Hub'}`;
-
-  const { data, error } = await travelPlannerSupabaseClient
-    .from('trips')
-    .insert([
-      { 
-        trip_name: generatedTripName, 
-        trip_state: state
-      }
-    ]);
-
+  const { error } = await travelPlannerSupabaseClient.from('trips').insert([{ trip_name: generatedTripName, trip_state: state }]);
   if (error) {
     console.error("Supabase Save Error:", error);
-    showAppNotification("Cloud link sync failed. Please check table authorizations.");
+    showAppNotification("Cloud sync failed. Check database configurations.");
   } else {
-    showAppNotification(`Phenomenal! "${generatedTripName}" has been successfully saved to your profile cloud logs.`);
+    showAppNotification(`Phenomenal! "${generatedTripName}" has been successfully saved to your profile.`);
   }
 }
 
 function buildSummary() {
   const perPersonCost = (state.budgetScope === 'Per-Person Scope') ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
   let localSummaryStr = state.leg2Transport.join(" + ");
-  
   let outboundCostPerHead = (state.transport === 'Full Road Trip') ? Math.round((state.calculatedDistanceKM / state.leg1VehicleMileage) * state.leg1FuelPrice / state.groupSize) : state.leg1TicketCost;
   let returnCostPerHead = (state.leg3Transport === 'Drive Return') ? Math.round((state.calculatedDistanceKM / state.leg3VehicleMileage) * state.leg3FuelPrice / state.groupSize) : state.leg3TicketCost;
   let totalLocalCommuteCostPerHead = Math.round((state.leg2DailyCost * state.days) / state.groupSize);
@@ -1602,7 +983,7 @@ function buildSummary() {
 
   document.getElementById('tripSummary').innerHTML = `
     🗺️ Route Blueprint: <strong>${routePathStr}</strong><br>
-    🏁 Full Map Distance: <strong>~${state.calculatedDistanceKM} KM Track Mapped</strong><br>
+    🏁 Full Map Distance: <strong>~${state.calculatedDistanceKM} KM Mapped</strong><br>
     📅 Timeline Breakdown: <strong>${state.days} Days / ${state.nights} Nights Total</strong><br>
     ⏱️ Timing Windows: Departure at <strong>${state.startTime}</strong> on Day 1 | Heading Back Home by <strong>${state.endTime}</strong> from ${state.homewardStartCity || state.destinations[0]}<br>
     🚗 Transport Setup: <strong>Depart via [${state.transport}] ➔ Roaming with [${localSummaryStr}] ➔ Return via [${state.leg3Transport}]</strong><br>
@@ -1614,11 +995,8 @@ function buildSummary() {
 async function triggerBuiltInGeneration() {
   const statusEl = document.getElementById('apiStatusMessage');
   const outPanel = document.getElementById('outputPanel');
-  
   try {
-    statusEl.style.color = "green"; 
-    statusEl.textContent = "Generating your bespoke adventure blueprint...";
-
+    statusEl.style.color = "green"; statusEl.textContent = "Generating your bespoke adventure blueprint...";
     if (!state.dailyPlanData || state.dailyPlanData.length === 0) {
       state.dailyPlanData = Array.from({length: state.days}, (_, i) => ({
         date: state.startDate, place: state.destinations[0] || "Destination", vibes: ["🍛 Local Foodie"], thingsToDo: "Explore regional spots.", dailyTransit: "Local Sightseeing"
@@ -1632,13 +1010,11 @@ async function triggerBuiltInGeneration() {
 
     const perHeadBudget = (state.budgetScope === 'Per-Person Scope') ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
     const adjustedSpendablePool = Math.max(2000, perHeadBudget - aggregateTransitExpense);
-    
     const dailyFoodBase = Math.round((adjustedSpendablePool * 0.35) / state.days); 
     const dailyTransitBase = Math.round((adjustedSpendablePool * 0.25) / state.days);
     const dailyStayBase = Math.round((adjustedSpendablePool * 0.40) / state.days);
 
-    let htmlBody = ""; 
-    let commonHubExploreItems = "";
+    let htmlBody = ""; let commonHubExploreItems = "";
     let aggregateCalculatedExpenditure = aggregateTransitExpense;
 
     state.dailyPlanData.forEach((day, index) => {
@@ -1661,7 +1037,6 @@ async function triggerBuiltInGeneration() {
 
       const isFirstDayPureTransit = (document.getElementById('flagDay1TransitCb').checked && index === 0);
       const isLastDayPureTransit = (document.getElementById('flagLastDayTransitCb').checked && index === (state.days - 1));
-
       let dayVibeHeaderString = day.vibes.join(" + ");
       let dynamicMorningStrategy = `🥞 <strong>Breakfast Run:</strong> Try local options near your stay like: <em>"${morningBreakfastVibe}"</em>.`;
       let dynamicEveningStrategy = `🌙 <strong>Evening Strategy:</strong> Head down to the popular local hub to try: <em>"${eveningCulinaryVibe}"</em>. Keep it casual.`;
@@ -1685,7 +1060,6 @@ async function triggerBuiltInGeneration() {
       const finalTransit = Math.floor((dailyTransitBase * (1 + ((index % 2) * 0.08))) / 10) * 10;
       const finalStay = Math.floor((dailyStayBase * (1 - (((index + 1) % 3) - 1) * 0.05)) / 10) * 10;
       const combinedDayCostSum = finalFood + finalTransit + finalStay;
-      
       aggregateCalculatedExpenditure += combinedDayCostSum;
 
       htmlBody += `
@@ -1695,7 +1069,6 @@ async function triggerBuiltInGeneration() {
             <span style="background:var(--coral-light); color:var(--coral); font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; text-transform:uppercase;">${dayVibeHeaderString}</span>
           </div>
           <p style="margin-bottom:12px; font-size:14px;">📍 <strong>Today's Area Base:</strong> <span style="color:var(--ocean); font-weight:600;">${day.place}</span></p>
-          
           <div style="display:flex; flex-direction:column; gap:12px; font-size:14px;">
             <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);"><strong>🌅 Morning & Mid-Day:</strong> <p style="margin-top:3px; color:var(--ink);">${dynamicMorningStrategy}</p></div>
             ${!(isLastDayPureTransit) ? `
@@ -1710,7 +1083,6 @@ async function triggerBuiltInGeneration() {
             </div>` : ''}
             <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);"><strong>🌙 Evening & Nightfall:</strong> <p style="margin-top:3px; color:var(--ink);">${dynamicEveningStrategy}</p></div>
           </div>
-
           <div style="margin-top:18px; border-top:1px dashed var(--border); padding-top:12px; display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; font-size:12px; background:var(--sand); padding:10px; border-radius:8px;">
             <div>🍲 <strong>Food/Entry:</strong> (₹${finalFood.toLocaleString('en-IN')} approx.)</div>
             <div>🚌 <strong>Local Route:</strong> (₹${finalTransit.toLocaleString('en-IN')} approx.)</div>
@@ -1719,12 +1091,10 @@ async function triggerBuiltInGeneration() {
           <div style="margin-top:8px; text-align:right; font-size:13px; font-weight:600; color:var(--ocean-dark);">
             💵 Estimated Day Total: <span style="color:var(--coral);">(₹${combinedDayCostSum.toLocaleString('en-IN')} approx.)</span>
           </div>
-        </div>
-      `;
+        </div>`;
     });
 
     const netTotalSavingsPool = Math.max(0, perHeadBudget - aggregateCalculatedExpenditure);
-
     htmlBody += `
       <div class="daily-card" style="border: 2px solid var(--success); background: var(--success-bg); padding: 22px; border-radius: 16px; margin-top: 28px;">
         <h3 style="font-family:'Fraunces', serif; color:var(--success); font-size:20px; margin-bottom:10px;">📊 Final Consolidated Financial Summary</h3>
@@ -1739,22 +1109,18 @@ async function triggerBuiltInGeneration() {
             🎉 🎉 <strong>Net Wallet Savings:</strong> ₹${netTotalSavingsPool.toLocaleString('en-IN')} INR Saved per Head!
           </div>
         </div>
-      </div>
-    `;
+      </div>`;
 
     document.getElementById('step7').style.display = 'none';
     document.getElementById('compulsoryFeedbackContainer').style.display = 'none';
     document.getElementById('stepTabs').style.display = 'none';
     document.getElementById('itineraryExploreShowcaseHub').innerHTML = commonHubExploreItems;
-    
     outPanel.style.display = 'block';
     document.getElementById('outputBody').innerHTML = htmlBody;
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
   } catch (error) {
     console.error("Generation Error:", error);
-    statusEl.style.color = "red";
-    statusEl.textContent = "Glitch caught. Double check your input parameter values.";
+    statusEl.style.color = "red"; statusEl.textContent = "Glitch caught. Double check input variables.";
   }
 }
 
@@ -1795,19 +1161,6 @@ function setupMultiSelectChips(containerId, stateKey, callback) {
       if(callback) callback();
     });
   });
-}
-
-function selectThematicRandomEngine(themeKey) {
-  let matchedCity = "Coorg, Karnataka";
-  if(themeKey === 'beaches') matchedCity = "Gokarna, Karnataka";
-  if(themeKey === 'heritage') matchedCity = "Hampi, Karnataka";
-  
-  state.destinations = [matchedCity];
-  document.querySelectorAll('#destChips .chip').forEach(c => {
-    c.classList.toggle('selected', c.dataset.val === matchedCity);
-  });
-  showAppNotification(`Theme match found! Selected ${matchedCity} automatically.`);
-  if(state.startCity) runGeographicalDistanceAndSpeedSuggester();
 }
 
 setupMultiSelectChips('destChips', 'destinations', () => { if(state.startCity) runGeographicalDistanceAndSpeedSuggester(); });
