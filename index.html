@@ -16,7 +16,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--paper); color: var(--ink); font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6; min-height: 100vh; position: relative; }
   
-  /* Modern Navbar with standard Sign Up & Log In Actions */
+  /* Modern App Header Navbar Layout */
   nav { background: var(--ocean-dark); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
   .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; font-weight:600; font-family: 'Fraunces', serif; }
   .nav-auth-group { display: flex; align-items: center; gap: 12px; }
@@ -24,6 +24,7 @@
   .nav-auth-btn.signup-highlight { background: var(--coral); font-weight: 600; }
   .nav-auth-btn:hover { opacity: 0.9; background: rgba(255,255,255,0.1); }
   .nav-auth-btn.signup-highlight:hover { background: var(--coral); }
+  .user-badge { color: white; font-size: 13.5px; font-weight: 600; background: var(--ocean-mid); padding: 6px 14px; border-radius: 8px; display: flex; align-items: center; gap: 6px; }
 
   .main { max-width: 780px; margin: 40px auto; padding: 0 16px; }
   .card { background: var(--white); border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid var(--border); }
@@ -69,7 +70,7 @@
   }
   .live-helper-link:hover { background: var(--ocean); border-color: var(--ocean); color: var(--white) !important; transform: translateY(-1px); }
 
-  /* Auth Modals Styling */
+  /* Auth overlay systems */
   .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13,17,23,0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; }
   .auth-modal { background: white; border-radius: 20px; max-width: 400px; width: 90%; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
   .auth-toggle-link { color: var(--coral); font-weight: 600; cursor: pointer; text-decoration: underline; font-size: 13px; }
@@ -121,7 +122,7 @@
 
 <div id="appNotificationToast" class="app-notification-toast"></div>
 
-<!-- Add Spotlight Overlay Modal -->
+<!-- Custom Spotlight Insertion View overlay component panel -->
 <div id="injectionModal" class="injection-modal-overlay">
   <div class="injection-modal-container">
     <h3 style="font-family:'Fraunces', serif; color:var(--ocean-dark); font-size:18px; margin-bottom:8px;">Add Spotlight Item</h3>
@@ -137,7 +138,7 @@
   </div>
 </div>
 
-<!-- Header Navigation with standard Sign Up / Login workflow layout setup -->
+<!-- Header Navigation with Sign Up / Login controls block framework -->
 <nav>
   <a class="nav-brand" href="#">✈️ AI Travel Planner</a>
   <div class="nav-auth-group" id="navAuthGroup">
@@ -146,11 +147,11 @@
   </div>
 </nav>
 
-<!-- Clean Application Auth overlay popup matrix -->
+<!-- Clean Application Account authentication window panel framework -->
 <div class="auth-overlay" id="authOverlay">
   <div class="auth-modal">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-      <h3 id="authModalTitle" style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark);">Account Portal</h3>
+      <h3 id="authModalTitle" style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark);">Create Account</h3>
       <button style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted);" onclick="closeAuthModal()">×</button>
     </div>
 
@@ -308,7 +309,7 @@
     <!-- STEP 4: TRANSIT SELECTIONS -->
     <div class="step-panel" id="step4">
       <div class="step-heading">Transit & Travel Settings 🚗💨</div>
-      <p class="step-sub">Map out your travel logistics and configure transport expenses cleanly.</p>
+      <p class="step-sub">Map out your travel logistics and configure transport choices cleanly.</p>
       
       <!-- PHASE 1: HEADING THERE -->
       <div style="background: var(--white); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
@@ -325,12 +326,12 @@
         
         <div id="leg1CostDynamicGroup" style="display:none; background: var(--paper); padding: 12px; border-radius: 8px; margin-top: 10px;">
           <div class="form-group" id="leg1FareWrapper" style="display:none;">
-            <label id="leg1FareLabel">Ticket Fare per Traveler (INR)</label>
+            <label id="leg1FareLabel">Ticket Cost per Traveler (INR)</label>
             <input type="number" id="leg1TicketCostInput" value="0" min="0" onchange="runGeographicalDistanceAndSpeedSuggester()">
           </div>
           <div id="leg1FuelWrapper" style="display:none;" class="form-row">
             <div class="form-group">
-              <label>Outbound Petrol Price (INR/Litre)</label>
+              <label>Petrol Price (INR/Litre)</label>
               <input type="number" id="leg1FuelPrice" value="102" min="0" onchange="runGeographicalDistanceAndSpeedSuggester()">
             </div>
             <div class="form-group">
@@ -352,13 +353,13 @@
         </div>
 
         <div id="multiCityBuilderPanel" style="display: none; background: var(--paper); padding: 16px; border-radius: 10px; margin-bottom: 12px;">
-          <label style="color: var(--coral); margin-bottom:8px;">📍 Custom Stopover Corridor Scheduler:</label>
+          <label style="color: var(--coral); margin-bottom:8px;">📍 Custom Stopover Scheduler:</label>
           <div id="stopoverRowsContainer"></div>
           <button class="btn btn-ghost" style="padding: 6px 12px; font-size: 12px; margin-top: 6px; background: white;" onclick="addNewStopoverRow()">➕ Add Another Stopover Town</button>
         </div>
 
         <div style="border-top: 1px dashed var(--border); margin-top: 16px; padding-top: 14px;">
-          <label style="color:var(--ocean-dark); font-weight:700; font-size:12px; margin-bottom:6px;">⏱️ Transit Pacing: Flag Pure Travel-Only Days</label>
+          <label style="color:var(--ocean-dark); font-weight:700; font-size:12px; margin-bottom:6px;">⏱️ Travel Pacing: Flag Pure Travel-Only Days</label>
           <div class="vibe-checkbox-group">
             <label class="vibe-checkbox-label"><input type="checkbox" id="flagDay1TransitCb" checked onchange="runGeographicalDistanceAndSpeedSuggester()"> 🛣️ Day 1 is a pure Travel-Only day (No sights planned)</label>
             <label class="vibe-checkbox-label"><input type="checkbox" id="flagLastDayTransitCb" checked onchange="runGeographicalDistanceAndSpeedSuggester()"> 🏡 Last Day is a pure Travel-Only day (Heading home)</label>
@@ -391,7 +392,7 @@
           <div class="vibe-checkbox-group" style="margin-bottom:10px;">
             <label class="vibe-checkbox-label"><input type="checkbox" id="layoverToggle" value="Yes" onchange="runGeographicalDistanceAndSpeedSuggester()"> Account for a scenic stopover or delay window?</label>
           </div>
-          <label style="font-size:11px; color:var(--muted);">🚙 Route Pitstop Filters (Things you want along the highway):</label>
+          <label style="font-size:11px; color:var(--muted);">🚙 Highway Pitstop Filters (Things you want along the road):</label>
           <div class="vibe-checkbox-group">
             <label class="vibe-checkbox-label"><input type="checkbox" checked value="🍛 Dhabas"> 🍛 Highway Dhabas</label>
             <label class="vibe-checkbox-label"><input type="checkbox" value="📸 Viewpoints"> 📸 Scenic Viewpoints</label>
@@ -421,7 +422,7 @@
 
         <div id="leg3CostDynamicGroup" style="display:none; background: var(--paper); padding: 12px; border-radius: 8px; margin-top: 10px;">
           <div class="form-group" id="leg3FareWrapper" style="display:none;">
-            <label id="leg3FareLabel">Return Ticket Fare per Traveler (INR)</label>
+            <label id="leg3FareLabel">Return Ticket Cost per Traveler (INR)</label>
             <input type="number" id="leg3TicketCostInput" value="0" min="0" onchange="runGeographicalDistanceAndSpeedSuggester()">
           </div>
           <div id="leg3FuelWrapper" style="display:none;" class="form-row">
@@ -449,7 +450,7 @@
     <!-- STEP 5: PER-DAY VIBES WITH LIVE SYNC -->
     <div class="step-panel" id="step5">
       <div class="step-heading">Daily Customization Matrix ✨</div>
-      <p class="step-sub">Your adjustments below instantly broadcast live to the full timeline list for seamless scheduling autonomy.</p>
+      <p class="step-sub">Your adjustments below instantly update the full timeline list for seamless scheduling autonomy.</p>
       
       <div style="background: var(--paper); border: 1.5px dashed var(--coral); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
         <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--ocean-dark); margin-bottom: 8px;">⚡ Global Live Auto-Sync Vibe Templates</div>
@@ -476,7 +477,7 @@
     <!-- STEP 6: FINANCIAL PLAN -->
     <div class="step-panel" id="step6">
       <div class="step-heading">Financial Parameters 💰</div>
-      <p class="step-sub">State your limits to compute optimal hotel clusters and stays.</p>
+      <p class="step-sub">State your limits to compute optimal hotel choices and stays.</p>
       <div class="form-group">
         <label id="budgetInputLabel">Target Budget Allocation Amount (INR)</label>
         <input type="number" id="budgetAmount" placeholder="e.g. 20000" min="1000">
@@ -519,7 +520,10 @@
     <div id="outputPanel" style="display:none; padding: 24px; background: #fff;">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--border); padding-bottom:10px; margin-bottom:20px;">
         <h2 style="font-family:'Fraunces', serif; color: var(--ocean-dark);">✨ Your Custom Live Itinerary Blueprint</h2>
-        <button class="btn btn-ghost" style="padding: 6px 14px; font-size:12px; color:var(--coral); border-color:var(--coral);" onclick="modifyItinerary()">✏️ Modify & Adjust</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-ghost" style="padding: 6px 14px; font-size:12px; color:var(--success); border-color:var(--success);" onclick="saveCurrentTripToAccount()">💾 Cloud Save Trip</button>
+          <button class="btn btn-ghost" style="padding: 6px 14px; font-size:12px; color:var(--coral); border-color:var(--coral);" onclick="modifyItinerary()">✏️ Modify & Adjust</button>
+        </div>
       </div>
 
       <div style="background:var(--sand); padding:16px; border-radius:12px; margin-bottom:20px;">
@@ -535,7 +539,7 @@
 </div>
 
 <script>
-// Supabase Client Setup
+// Supabase Client Setup configuration values
 const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlic3FsbGdpdG50d2EiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNzEwNTE4OSwiZXhwIjoyMDUyNjgxMTg5fQ.q0zM8gK1M0k4q0m1_K0k4q0m1_K0k4q0m1_K0k4q0m1"; 
 
@@ -640,16 +644,30 @@ function showAppNotification(messageString) {
   setTimeout(() => { toast.classList.remove('show'); }, 4500);
 }
 
+// Global hook to watch and sync real-time database session changes cleanly
+travelPlannerSupabaseClient.auth.onAuthStateChange((event, session) => {
+  const authContainer = document.getElementById('navAuthGroup');
+  if (session) {
+    activeUserToken = session.access_token;
+    authContainer.innerHTML = `<span class="user-badge">🟢 ${session.user.email}</span>`;
+  } else {
+    activeUserToken = null;
+    authContainer.innerHTML = `
+      <button class="nav-auth-btn" onclick="openAuthModal('login')">Log In</button>
+      <button class="nav-auth-btn signup-highlight" onclick="openAuthModal('signin')">Sign Up</button>
+    `;
+  }
+});
+
 window.addEventListener('load', async () => {
   const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
   if (session) {
     activeUserToken = session.access_token;
-    document.getElementById('navAuthGroup').innerHTML = `<span style="color: white; font-size: 13.5px; font-weight: 600;">🟢 ${session.user.email}</span>`;
+    document.getElementById('navAuthGroup').innerHTML = `<span class="user-badge">🟢 ${session.user.email}</span>`;
   }
   updateProgressBar();
 });
 
-// App Authentication Window Controls
 function openAuthModal(mode) {
   document.getElementById('authOverlay').style.display = 'flex';
   if(mode) setAuthInterfaceMode(mode);
@@ -711,13 +729,12 @@ async function handleCredentialAuth() {
         errMsg.textContent = "Account verified. Please enter your password to log in directly.";
         errMsg.classList.add('show');
       } else { errMsg.textContent = error.message; errMsg.classList.add('show'); }
-    } else { showAppNotification("Verification link dispatched to your inbox!"); closeAuthModal(); }
+    } else { showAppNotification("Verification email dispatched cleanly to your inbox!"); closeAuthModal(); }
   } else if (currentAuthMode === 'login') {
     const { data, error } = await travelPlannerSupabaseClient.auth.signInWithPassword({ email, password });
     if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); }
     else {
       activeUserToken = data.session.access_token;
-      document.getElementById('navAuthGroup').innerHTML = `<span style="color: white; font-size: 13.5px; font-weight: 600;">🟢 ${data.user.email}</span>`;
       closeAuthModal();
     }
   } else if (currentAuthMode === 'recovery') {
@@ -725,11 +742,10 @@ async function handleCredentialAuth() {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); }
-    else { showAppNotification("Password initialization link sent."); closeAuthModal(); }
+    else { showAppNotification("Password reset details sent."); closeAuthModal(); }
   }
 }
 
-// Multi City Workflow Logic Tools
 function toggleRouteStyle(chosenStyle) {
   state.routeStyle = chosenStyle;
   const chips = document.querySelectorAll('#routePaceChips .chip');
@@ -755,7 +771,7 @@ function addNewStopoverRow() {
   div.id = rowId;
   div.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-      <span style="font-size:12px; font-weight:700; color:var(--coral);">📍 Stopover Hub Slot</span>
+      <span style="font-size:12px; font-weight:700; color:var(--coral);">📍 Stopover Destination</span>
       <button style="background:none; border:none; color:var(--muted); cursor:pointer; font-size:16px;" onclick="removeStopoverRow('${rowId}')">×</button>
     </div>
     <div class="form-group">
@@ -764,7 +780,7 @@ function addNewStopoverRow() {
     </div>
     
     <div class="form-group">
-      <label>⏱️ Shift Timing (When do you want to hit the road?):</label>
+      <label>⏱️ Shift Timing (When do you want to head out?):</label>
       <select class="stopover-timing-select" onchange="syncStopoverValuesIntoState()" style="font-size:13px; padding:6px 10px;">
         <option value="🌅 Sunrise Rollout (06:00 AM)">🌅 Sunrise Rollout (06:00 AM)</option>
         <option value="☀️ Mid-Day Cruise (11:00 AM)">☀️ Mid-Day Cruise (11:00 AM)</option>
@@ -1107,13 +1123,13 @@ function generateDailyVibeSelectors() {
       let platformLogisticsCheckboxes = "";
       if(state.vehicleMode === "No Private Vehicle") {
         platformLogisticsCheckboxes = `
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 📱 Confirm return transit tickets booking statuses early morning</label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 📱 Confirm return transit bookings early morning</label>
           <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🚕 Schedule local cab link directly to airport or station gates</label>
         `;
       } else {
         platformLogisticsCheckboxes = `
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> ⛽ Gas Station Top-Up: Refuel vehicle completely before exiting final regional stops</label>
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🔧 Quick vital engine inspection and tire health check layers</label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> ⛽ Gas Station Top-Up: Refuel vehicle completely before exiting final stops</label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🔧 Quick fluid check and tire verification before launch</label>
         `;
       }
 
@@ -1129,7 +1145,7 @@ function generateDailyVibeSelectors() {
           </div>
 
           <div class="form-group">
-            <label style="color:var(--ocean-dark);">📋 Departure Checklist Parameters:</label>
+            <label style="color:var(--ocean-dark);">📋 Departure Checklist:</label>
             <div style="display:flex; flex-direction:column; gap:4px; margin-top:5px;">
               <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🛌 Complete stay inventory check & clear room lockers</label>
               ${platformLogisticsCheckboxes}
@@ -1421,6 +1437,35 @@ function confirmInAppModalInjection() {
   showAppNotification(`${modalContextItem.type.toUpperCase()} option added to Day ${targetDayVal} safely inside layout.`);
 }
 
+// Secure Data Storage Pipeline: streams travel matrices straight to the cloud tables via JSONB structure
+async function saveCurrentTripToAccount() {
+  const { data: { user }, error: authError } = await travelPlannerSupabaseClient.auth.getUser();
+
+  if (authError || !user) {
+    showAppNotification("Please sign up or log in above to save this trip to your dashboard profile!");
+    openAuthModal('signin');
+    return;
+  }
+
+  const generatedTripName = `Trip to ${state.destinations[0] || 'Uncharted Hub'}`;
+
+  const { data, error } = await travelPlannerSupabaseClient
+    .from('trips')
+    .insert([
+      { 
+        trip_name: generatedTripName, 
+        trip_state: state
+      }
+    ]);
+
+  if (error) {
+    console.error("Supabase Save Error:", error);
+    showAppNotification("Cloud link sync failed. Please check table authorizations.");
+  } else {
+    showAppNotification(`Phenomenal! "${generatedTripName}" has been successfully saved to your profile cloud logs.`);
+  }
+}
+
 function buildSummary() {
   const perPersonCost = (state.budgetScope === 'Per-Person Scope') ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
   let localSummaryStr = state.leg2Transport.join(" + ");
@@ -1441,9 +1486,9 @@ function buildSummary() {
     🗺️ Route Blueprint: <strong>${routePathStr}</strong><br>
     🏁 Full Map Distance: <strong>~${state.calculatedDistanceKM} KM Track Mapped</strong><br>
     📅 Timeline Breakdown: <strong>${state.days} Days / ${state.nights} Nights Total</strong><br>
-    ⏱️ Timing Windows: Heading There Departure at <strong>${state.startTime}</strong> on Day 1 | Heading Back Home Cruise by <strong>${state.endTime}</strong> from ${state.homewardStartCity || state.destinations[0]}<br>
+    ⏱️ Timing Windows: Departure at <strong>${state.startTime}</strong> on Day 1 | Heading Back Home by <strong>${state.endTime}</strong> from ${state.homewardStartCity || state.destinations[0]}<br>
     🚗 Transport Setup: <strong>Depart via [${state.transport}] ➔ Roaming with [${localSummaryStr}] ➔ Return via [${state.leg3Transport}]</strong><br>
-    ⛽ Integrated Transit Expenses: <strong>₹${aggregateTransitExpense.toLocaleString('en-IN')} INR per head</strong><br>
+    ⛽ Transit Expenses: <strong>₹${aggregateTransitExpense.toLocaleString('en-IN')} INR per head</strong><br>
     💰 Target Capital Allocation: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR Per Traveler</strong>
   `;
 }
@@ -1512,7 +1557,7 @@ async function triggerBuiltInGeneration() {
         dynamicMorningStrategy = `🧳 <strong>Clear Accommodations:</strong> Complete room checkouts, settle local invoices, and pack up.`;
         dynamicEveningStrategy = `🏡 <strong>Homeward Leg:</strong> Conclude return journey segments back into <strong>${state.startCity}</strong>. Trip complete!`;
       } else {
-        if(day.vibes.includes("🏛️ Iconic Sights")) dynamicMorningStrategy = `🏛️ <strong>Iconic Highlights:</strong> Beat local queues early to see: <em>"${primaryFamousSight}"</em> before peak crowd hours.`;
+        if(day.vibes.includes("🏛️ Iconic Sights")) dynamicMorningStrategy = `🏛️ <strong>Iconic Highlights:</strong> Beat queues early to see: <em>"${primaryFamousSight}"</em> before peak crowd hours.`;
         if(day.vibes.includes("🏔️ Adventure Trekking")) dynamicMorningStrategy = `🏔️ <strong>Adventure Track:</strong> Pack gear early for high-energy exploration routes near ${day.place}.`;
         if(day.vibes.includes("🧘 Wellness & Slow")) dynamicEveningStrategy = `🧘 <strong>Slow Pace:</strong> Wind down at a quiet riverbank or rooftop cafe with traditional local blends.`;
       }
@@ -1591,7 +1636,7 @@ async function triggerBuiltInGeneration() {
   } catch (error) {
     console.error("Generation Error:", error);
     statusEl.style.color = "red";
-    statusEl.textContent = "Glitch caught. Double check your input parameters values.";
+    statusEl.textContent = "Glitch caught. Double check your input parameter values.";
   }
 }
 
