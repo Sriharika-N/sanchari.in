@@ -100,6 +100,8 @@
   }
   .duration-metric { font-size: 18px; font-weight: 700; color: var(--ocean-dark); }
   .duration-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+  
+  .stopover-row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
 </style>
 </head>
 <body>
@@ -285,15 +287,15 @@
       <div class="error-box" id="err3">Please choose valid dates and journey scheduling metrics.</div>
     </div>
 
-    <!-- STEP 4: TRANSIT LOGISTICS & VEHICLE SETTINGS (WITH COST PREDICTORS) -->
+    <!-- STEP 4: TRANSIT LOGISTICS & VEHICLE SETTINGS -->
     <div class="step-panel" id="step4">
       <div class="step-heading">Transit & Travel Settings 🚗💨</div>
-      <p class="step-sub">Choose your transportation modes and configure structural cost details for the route engine.</p>
+      <p class="step-sub">Map out your routing sequence and configure transport expenses cleanly.</p>
       
-      <!-- SECTION 1: THE LONG DISTANCE LAUNCH -->
+      <!-- SECTION 1: THE BIG LAUNCH -->
       <div style="background: var(--white); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
-        <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🛫 Leg 1: Getting There (Home to Destination Hub)</h4>
-        <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Choose how you are reaching your primary vacation city area first.</p>
+        <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🎬 Phase 1: The Big Launch (Heading Out)</h4>
+        <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Choose how you are departing your hometown to reach the holiday playground.</p>
         <div class="form-group">
           <div class="chips" id="leg1TransportChips">
             <div class="chip" data-val="Flight Connected">✈️ Flying There</div>
@@ -303,20 +305,14 @@
           </div>
         </div>
         
-        <div class="form-group" id="firstHubFieldGroup" style="display:none;">
-          <label>Where are you arriving first? (Intermediate Stop / Entry City)</label>
-          <input type="text" id="intermediateHubInput" placeholder="e.g. Jaipur (Before moving to Udaipur)">
-        </div>
-
-        <!-- Dynamic Leg 1 Fields -->
         <div id="leg1CostDynamicGroup" style="display:none; background: var(--paper); padding: 12px; border-radius: 8px; margin-top: 10px;">
           <div class="form-group" id="leg1FareWrapper" style="display:none;">
-            <label id="leg1FareLabel">Ticket Fare per Person (INR)</label>
+            <label id="leg1FareLabel">Ticket Fare per Traveler (INR)</label>
             <input type="number" id="leg1TicketCostInput" value="0" min="0" onchange="runGeographicalDistanceAndSpeedSuggester()">
           </div>
           <div id="leg1FuelWrapper" style="display:none;" class="form-row">
             <div class="form-group">
-              <label>Outbound Petrol Price per Litre (INR)</label>
+              <label>Outbound Petrol Price (INR/Litre)</label>
               <input type="number" id="leg1FuelPrice" value="102" min="0" onchange="runGeographicalDistanceAndSpeedSuggester()">
             </div>
             <div class="form-group">
@@ -327,15 +323,35 @@
         </div>
       </div>
 
-      <!-- SECTION 2: INTERNAL SHIFTS & COMMUTES (MULTI SELECT) -->
+      <!-- SECTION 2: CHOOSE YOUR PACE (OPTION B BUILDER) -->
       <div style="background: var(--white); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
-        <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🔀 Leg 2: Exploring Locally (Multi-Select Options)</h4>
-        <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Select all the options you plan to use for transfers and roaming inside the city.</p>
+        <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🏎️ Phase 2: Choose Your Pace</h4>
+        <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Are you staying at one main destination, or building a multi-city road trip adventure?</p>
+        
+        <div class="chips" id="routePaceChips" style="margin-bottom: 14px;">
+          <div class="chip selected" data-val="Single Hub" onclick="toggleRouteStyle('Single Hub')">🛋️ Chillin' at One Epic Hub</div>
+          <div class="chip" data-val="Multi-City" onclick="toggleRouteStyle('Multi-City')">🚀 Multi-City Road Trip Stopovers</div>
+        </div>
+
+        <!-- Dynamic Multi-City Stopover List Container -->
+        <div id="multiCityBuilderPanel" style="display: none; background: var(--paper); padding: 16px; border-radius: 10px; margin-bottom: 12px;">
+          <label style="color: var(--coral);">📍 Map Your Stopover Destinations Corridor:</label>
+          <div id="stopoverRowsContainer">
+            <!-- Dynamic stopover input rows spawn here -->
+          </div>
+          <button class="btn btn-ghost" style="padding: 6px 12px; font-size: 12px; margin-top: 6px; background: white;" onclick="addNewStopoverRow()">➕ Add Another Stopover Town</button>
+        </div>
+      </div>
+
+      <!-- SECTION 3: THE ROAMING RHYTHM (MULTI SELECT) -->
+      <div style="background: var(--white); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+        <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🗺️ Phase 3: The Roaming Rhythm (Exploring Town)</h4>
+        <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Select all options you'll use to explore and commute locally within city hubs.</p>
         <div class="form-group">
           <div class="chips" id="leg2TransportChips">
             <div class="chip" data-val="Hired Outstation Cab">🚕 Hired Outstation Cab</div>
             <div class="chip" data-val="Pre-booked Train Link">🚂 Inter-City Rail Link</div>
-            <div class="chip" data-val="Private Bus Booking">🚌 Private Buses (Sleeper/Volvo)</div>
+            <div class="chip" data-val="Private Bus Booking">🚌 Private Buses (Volvo / Sleepers)</div>
             <div class="chip" data-val="Public State Bus">🚏 Public Buses / State KSRTC</div>
             <div class="chip" data-val="Self-Drive Commute">🚗 Local Self-Drive Rental</div>
             <div class="chip" data-val="Local Cabs & Shuttles">❌ Local Cabs & Shuttles Only</div>
@@ -343,22 +359,22 @@
         </div>
 
         <div class="form-group" id="leg2CostDynamicGroup" style="display:none; background: var(--paper); padding: 12px; border-radius: 8px;">
-          <label>Estimated Daily Spending Pool Allocation for Local Commuting (INR/Day)</label>
+          <label>Estimated Daily Cost Budget Allocation for Local Commuting (INR/Day)</label>
           <input type="number" id="leg2DailyCostInput" value="500" min="0" onchange="runGeographicalDistanceAndSpeedSuggester()">
         </div>
 
         <div class="form-group" style="margin-top:14px;">
-          <label>Buffer Parameter Setup</label>
+          <label>Layovers & Delays</label>
           <div class="vibe-checkbox-group">
-            <label class="vibe-checkbox-label"><input type="checkbox" id="layoverToggle" value="Yes" onchange="runGeographicalDistanceAndSpeedSuggester()"> Includes long layover or scenic stopover along the route?</label>
+            <label class="vibe-checkbox-label"><input type="checkbox" id="layoverToggle" value="Yes" onchange="runGeographicalDistanceAndSpeedSuggester()"> Account for a scenic stopover or long delay layover window?</label>
           </div>
         </div>
       </div>
 
-      <!-- SECTION 3: THE RETURN TRAVELLING LOOP (ALIGNED TO LEG 1 OPTIONS) -->
+      <!-- SECTION 4: THE HOMEWARD CRUISE -->
       <div style="background: var(--white); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
-        <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🏡 Leg 3: Coming Back Home (Destination to Step-Down Arrival)</h4>
-        <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Complete the full travel loop configuration to return back home safely.</p>
+        <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🏡 Phase 4: The Homeward Cruise (Closing the Loop)</h4>
+        <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Complete the full travel circle configuration to arrive back home safely.</p>
         <div class="form-group">
           <div class="chips" id="leg3TransportChips">
             <div class="chip" data-val="Flight Return">✈️ Flying Back Home</div>
@@ -368,15 +384,14 @@
           </div>
         </div>
 
-        <!-- Dynamic Leg 3 Fields -->
         <div id="leg3CostDynamicGroup" style="display:none; background: var(--paper); padding: 12px; border-radius: 8px; margin-top: 10px;">
           <div class="form-group" id="leg3FareWrapper" style="display:none;">
-            <label id="leg3FareLabel">Return Ticket Fare per Person (INR)</label>
+            <label id="leg3FareLabel">Return Ticket Fare per Traveler (INR)</label>
             <input type="number" id="leg3TicketCostInput" value="0" min="0" onchange="runGeographicalDistanceAndSpeedSuggester()">
           </div>
           <div id="leg3FuelWrapper" style="display:none;" class="form-row">
             <div class="form-group">
-              <label>Return Petrol Price per Litre (INR)</label>
+              <label>Return Petrol Price (INR/Litre)</label>
               <input type="number" id="leg3FuelPrice" value="102" min="0" onchange="runGeographicalDistanceAndSpeedSuggester()">
             </div>
             <div class="form-group">
@@ -387,7 +402,7 @@
         </div>
       </div>
       
-      <!-- Interactive TeTelemetry suggestion box -->
+      <!-- Interactive Summary Matrix Output Card Container -->
       <div id="distanceSuggestionBox" style="background:var(--sand); padding:16px; border-radius:12px; font-size:14px; margin-bottom:18px; display:none; color:var(--ocean-dark); border-left: 4px solid var(--gold);"></div>
 
       <div class="form-group" id="transitDaysWrapper" style="display:none;">
@@ -503,13 +518,13 @@ const travelPlannerSupabaseClient = window.supabase.createClient(SUPABASE_URL, S
 let activeUserToken = null;
 let currentAuthMode = 'signin'; 
 
-// Master configuration state tracking parameters
+// Master configuration state metrics tracking map
 let state = { 
   destinations: [], startCity: '', intermediateHub: '', startDate: '', endDate: '', startTime: '06:00', endTime: '22:00', days: 0, nights: 0, transitDaysAllocation: 2,
   crew: '', groupSize: 1, transport: 'Full Road Trip', leg2Transport: [], leg3Transport: 'Drive Return', vehicleMode: 'Own Private Car', dailyPlanData: [], budgetVal: 0, budgetScope: '' ,
-  flightTicketCost: 0, fuelPrice: 102, vehicleMileage: 15, calculatedDistanceKM: 0,
-  // Added custom cost configuration state variables
+  calculatedDistanceKM: 0,
   leg1TicketCost: 0, leg1FuelPrice: 102, leg1VehicleMileage: 15,
+  routeStyle: 'Single Hub', stopoverCities: [],
   leg2DailyCost: 500, hasLayover: false,
   leg3TicketCost: 0, leg3FuelPrice: 102, leg3VehicleMileage: 15
 };
@@ -790,9 +805,52 @@ function validateDatesOnly() {
   return true;
 }
 
-// Custom view helper function to render out dynamic financial control inputs smoothly
+// Option B View Helpers: Handles the toggle selection behavior natively
+function toggleRouteStyle(chosenStyle) {
+  state.routeStyle = chosenStyle;
+  const chips = document.querySelectorAll('#routePaceChips .chip');
+  chips.forEach(c => c.classList.toggle('selected', c.dataset.val === chosenStyle));
+  
+  const builderPanel = document.getElementById('multiCityBuilderPanel');
+  if (chosenStyle === 'Multi-City') {
+    builderPanel.style.display = 'block';
+    if (state.stopoverCities.length === 0) { addNewStopoverRow(); }
+  } else {
+    builderPanel.style.display = 'none';
+  }
+  runGeographicalDistanceAndSpeedSuggester();
+}
+
+function addNewStopoverRow() {
+  const container = document.getElementById('stopoverRowsContainer');
+  const rowId = 'stopover-row-' + Date.now();
+  
+  const div = document.createElement('div');
+  div.className = 'stopover-row';
+  div.id = rowId;
+  div.innerHTML = `
+    <input type="text" class="stopover-city-input" placeholder="Enter stopover city name..." style="flex:1;" onchange="syncStopoverValuesIntoState()">
+    <button class="btn btn-ghost" style="padding: 10px; color: var(--coral); font-weight: bold; background: white;" onclick="removeStopoverRow('${rowId}')">×</button>
+  `;
+  container.appendChild(div);
+}
+
+function removeStopoverRow(rowId) {
+  const el = document.getElementById(rowId);
+  if(el) el.remove();
+  syncStopoverValuesIntoState();
+}
+
+function syncStopoverValuesIntoState() {
+  state.stopoverCities = [];
+  document.querySelectorAll('.stopover-city-input').forEach(inp => {
+    const val = inp.value.trim();
+    if(val) state.stopoverCities.push(val);
+  });
+  runGeographicalDistanceAndSpeedSuggester();
+}
+
 function syncDynamicCostUIFields() {
-  // Parse Leg 1 Mode UI configurations
   const leg1Group = document.getElementById('leg1CostDynamicGroup');
   const leg1FareWrap = document.getElementById('leg1FareWrapper');
   const leg1FuelWrap = document.getElementById('leg1FuelWrapper');
@@ -807,11 +865,9 @@ function syncDynamicCostUIFields() {
     }
   }
 
-  // Parse Leg 2 Mode UI configurations
   const leg2Group = document.getElementById('leg2CostDynamicGroup');
   leg2Group.style.display = state.leg2Transport.length > 0 ? 'block' : 'none';
 
-  // Parse Leg 3 Mode UI configurations
   const leg3Group = document.getElementById('leg3CostDynamicGroup');
   const leg3FareWrap = document.getElementById('leg3FareWrapper');
   const leg3FuelWrap = document.getElementById('leg3FuelWrapper');
@@ -836,9 +892,8 @@ async function runGeographicalDistanceAndSpeedSuggester() {
   }
 
   suggestionBox.style.display = 'block';
-  suggestionBox.innerHTML = `⏳ Figuring out the best route options and mapping driving distances...`;
+  suggestionBox.innerHTML = `⏳ Figuring out the best route options and mapping distances...`;
 
-  // Update dynamic values from fields into current active state metrics safely
   state.leg1TicketCost = parseInt(document.getElementById('leg1TicketCostInput').value) || 0;
   state.leg1FuelPrice = parseInt(document.getElementById('leg1FuelPrice').value) || 102;
   state.leg1VehicleMileage = parseInt(document.getElementById('leg1VehicleMileage').value) || 15;
@@ -855,23 +910,20 @@ async function runGeographicalDistanceAndSpeedSuggester() {
     const resStart = await fetch(geocodeUrl + encodeURIComponent(state.startCity));
     const dataStart = await resStart.json();
     
-    const targetMidCity = state.intermediateHub || state.destinations[0];
-    const resMid = await fetch(geocodeUrl + encodeURIComponent(targetMidCity));
-    const dataMid = await resMid.json();
-    
-    const resFinal = await fetch(geocodeUrl + encodeURIComponent(state.destinations[0]));
+    // Resolve primary target endpoint node contextually
+    const finalEndpointCity = state.destinations[0];
+    const resFinal = await fetch(geocodeUrl + encodeURIComponent(finalEndpointCity));
     const dataFinal = await resFinal.json();
     
-    let finalCalculatedKM = 420;
-    let exactDrivingHours = 8;
-    let formattedMinutes = 30;
+    let finalCalculatedKM = 450;
+    let exactDrivingHours = 9;
+    let formattedMinutes = 15;
 
-    if (dataStart.length && dataMid.length && dataFinal.length) {
+    if (dataStart.length && dataFinal.length) {
       const startPoint = `${dataStart[0].lon},${dataStart[0].lat}`;
-      const midPoint = `${dataMid[0].lon},${dataMid[0].lat}`;
       const finalPoint = `${dataFinal[0].lon},${dataFinal[0].lat}`;
       
-      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startPoint};${midPoint};${finalPoint}?overview=false`;
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startPoint};${finalPoint}?overview=false`;
       const osrmRes = await fetch(osrmUrl);
       const osrmData = await osrmRes.json();
       
@@ -883,26 +935,35 @@ async function runGeographicalDistanceAndSpeedSuggester() {
       }
     }
     
+    // Account for added stopover loops nodes if Multi-City is checked active
+    if (state.routeStyle === 'Multi-City' && state.stopoverCities.length > 0) {
+      finalCalculatedKM += (state.stopoverCities.length * 110); 
+      exactDrivingHours += (state.stopoverCities.length * 2);
+    }
+
     state.calculatedDistanceKM = finalCalculatedKM;
     
-    // Live Cost Estimation Calculations
     let outboundCostPerHead = state.transport === 'Full Road Trip' ? Math.round((finalCalculatedKM / state.leg1VehicleMileage) * state.leg1FuelPrice / state.groupSize) : state.leg1TicketCost;
     let returnCostPerHead = state.leg3Transport === 'Drive Return' ? Math.round((finalCalculatedKM / state.leg3VehicleMileage) * state.leg3FuelPrice / state.groupSize) : state.leg3TicketCost;
     let totalLocalCommuteCostPerHead = Math.round((state.leg2DailyCost * (state.days || 1)) / state.groupSize);
     let cumulativeTransitSpend = outboundCostPerHead + returnCostPerHead + totalLocalCommuteCostPerHead;
     
     let localOptionsDisplay = state.leg2Transport.length > 0 ? state.leg2Transport.join(", ") : "None chosen";
-    let journeyPerformanceText = `🛣️ <strong>Leg 1 (Going There):</strong> ${state.transport}<br>🔄 <strong>Leg 2 (Local Sights):</strong> ${localOptionsDisplay}<br>🏡 <strong>Leg 3 (Coming Home):</strong> ${state.leg3Transport}`;
+    let routePaceLabelDisplay = state.routeStyle === 'Multi-City' ? `Stopovers Tracker Active [${state.stopoverCities.join(' ➔ ')}]` : 'Single Base Hub';
+    
     let suggestedJourneyDays = finalCalculatedKM > 500 ? 2 : 1;
     if (state.hasLayover) suggestedJourneyDays += 1;
 
     transitWrapper.style.display = 'block';
     suggestionBox.innerHTML = `
-      🗺️ <strong>Total Map Distance:</strong> ~${finalCalculatedKM} KM cumulative route mapping.<br>
-      ${journeyPerformanceText}<br>
+      🗺️ <strong>Total Map Distance:</strong> ~${finalCalculatedKM} KM total loop route mapping.<br>
+      🏎️ <strong>Route Strategy:</strong> ${routePaceLabelDisplay}<br>
+      🎬 <strong>The Big Launch (Outbound):</strong> ${state.transport}<br>
+      🗺️ <strong>The Roaming Rhythm (Local Sights):</strong> ${localOptionsDisplay}<br>
+      🏡 <strong>The Homeward Cruise (Coming Home):</strong> ${state.leg3Transport}<br>
       ⏱️ <strong>Estimated Continuous Travel Time:</strong> ~${exactDrivingHours}h ${formattedMinutes}m ${state.hasLayover ? '( Layover buffer incorporated)' : ''}.<br>
-      💵 <strong>Estimated Route Costs (Per Traveler):</strong> Outbound: ₹${outboundCostPerHead} | Return: ₹${returnCostPerHead} | Local Transfers: ₹${totalLocalCommuteCostPerHead}<br>
-      💰 <strong>Total Transport Overhead baseline:</strong> <span style="color:var(--coral); font-weight:700;">₹${cumulativeTransitSpend.toLocaleString('en-IN')} INR per head</span>.<br>
+      💵 <strong>Estimated Expenses Metrics (Per Head):</strong> Launch: ₹${outboundCostPerHead} | Cruise: ₹${returnCostPerHead} | Local Transfers: ₹${totalLocalCommuteCostPerHead}<br>
+      💰 <strong>Total Route Budget Pool Baseline:</strong> <span style="color:var(--coral); font-weight:700;">₹${cumulativeTransitSpend.toLocaleString('en-IN')} INR per traveler</span>.<br>
       💡 <strong>Our Recommendation:</strong> We suggest allocating exactly <strong>${suggestedJourneyDays} Travel Day(s)</strong> total.
     `;
 
@@ -911,9 +972,9 @@ async function runGeographicalDistanceAndSpeedSuggester() {
     generateDailyVibeSelectors();
 
   } catch (apiError) {
-    console.warn("API fallback loops triggered safely.", apiError);
+    console.warn("API map rendering bypass loop triggered.", apiError);
     transitWrapper.style.display = 'block';
-    suggestionBox.innerHTML = `🏁 <strong>Transit Map Configuration Resolution complete.</strong> Adjust days drop down field parameter details down below manually.`;
+    suggestionBox.innerHTML = `🏁 <strong>Transit Map Configuration Resolution complete.</strong> Adjust pacing drop down fields below manually.`;
   }
 }
 
@@ -928,7 +989,7 @@ function generateDailyVibeSelectors() {
   container.innerHTML = '';
   
   const start = new Date(state.startDate);
-  const initialBaseCity = state.intermediateHub || state.destinations[0] || "Manali, HP";
+  const initialBaseCity = state.stopoverCities[0] || state.destinations[0] || "Manali, HP";
   const finalBaseCity = state.destinations[0] || "Udaipur, Rajasthan";
   
   for (let i = 0; i < state.days; i++) {
@@ -957,7 +1018,7 @@ function generateDailyVibeSelectors() {
       customCardHtml = `
         <div class="daily-card" style="border-left: 4px solid var(--coral);">
           <div style="font-weight:600; color:var(--ocean-dark);">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
-          <p style="color:var(--coral); font-size:12px; font-weight:600; margin-top:2px;">🏡 Leg 3: Return Route Commenced — Heading Home</p>
+          <p style="color:var(--coral); font-size:12px; font-weight:600; margin-top:2px;">🏡 Homeward Cruise leg — Heading Back</p>
           
           <div class="form-group" style="margin-top:10px;">
             <label>Current Location Base:</label>
@@ -981,18 +1042,23 @@ function generateDailyVibeSelectors() {
     } else {
       let conditionalInputLayout = "";
       if (state.transitDaysAllocation >= 2 && i === 0) {
-        conditionalInputLayout = `<p style="color:var(--coral); font-size:12px; font-weight:600;">🛣️ Day 1: Leg 1 Launch — Driving Outwards</p>`;
+        conditionalInputLayout = `<p style="color:var(--coral); font-size:12px; font-weight:600;">🛣️ Day 1: The Big Launch — Kicking Off the Journey</p>`;
       }
 
-      const computedDefaultPlace = (i < 2 && state.intermediateHub) ? initialBaseCity : finalBaseCity;
-      
+      // Pre-populate logical intermediate step stops from state matrices natively
+      let computedDefaultPlace = finalBaseCity;
+      if (state.routeStyle === 'Multi-City' && state.stopoverCities.length > 0) {
+         if (i === 0) computedDefaultPlace = state.stopoverCities[0];
+         else if (i === 1 && state.stopoverCities[1]) computedDefaultPlace = state.stopoverCities[1];
+      }
+
       let initialTransitOptions = "";
       if (state.leg2Transport.length > 0) {
          state.leg2Transport.forEach(opt => {
-            initialTransitOptions += `<option value="${opt}">Keep active link: ${opt}</option>`;
+            initialTransitOptions += `<option value="${opt}">Keep option: ${opt}</option>`;
          });
       }
-      initialTransitOptions += `<option value="Local Sightseeing">Stay at current destination (Local exploration / Cabs / Walking)</option>`;
+      initialTransitOptions += `<option value="Local Sightseeing">Stay at current destination hub area</option>`;
 
       customCardHtml = `
         <div class="daily-card">
@@ -1067,8 +1133,7 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   }
   
   if (stepNum === 4) {
-    if (!state.transport || state.leg2Transport.length === 0 || !state.leg3Transport || !state.vehicleMode) { document.getElementById('err4').classList.add('show'); return; }
-    state.intermediateHub = document.getElementById('intermediateHubInput').value.trim();
+    if (!state.transport || state.leg2Transport.length === 0 || !state.leg3Transport) { document.getElementById('err4').classList.add('show'); return; }
   }
   
   if (stepNum === 5) {
@@ -1182,20 +1247,25 @@ function buildSummary() {
   const perPersonCost = (state.budgetScope === 'Per-Person Scope') ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
   let localSummaryStr = state.leg2Transport.join(" + ");
   
-  // Dynamic summary cost mapping variables
   let outboundCostPerHead = state.transport === 'Full Road Trip' ? Math.round((state.calculatedDistanceKM / state.leg1VehicleMileage) * state.leg1FuelPrice / state.groupSize) : state.leg1TicketCost;
   let returnCostPerHead = state.leg3Transport === 'Drive Return' ? Math.round((state.calculatedDistanceKM / state.leg3VehicleMileage) * state.leg3FuelPrice / state.groupSize) : state.leg3TicketCost;
   let totalLocalCommuteCostPerHead = Math.round((state.leg2DailyCost * state.days) / state.groupSize);
   let aggregateTransitExpense = outboundCostPerHead + returnCostPerHead + totalLocalCommuteCostPerHead;
 
+  let routePathStr = `${state.startCity} ➔ `;
+  if(state.routeStyle === 'Multi-City' && state.stopoverCities.length > 0) {
+     routePathStr += state.stopoverCities.join(' ➔ ') + ' ➔ ';
+  }
+  routePathStr += `${state.destinations[0]} ➔ ${state.startCity}`;
+
   document.getElementById('tripSummary').innerHTML = `
-    🗺️ Route Blueprint: <strong>${state.startCity} ➔ ${state.intermediateHub ? state.intermediateHub + ' ➔ ' : ''}${state.destinations[0]} ➔ ${state.startCity}</strong><br>
-    🏁 Full Route Journey Distance: <strong>~${state.calculatedDistanceKM} KM Total Loop Mapped</strong><br>
-    📅 Plan Breakdown: <strong>${state.days} Days / ${state.nights} Nights Total</strong> ${state.hasLayover ? '(Scenic Layover Flagged)' : ''}<br>
-    ⏱️ Timing Schedules: Departure at <strong>${state.startTime}</strong> on Day 1 | Returning Arrival home by <strong>${state.endTime}</strong> on the Last Day<br>
-    🚗 Transport Configuration: <strong>${state.transport} ➔ [${localSummaryStr}] ➔ ${state.leg3Transport}</strong><br>
-    ⛽ Estimated Route Commuting Overhead: <strong>₹${aggregateTransitExpense.toLocaleString('en-IN')} INR per head</strong><br>
-    💰 Target Accommodation/Activity Pool: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR Per Traveler</strong>
+    🗺️ Route Blueprint: <strong>${routePathStr}</strong><br>
+    🏁 Full Loop Map Distance: <strong>~${state.calculatedDistanceKM} KM Track Mapped</strong><br>
+    📅 Timeline Breakdown: <strong>${state.days} Days / ${state.nights} Nights Total</strong> ${state.hasLayover ? '(Scenic Layovers Blocked)' : ''}<br>
+    ⏱️ Timing Windows: Launch Departure at <strong>${state.startTime}</strong> on Day 1 | Returning Home Cruise by <strong>${state.endTime}</strong> on the Final Day<br>
+    🚗 Fleet Configuration: <strong>Launch via [${state.transport}] ➔ Roaming with [${localSummaryStr}] ➔ Cruise Return via [${state.leg3Transport}]</strong><br>
+    ⛽ Consolidated Transit Expenses: <strong>₹${aggregateTransitExpense.toLocaleString('en-IN')} INR per head</strong><br>
+    💰 Target Destination Budget Allocation: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR Per Traveler</strong>
   `;
 }
 
@@ -1245,18 +1315,18 @@ async function triggerBuiltInGeneration() {
     if (day.dailyTransit && day.dailyTransit !== "Local Sightseeing" && !isLastDay) {
       transitCardLogisticsHtml = `
         <div style="margin: 10px 0; padding: 10px 14px; background: #fff8e6; color: #856404; font-size: 13.5px; border-radius: 8px; border: 1px solid #ffeeba; display: flex; flex-direction: column; gap: 4px;">
-          <div>🔀 <strong>Transit Route Active:</strong> Moving today using options linked to: <strong>${day.dailyTransit}</strong>.</div>
+          <div>🔀 <strong>Transit Connection Active:</strong> Moving locations today utilizing: <strong>${day.dailyTransit}</strong>.</div>
         </div>
       `;
     }
 
     if (state.transitDaysAllocation >= 2 && index === 0) {
-      dayVibeHeaderString = "🛣️ Leg 1: Travel Day (Heading Out)";
-      dynamicMorningStrategy = `🛫 <strong>Departure [Leaving at: ${state.startTime}]:</strong> Commencing your journey outward from <strong>${state.startCity}</strong> towards ${day.place} via ${state.transport}. Check into your arrival stay.`;
+      dayVibeHeaderString = "🛣️ The Big Launch Day (Heading Out)";
+      dynamicMorningStrategy = `🛫 <strong>Launch Departure [Leaving at: ${state.startTime}]:</strong> Commencing your journey outward from <strong>${state.startCity}</strong> towards ${day.place} via ${state.transport}. Check into your arrival stay.`;
       dynamicEveningStrategy = `🌙 <strong>Evening:</strong> Settle down from travel hours. Grab a casual dinner nearby and rest up for tomorrow.`;
     } else if (isLastDay) {
-      dayVibeHeaderString = "🏡 Leg 3: Travel Day (Heading Home)";
-      let operationalDeductionNote = (state.vehicleMode !== "No Private Vehicle") ? "Double-check fuel levels, route maps for bottlenecks, and engine vitals." : "Confirm your public transport booking times and double check baggage clearances.";
+      dayVibeHeaderString = "🏡 The Homeward Cruise Day (Closing the Loop)";
+      let operationalDeductionNote = (state.vehicleMode !== "No Private Vehicle") ? "Double-check fuel levels, route maps for mountain bottlenecks, and engine vitals." : "Confirm your public transport booking times and double check baggage clearances.";
       dynamicMorningStrategy = `🧳 <strong>Packing Up:</strong> Complete your hotel check-out, settle outstanding bills, and pack your luggage. ${operationalDeductionNote}`;
       dynamicEveningStrategy = `🏡 <strong>Arrival Home [Target Time: ${state.endTime}]:</strong> Conclude your return leg back into <strong>${state.startCity}</strong> via ${state.leg3Transport}. Full loop complete!`;
     } else {
@@ -1385,12 +1455,6 @@ setupMultiSelectTransportChips('leg2TransportChips', 'leg2Transport', () => {
 
 setupExclusiveChips('leg3TransportChips', 'leg3Transport', (val) => {
   syncDynamicCostUIFields();
-  runGeographicalDistanceAndSpeedSuggester();
-});
-
-setupExclusiveChips('vehicleChips', 'vehicleMode', (val) => {
-  const hasVehicle = ['Own Private Car', 'Own Private Bike'].includes(val);
-  document.getElementById('mileageInputGroup').style.display = hasVehicle ? 'block' : 'none';
   runGeographicalDistanceAndSpeedSuggester();
 });
 
