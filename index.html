@@ -576,16 +576,37 @@
   </div>
 </div>
 
+<script>
+// Supabase Base Initialization Channels (RESTORED FIXED CONNECTIONS)
+const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlic3FsbGdpdG50d2EiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNzEwNTE4OSwiZXhwIjoyMDUyNjgxMTg5fQ.q0zM8gK1M0k4q0m1_K0k4q0m1_K0k4q0m1_K0k4q0m1"; 
+
+const travelPlannerSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let activeUserToken = null;
+let currentAuthMode = 'signin'; 
+let securityPasswordBuffer = ""; 
+
+let state = { 
+  destinations: [], startCity: '', startDate: '', endDate: '', startTime: '06:00', endTime: '22:00', days: 0, nights: 0, transitDaysAllocation: 2,
+  crew: '', groupSize: 1, transport: 'Full Road Trip', leg2Transport: [], leg3Transport: 'Drive Return', vehicleMode: 'Own Private Car', dailyPlanData: [], budgetVal: 0, budgetScope: '' ,
+  calculatedDistanceKM: 0,
+  leg1TicketCost: 0, leg1FuelPrice: 102, leg1VehicleMileage: 15,
+  routeStyle: 'Single Hub', stopoverCities: [],
+  leg2DailyCost: 500, hasLayover: false,
+  leg3TicketCost: 0, leg3FuelPrice: 102, leg3VehicleMileage: 15,
+  homewardStartCity: ''
+};
+</script>
+
 <!-- ==========================================
      CORE MODULE SEPARATION BRIDGE LINK
      ========================================== -->
 <script src="generate.js"></script>
 
 <script>
-// Global UI State Management
+// Global UI State Management Continuation
 let currentStep = 1;
 const TOTAL_STEPS = 7;
-let securityPasswordBuffer = ""; 
 let modalContextItem = { type: '', value: '' };
 
 // Global Watcher hooking session tracking changes to greet travelers dynamically
@@ -766,60 +787,6 @@ async function submitTravelerProfileDetails() {
   }
 }
 
-function syncDynamicCostUIFields() {
-  const leg1Group = document.getElementById('leg1CostDynamicGroup');
-  const leg1FareWrap = document.getElementById('leg1FareWrapper');
-  const leg1FuelWrap = document.getElementById('leg1FuelWrapper');
-  
-  if (state.transport) {
-    leg1Group.style.display = 'block';
-    if (state.transport.includes('Road') || state.transport.includes('Driving') || state.transport.includes('Trip')) {
-      leg1FuelWrap.style.display = 'flex'; leg1FareWrap.style.display = 'none';
-    } else {
-      leg1FuelWrap.style.display = 'none'; 
-      leg1FareWrap.style.display = 'block';
-      let labelMappingValue = "Ticket";
-      if (state.transport.includes("Flight")) labelMappingValue = "Flight Ticket";
-      if (state.transport.includes("Train")) labelMappingValue = "Train Ticket";
-      if (state.transport.includes("Bus")) labelMappingValue = "Bus Ticket";
-      document.getElementById('leg1FareLabel').textContent = `${labelMappingValue} Cost per Traveler (INR)`;
-    }
-  }
-
-  const leg2Group = document.getElementById('leg2DailyCostGroup');
-  leg2Group.style.display = state.leg2Transport.length > 0 ? 'block' : 'none';
-
-  const leg3Group = document.getElementById('leg3CostDynamicGroup');
-  const leg3FareWrap = document.getElementById('leg3FareWrapper');
-  const leg3FuelWrap = document.getElementById('leg3FuelWrapper');
-  
-  if (state.leg3Transport) {
-    leg3Group.style.display = 'block';
-    if (state.leg3Transport.includes('Drive') || state.leg3Transport.includes('Road') || state.leg3Transport.includes('Trip')) {
-      leg3FuelWrap.style.display = 'flex'; leg3FareWrap.style.display = 'none';
-    } else {
-      leg3FuelWrap.style.display = 'none'; 
-      leg3FareWrap.style.display = 'block';
-      let labelReturnMappingValue = "Return Ticket";
-      if (state.leg3Transport.includes("Flight")) labelReturnMappingValue = "Flight Return Ticket";
-      if (state.leg3Transport.includes("Train")) labelReturnMappingValue = "Train Return Ticket";
-      if (state.leg3Transport.includes("Bus")) labelReturnMappingValue = "Bus Return Ticket";
-      document.getElementById('leg3FareLabel').textContent = `${labelReturnMappingValue} Cost per Traveler (INR)`;
-    }
-  }
-}
-
-function updateLiveHelperMapLinks(inputNode, dateKey) {
-  const currentVal = inputNode.value.trim();
-  if(!currentVal) return;
-  const foodLink = document.getElementById(`live-link-food-${dateKey}`);
-  const sightsLink = document.getElementById(`live-link-sights-${dateKey}`);
-  const stayLink = document.getElementById(`live-link-stay-${dateKey}`);
-  if(foodLink) foodLink.href = `https://www.google.com/maps/search/Top+Restaurants+in+${encodeURIComponent(currentVal)}`;
-  if(sightsLink) sightsLink.href = `https://www.google.com/maps/search/${encodeURIComponent(currentVal)}+attractions`;
-  if(stayLink) stayLink.href = `https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(currentVal)}`;
-}
-
 function updateProgressBar() {
   document.getElementById('progressFill').style.width = ((currentStep / TOTAL_STEPS) * 100) + '%';
   const tabs = document.getElementById('stepTabs').children;
@@ -869,7 +836,7 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
         card.querySelectorAll('.daily-vibe-cb:checked').forEach(cb => selectedVibes.push(cb.value));
         if(selectedVibes.length === 0) selectedVibes.push("🍛 Local Foodie");
       }
-      state.dailyPlanData.push({ date: dateStr, place: placeVal, vibes: selectedVibes, thingsToDo: thingsVal, dailyTransit: transitVal });
+      state.dailyPlanData.push({ date: dateStr, place: placeVal, vibes: selectedVibes, thingsToDo: thingsToDo, dailyTransit: transitVal });
     });
   }
   if (stepNum === 6) {
