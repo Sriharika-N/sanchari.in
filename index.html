@@ -382,7 +382,6 @@
         <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🏡 Phase 4: The Homeward Cruise (Closing the Loop)</h4>
         <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Complete the full travel circle configuration to arrive back home safely.</p>
         
-        <!-- NEW INPUT NODE: Captures specific starting hub context for precise road telemetry processing -->
         <div class="form-group" style="margin-bottom: 18px;">
           <label style="color:var(--ocean-mid);">📍 Where are you starting your journey back from?</label>
           <input type="text" id="homewardStartCityInput" placeholder="e.g. Coorg, Udaipur, Ooty..." onchange="syncHomewardStartCityValue()">
@@ -434,21 +433,21 @@
       <div class="error-box" id="err4">Please select your transport preferences across all three journey steps.</div>
     </div>
 
-    <!-- STEP 5: PER-DAY VIBES -->
+    <!-- STEP 5: PER-DAY VIBES (CLEANED REAL-TIME AUTO-SYNC ENGINE) -->
     <div class="step-panel" id="step5">
       <div class="step-heading">Daily Customization Matrix ✨</div>
-      <p class="step-sub">Select multiple preferences per day, or use the tool below to copy a pattern globally to prevent overwhelming configuration fatigue.</p>
+      <p class="step-sub">Your adjustments below instantly broadcast live to the full timeline list for seamless scheduling autonomy.</p>
       
+      <!-- REMOVED BUTTON SYSTEM: Interactive checkboxes broadcast updates to all cards via onchange directly -->
       <div style="background: var(--paper); border: 1.5px dashed var(--coral); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
-        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--ocean-dark); margin-bottom: 8px;">⚡ Fast Pass: Apply Same Vibes to All Days</div>
+        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--ocean-dark); margin-bottom: 8px;">⚡ Global Live Auto-Sync Vibe Templates</div>
         <div class="vibe-checkbox-group" id="globalMassSchedulerGroup">
-          <label class="vibe-checkbox-label"><input type="checkbox" id="g-vibe-famous" value="🏛️ Iconic Sights"> 🏛️ Iconic Sights</label>
-          <label class="vibe-checkbox-label"><input type="checkbox" id="g-vibe-offbeat" value="🌿 Offbeat Gems"> 🌿 Offbeat Gems</label>
-          <label class="vibe-checkbox-label"><input type="checkbox" id="g-vibe-trekking" value="🏔️ Adventure Trekking"> 🏔️ Adventure Trekking</label>
-          <label class="vibe-checkbox-label"><input type="checkbox" id="g-vibe-foodie" value="🍛 Local Foodie" checked> 🍛 Local Foodie</label>
-          <label class="vibe-checkbox-label"><input type="checkbox" id="g-vibe-slow" value="🧘 Slow & Wellness"> 🧘 Slow & Wellness</label>
+          <label class="vibe-checkbox-label"><input type="checkbox" id="g-vibe-famous" value="🏛️ Iconic Sights" onchange="broadcastVibesLiveToTimeline()"> 🏛️ Iconic Sights</label>
+          <label class="vibe-checkbox-label"><input type="checkbox" id="g-vibe-offbeat" value="🌿 Offbeat Gems" onchange="broadcastVibesLiveToTimeline()"> 🌿 Offbeat Gems</label>
+          <label class="vibe-checkbox-label"><input type="checkbox" id="g-vibe-trekking" value="🏔️ Adventure Trekking" onchange="broadcastVibesLiveToTimeline()"> 🏔️ Adventure Trekking</label>
+          <label class="vibe-checkbox-label"><input type="checkbox" id="g-vibe-foodie" value="🍛 Local Foodie" checked onchange="broadcastVibesLiveToTimeline()"> 🍛 Local Foodie</label>
+          <label class="vibe-checkbox-label"><input type="checkbox" id="g-vibe-slow" value="🧘 Wellness & Slow" onchange="broadcastVibesLiveToTimeline()"> 🧘 Slow & Wellness</label>
         </div>
-        <button class="btn btn-ghost" style="margin-top: 12px; width: 100%; font-size: 13px; color: var(--coral); border-color: var(--coral); background: white;" onclick="applyVibesGloballyToAllDays()">Sync Selection Across Entire Itinerary 🔄</button>
       </div>
 
       <div class="form-group">
@@ -539,7 +538,7 @@ let state = {
   routeStyle: 'Single Hub', stopoverCities: [],
   leg2DailyCost: 500, hasLayover: false,
   leg3TicketCost: 0, leg3FuelPrice: 102, leg3VehicleMileage: 15,
-  homewardStartCity: '' // Context parameters tracker node for custom return journeys
+  homewardStartCity: ''
 };
 let currentStep = 1;
 const TOTAL_STEPS = 7;
@@ -587,7 +586,7 @@ const travelKnowledgeBase = {
     famous: ["Pangong Tso High-Altitude Saltwater Lake", "Thiksey Monastery Tiered Complex", "Khardung La World Peak Pass"],
     gems: ["Nubra Valley Hunder Sand Dunes Track", "Basgo Castle Ruin Offbeat Paths"],
     breakfast: ["Traditional Ladakhi Khambir skillet bread with butter tea", "Apricot jam reductions with warm cakes"],
-    eats: ["Alchi Kitchen heritage traditional recipes diner", "Leh Main Market open-air local dumpling lanes"]
+    eats: ["Alchi Kitchen heritage traditional recipes diner", "Leh Market open-air local dumpling lanes"]
   },
   "goa": {
     famous: ["Fontainhas Historic Latin Quarter Walk", "Dudhsagar Jungle Waterfalls Track", "Aguada Historic Coastal Fort Outpost"],
@@ -902,13 +901,11 @@ function syncStopoverValuesIntoState() {
   runGeographicalDistanceAndSpeedSuggester();
 }
 
-// NEW Context synchronization pass handler for Phase 4 tracking
 function syncHomewardStartCityValue() {
   state.homewardStartCity = document.getElementById('homewardStartCityInput').value.trim();
   runGeographicalDistanceAndSpeedSuggester();
 }
 
-// FIXED: Clean split pattern checking to swap labels beautifully exactly like Phase 4 
 function syncDynamicCostUIFields() {
   const leg1Group = document.getElementById('leg1CostDynamicGroup');
   const leg1FareWrap = document.getElementById('leg1FareWrapper');
@@ -922,7 +919,6 @@ function syncDynamicCostUIFields() {
       leg1FuelWrap.style.display = 'none'; 
       leg1FareWrap.style.display = 'block';
       
-      // Clean string slice mapping matching Phase 4 perfectly
       let parsedLabelText = "Ticket";
       if (state.transport.includes("Flight")) parsedLabelText = "Flight Ticket";
       if (state.transport.includes("Train")) parsedLabelText = "Train Ticket";
@@ -1059,6 +1055,25 @@ function updateJourneyDaysState() {
   generateDailyVibeSelectors();
 }
 
+// NEW REAL-TIME BROADCASTER ENGINE: Sweeps across timeline cards on field updates automatically
+function broadcastVibesLiveToTimeline() {
+  const globalContainer = document.getElementById('globalMassSchedulerGroup');
+  let globallySelectedVibes = [];
+  globalContainer.querySelectorAll('input:checked').forEach(cb => {
+    globallySelectedVibes.push(cb.value);
+  });
+
+  // Dynamically map updates into timeline checkbox lists without disturbing user custom text parameters
+  document.querySelectorAll('.daily-card').forEach((card, idx) => {
+    const isLastCardElement = (state.transitDaysAllocation >= 1 && idx === (state.days - 1));
+    if (isLastCardElement) return; // Retain system security configurations for the last homeward day
+
+    card.querySelectorAll('.daily-vibe-cb').forEach(cb => {
+      cb.checked = globallySelectedVibes.includes(cb.value);
+    });
+  });
+}
+
 function generateDailyVibeSelectors() {
   const container = document.getElementById('dailyVibeContainer');
   if (!container || !state.startDate || isNaN(state.days) || state.days <= 0) return;
@@ -1067,6 +1082,14 @@ function generateDailyVibeSelectors() {
   const start = new Date(state.startDate);
   const finalBaseCity = state.destinations[0] || "Udaipur, Rajasthan";
   
+  // Read baseline parameters from global scheduler panel ahead of generation pass
+  const globalContainer = document.getElementById('globalMassSchedulerGroup');
+  let inheritedVibes = [];
+  if (globalContainer) {
+    globalContainer.querySelectorAll('input:checked').forEach(cb => inheritedVibes.push(cb.value));
+  }
+  if (inheritedVibes.length === 0) inheritedVibes.push("🍛 Local Foodie");
+
   for (let i = 0; i < state.days; i++) {
     const current = new Date(start.getTime());
     current.setDate(start.getDate() + i);
@@ -1120,15 +1143,20 @@ function generateDailyVibeSelectors() {
         conditionalInputLayout = `<p style="color:var(--coral); font-size:12px; font-weight:600;">🛣️ Day 1: The Big Launch — Kicking Off the Journey</p>`;
       }
 
+      // INTEGRATED SMART DEFAULTS LAYER: Ingest city loops metrics safely from Step 4 data matrix
       let computedDefaultPlace = finalBaseCity;
       let stopoverNoticeString = "";
+      let automaticPlaceholderStrategyText = "e.g. Roam around local markets, explore top attractions...";
+      
       if (state.routeStyle === 'Multi-City' && state.stopoverCities.length > 0) {
          if (i === 0 && state.stopoverCities[0]) {
            computedDefaultPlace = state.stopoverCities[0].cityName;
            stopoverNoticeString = `<p style="color:var(--gold); font-size:12px; font-weight:600;">⚡ Shift Active: Scheduled for ${state.stopoverCities[0].shiftTime} via [${state.stopoverCities[0].transitModes.join(' / ')}]</p>`;
+           automaticPlaceholderStrategyText = `Travel migration day. Explore stopover points inside ${computedDefaultPlace}.`;
          } else if (i === 1 && state.stopoverCities[1]) {
            computedDefaultPlace = state.stopoverCities[1].cityName;
            stopoverNoticeString = `<p style="color:var(--gold); font-size:12px; font-weight:600;">⚡ Shift Active: Scheduled for ${state.stopoverCities[1].shiftTime} via [${state.stopoverCities[1].transitModes.join(' / ')}]</p>`;
+           automaticPlaceholderStrategyText = `Travel migration day. Explore stopover points inside ${computedDefaultPlace}.`;
          }
       }
 
@@ -1164,19 +1192,19 @@ function generateDailyVibeSelectors() {
           </div>
 
           <div class="form-group">
-            <label>Select Daily Vibes (Mix & Match Multiple):</label>
+            <label>Select Daily Vibes (Full Traveler Control / Autonomy Active):</label>
             <div class="vibe-checkbox-group">
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🏛️ Iconic Sights"> 🏛️ Iconic Sights</label>
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🌿 Offbeat Gems"> 🌿 Offbeat Gems</label>
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🏔️ Adventure Trekking"> 🏔️ Adventure Trekking</label>
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🍛 Local Foodie" checked> 🍛 Local Foodie</label>
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🧘 Wellness & Slow"> 🧘 Slow & Wellness</label>
+              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🏛️ Iconic Sights" ${inheritedVibes.includes("🏛️ Iconic Sights") ? 'checked' : ''}> 🏛️ Iconic Sights</label>
+              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🌿 Offbeat Gems" ${inheritedVibes.includes("🌿 Offbeat Gems") ? 'checked' : ''}> 🌿 Offbeat Gems</label>
+              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🏔️ Adventure Trekking" ${inheritedVibes.includes("🏔️ Adventure Trekking") ? 'checked' : ''}> 🏔️ Adventure Trekking</label>
+              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🍛 Local Foodie" ${inheritedVibes.includes("🍛 Local Foodie") ? 'checked' : ''}> 🍛 Local Foodie</label>
+              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🧘 Wellness & Slow" ${inheritedVibes.includes("🧘 Wellness & Slow") ? 'checked' : ''}> 🧘 Slow & Wellness</label>
             </div>
           </div>
 
           <div class="form-group">
             <label>Things you want to do here specifically (Choose from links above):</label>
-            <input type="text" class="daily-things-input" data-date="${dateStr}" placeholder="e.g. Roam around Jaipur markets, explore Amer fort...">
+            <input type="text" class="daily-things-input" data-date="${dateStr}" value="${stopoverNoticeString ? automaticPlaceholderStrategyText : ''}" placeholder="${automaticPlaceholderStrategyText}">
           </div>
         </div>
       `;
@@ -1264,6 +1292,7 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   
   if (nextStepNum === 4) runGeographicalDistanceAndSpeedSuggester();
+  if (nextStepNum === 5) generateDailyVibeSelectors(); // Refreshes alignment natively from previous step states
   if (nextStepNum === 7) buildSummary();
 }
 
@@ -1300,6 +1329,7 @@ function injectExploreTargetIntoItinerary(targetType, contentValue) {
 
 function closeInAppModal() { document.getElementById('injectionModal').style.display = 'none'; }
 
+// Preserves destination spot additions mechanism completely
 function confirmInAppModalInjection() {
   const targetDayVal = parseInt(document.getElementById('injectionDayInput').value);
   const parsedDayIndex = targetDayVal - 1;
