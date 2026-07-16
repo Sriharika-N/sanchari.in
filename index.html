@@ -54,9 +54,6 @@
   .error-box.show { display: block; }
   
   .daily-card { background: var(--white); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 16px; }
-  .vibe-checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
-  .vibe-checkbox-label { font-size: 13px; display: flex; align-items: center; gap: 4px; background: var(--paper); padding: 4px 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); }
-  .live-helper-link { color: var(--white) !important; font-weight:600; text-decoration:none; background:var(--coral); padding:5px 10px !important; border-radius:6px; border:1px solid var(--coral); font-size:12px !important; display:inline-flex; align-items:center; gap:4px; transition:all 0.2s; }
   .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13,17,23,0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; }
   .auth-modal { background: white; border-radius: 20px; max-width: 400px; width: 90%; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
   .duration-summary-card { background: var(--coral-light); border: 1.5px solid var(--coral); border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display: flex; justify-content: space-around; align-items: center; text-align: center; }
@@ -75,13 +72,12 @@
 
 <div id="appNotificationToast" class="app-notification-toast"></div>
 
-<!-- NAVIGATION BAR -->
 <nav>
   <a class="nav-brand" href="#">✈️ AI Travel Planner</a>
   <div class="nav-auth-group" id="navAuthGroup"></div>
 </nav>
 
-<!-- PROFILE MANAGEMENT STEP -->
+<!-- TRAVELLER ADDITIONAL PARAMETERS PROFILING PANEL -->
 <div class="auth-overlay" id="profileCompletionOverlay" style="z-index: 1100;">
   <div class="auth-modal">
     <h3 style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark); margin-bottom:12px;">Tell Us About You ✨</h3>
@@ -100,32 +96,31 @@
 
 <div class="main">
   
-  <!-- ROOT INTERFACE VIEW: GATEWAY ENTRY -->
+  <!-- ROOT AUTHENTICATION FORM CORRIDOR GATEWAY -->
   <div class="card" id="unauthenticatedGatewayCard" style="display: block; padding: 30px; max-width: 460px; margin: 40px auto;">
     <h2 id="gatewayTitle" style="font-family:'Fraunces', serif; color: var(--ocean-dark); margin-bottom: 6px; text-align: center;">Welcome Explorer 🗺️</h2>
-    <p style="font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 24px;">Please create an account or log in to unlock customizable travel tracking features.</p>
+    <p style="font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 24px;">Please choose an entry option to unlock travel route architectures.</p>
     
-    <div class="auth-tabs" style="margin-bottom: 20px;">
-      <div class="auth-tab active" id="gatewayTabSignin" onclick="toggleGatewayInterfaceMode('signin')">Sign Up</div>
-      <div class="auth-tab" id="gatewayTabLogin" onclick="toggleGatewayInterfaceMode('login')">Log In</div>
+    <div class="dashboard-toggle-bar" style="margin-bottom: 20px; padding: 4px;">
+      <button class="dashboard-toggle-btn active" id="gatewayTabSignin" onclick="toggleGatewayInterfaceMode('signin')">Sign Up</button>
+      <button class="dashboard-toggle-btn" id="gatewayTabLogin" onclick="toggleGatewayInterfaceMode('login')">Log In</button>
     </div>
     
     <div class="form-group"><label>Email Address</label><input type="email" id="gatewayEmail" placeholder="name@example.com"></div>
     <div class="form-group"><label>Password</label><input type="password" id="gatewayPassword" placeholder="••••••••"></div>
-    <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="handleGatewayAuthenticationSubmit()">Continue to Itinerary Planner</button>
+    <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" id="gatewaySubmitBtn" onclick="handleGatewayAuthenticationSubmit()">Create Account & Start</button>
     <div class="error-box" id="gatewayErrorMsg" style="margin-top: 14px;"></div>
   </div>
 
-  <!-- AUTHENTICATED CORE DASHBOARD LAYOUT -->
+  <!-- AUTHENTICATED ACTIVE WORKSPACE -->
   <div id="authenticatedPlannerCard" style="display: none;">
     
-    <!-- SUB-TAB CONTROLLER BAR -->
     <div class="dashboard-toggle-bar">
       <button class="dashboard-toggle-btn active" id="tabBtnCreate" onclick="switchDashboardAppView('create')">🆕 Build New Route Plan</button>
       <button class="dashboard-toggle-btn" id="tabBtnHistory" onclick="switchDashboardAppView('history')">🗂️ Your Plans & History</button>
     </div>
 
-    <!-- VIEW A: THE 7-STEP ITINERARY BUILDER CARD -->
+    <!-- VIEW A: THE 7-STEP FORMS -->
     <div class="card" id="itineraryWizardFormWrapper" style="display: block;">
       <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
       <div class="step-tabs" id="stepTabs">
@@ -181,7 +176,7 @@
           <div class="form-group"><label>Start Time</label><input type="time" id="startTime" value="06:00" onchange="validateDatesOnly()"></div>
           <div class="form-group"><label>End Time</label><input type="time" id="endTime" value="22:00" onchange="validateDatesOnly()"></div>
         </div>
-        <div class="error-box" id="dateErrorBox">⚠️ Return logic configuration conflict tracking caught.</div>
+        <div class="error-box" id="dateErrorBox">⚠️ Return logic calendar variance caught.</div>
         <div class="btn-row"><button class="btn btn-ghost" onclick="goBack(2)">← Back</button><button class="btn btn-primary" id="btnStep3" onclick="submitStepAndProgress(3, 4, 'Date Setup')">Next →</button></div>
       </div>
 
@@ -254,7 +249,7 @@
       </div>
     </div>
 
-    <!-- VIEW B: AUTOMATED "YOUR PLANS & HISTORY" TAB -->
+    <!-- VIEW B: SAVED PLANS AND HISTORY HUB TAB -->
     <div class="card" id="itineraryHistoryLogsWrapper" style="display: none; padding: 24px;">
       <h3 style="font-family:'Fraunces', serif; color:var(--ocean-dark); margin-bottom:6px;">🗂️ Your Plans & Search History</h3>
       <p style="font-size:13px; color:var(--muted); margin-bottom:20px;">Review your tracked routing loops and previous platform searches.</p>
@@ -275,7 +270,7 @@
 
 <script>
 // =========================================================================
-// CORE CONFIGURATION & MATRICES (UNIFIED INSIDE CODE INTERFACE)
+// RUNTIME DATA STORES & CORE HOISTING SAFETY CONTROLS
 // =========================================================================
 const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlicHNxbGxnaXRudHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NTM1NDQsImV4cCI6MjA5OTMyOTU0NH0.V8FT2cDAJMcfv1mtgCGWZck5wxswAlj7tyW-KbaJ8bM"; 
@@ -293,41 +288,13 @@ let state = {
 };
 
 const travelKnowledgeBase = {
-  "coorg": {
-    famous: ["Abbey Falls Scenic Estate Walk", "Namdroling Golden Temple", "Madikeri Historic Fort Grounds", "Raja's Seat Hanging Gardens"],
-    gems: ["Chelavara Falls Ridge Trek", "Kote Betta Mountain Trail", "Sanapur Whispering Streams", "Nishani Motte Hidden Offbeat Outpost"],
-    breakfast: ["Local filter coffee paired with Akki Roti", "Fresh plantation-side spice tea spreads"],
-    eats: ["Coorg Cuisine Restaurant for authentic Pandi Curry", "Tiger Tiger Cafe specialty local plates"]
-  },
-  "munnar": {
-    famous: ["Eravikulam High Plateau Valley", "Mattupetty Lake Boating Gates", "Top Station Horizon Peak", "Tea Museum Heritage Walk"],
-    gems: ["Lockhart Gap Panoramic Ridge Way", "Attukad Waterfalls Secluded Glade", "Anamudi Foothill Secret Trails", "Pothamedu Hidden Clouds Viewpoint"],
-    breakfast: ["Freshly picked Munnar leaf blends with local idlis", "Highland cardamon tea with appam variants"],
-    eats: ["Rapsy Restaurant regional specialty dishes", "Guru's Malabar spice parotta counters"]
-  },
-  "gokarna": {
-    famous: ["Om Beach Rocky Waterfront Trail", "Mahabaleshwar Temple Courtyard", "Kudle Beach Main Surfer Strip", "Half Moon Beach Ridge Overlook"],
-    gems: ["Paradise Beach Secluded Jungle Spot", "Belekan Beach Offbeat Bay Trail", "Nirvana Coastal Meadow Path", "God's Own Beach Cliffside Overlook"],
-    breakfast: ["Beachside shack continental items & banana buns", "Traditional South Kannada style dosa plates"],
-    eats: ["Prema Restaurant legendary local ice cream & meals", "Namaste Cafe absolute oceanfront seafood dinner"]
-  },
-  "hampi": {
-    famous: ["Virupaksha Temple Sacred Courtyard", "Vittala Temple Stone Chariot Monument", "Hemakuta Hill Historic Complex View"],
-    gems: ["Sanapur Lake Offbeat Coracle Boat Run", "Anegundi Ancient Heritage Village Walk"],
-    breakfast: ["Local crisp ghee roast dosas from rural setups", "Traditional filter decoctions with idlis"],
-    eats: ["Mango Tree Restaurant river-facing dishes", "Local organic banana flower curries hub"]
-  },
-  "default": {
-    famous: ["Central Heritage Landmark Exploration", "Panoramic Valley Lookout Point", "Ancient Historical Quarter Run", "Main City Botanical Garden"],
-    gems: ["Hidden Eco Forest Trail Pathway", "Offbeat River Stream Overlook", "Rustic Artisanal Heritage District Walk", "Secluded Sunset Cliff Outpost"],
-    breakfast: ["Traditional prepared local morning spread", "Freshly sorted marketplace food choices"],
-    eats: ["Acclaimed local diner choice", "Vibrant food street alleyways"]
-  }
+  "coorg": { famous: ["Abbey Falls Scenic Estate Walk", "Namdroling Golden Temple"], gems: ["Chelavara Falls Ridge Trek"] },
+  "munnar": { famous: ["Eravikulam High Plateau Valley", "Mattupetty Lake Boating Gates"], gems: ["Lockhart Gap Ridge Way"] },
+  "gokarna": { famous: ["Om Beach Rocky Waterfront Trail", "Mahabaleshwar Temple Courtyard"], gems: ["Paradise Beach Jungle Spot"] },
+  "hampi": { famous: ["Virupaksha Temple Sacred Courtyard", "Vittala Temple Stone Chariot"], gems: ["Sanapur Lake Coracle Run"] },
+  "default": { famous: ["Central Heritage Landmark Exploration"], gems: ["Hidden Eco Forest Trail Pathway"] }
 };
 
-// =========================================================================
-// RUNTIME IMPLEMENTATIONS & INTERFACE ENGINE
-// =========================================================================
 function validateDatesOnly() {
   const start = document.getElementById('startDate').value; const end = document.getElementById('endDate').value;
   const dCard = document.getElementById('durationSummaryCard');
@@ -349,18 +316,7 @@ async function runGeographicalDistanceAndSpeedSuggester() {
   if (!state.destinations.length || !state.transport) {
     if (suggestionBox) suggestionBox.style.display = 'none'; return;
   }
-  if (suggestionBox) {
-    suggestionBox.style.display = 'block';
-    suggestionBox.innerHTML = `⏳ Figuring out the best route choices and calculating map loops...`;
-  }
-
-  state.leg1TicketCost = parseInt(document.getElementById('leg1TicketCostInput').value) || 0;
-  state.leg1FuelPrice = parseInt(document.getElementById('leg1FuelPrice').value) || 102;
-  state.leg1VehicleMileage = parseInt(document.getElementById('leg1VehicleMileage').value) || 15;
-  state.leg2DailyCost = parseInt(document.getElementById('leg2DailyCostInput').value) || 500;
-  state.leg3TicketCost = 0;
-  state.leg3FuelPrice = parseInt(document.getElementById('leg3FuelPrice').value) || 102;
-  state.leg3VehicleMileage = parseInt(document.getElementById('leg3VehicleMileage').value) || 15;
+  if (suggestionBox) { suggestionBox.style.display = 'block'; suggestionBox.innerHTML = `⏳ Figuring out route choices...`; }
 
   try {
     const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=`;
@@ -373,30 +329,14 @@ async function runGeographicalDistanceAndSpeedSuggester() {
     let finalCalculatedKM = 310;
     if (dataStart.length && dataFinal.length) {
       const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${dataStart[0].lon},${dataStart[0].lat};${dataFinal[0].lon},${dataFinal[0].lat}?overview=false`;
-      const osrmRes = await fetch(osrmUrl);
-      const osrmData = await osrmRes.json();
-      if (osrmData.routes && osrmData.routes.length) {
-        finalCalculatedKM = Math.round(osrmData.routes[0].distance / 1000);
-      }
+      const osrmRes = await fetch(osrmUrl); const osrmData = await osrmRes.json();
+      if (osrmData.routes && osrmData.routes.length) { finalCalculatedKM = Math.round(osrmData.routes[0].distance / 1000); }
     }
     state.calculatedDistanceKM = finalCalculatedKM;
-    
-    let outboundCostHead = (state.transport === 'Full Road Trip') ? Math.round((finalCalculatedKM / state.leg1VehicleMileage) * state.leg1FuelPrice / state.groupSize) : state.leg1TicketCost;
-    let returnCostHead = (state.leg3Transport === 'Drive Return') ? Math.round((finalCalculatedKM / state.leg3VehicleMileage) * state.leg3FuelPrice / state.groupSize) : state.leg3TicketCost;
-    let totalLocalCostHead = Math.round((state.leg2DailyCost * (state.days || 1)) / state.groupSize);
-    let totalBaseline = outboundCostHead + returnCostHead + totalLocalCostHead;
-
     if (suggestionBox) {
-      suggestionBox.innerHTML = `
-        🗺️ <strong>Total Map Distance:</strong> ~${finalCalculatedKM} KM loop route tracking.<br>
-        🎬 <strong>Outbound Vector:</strong> via ${state.transport} (₹${outboundCostHead} per head)<br>
-        🏡 <strong>Return Vector:</strong> via ${state.leg3Transport} (₹${returnCostHead} per head)<br>
-        💰 <strong>Total Budget Overheads Baseline:</strong> <span style="color:var(--coral); font-weight:700;">₹${totalBaseline.toLocaleString('en-IN')} INR per traveler</span>.
-      `;
+      suggestionBox.innerHTML = `🗺️ <strong>Total Map Loop Distance:</strong> ~${finalCalculatedKM} KM loop tracked cleanly from hometown lines.`;
     }
-  } catch (e) {
-    if (suggestionBox) suggestionBox.innerHTML = `🏁 <strong>Transit Map Configuration completed safely.</strong>`;
-  }
+  } catch (e) { if (suggestionBox) suggestionBox.innerHTML = `🏁 Transit Loop configured.`; }
 }
 </script>
 
@@ -404,6 +344,7 @@ async function runGeographicalDistanceAndSpeedSuggester() {
 let currentStep = 1;
 const TOTAL_STEPS = 7;
 
+// AUTHENTICATION LISTENER: Identifies users and flags whether details are missing
 travelPlannerSupabaseClient.auth.onAuthStateChange(async (event, session) => {
   const authContainer = document.getElementById('navAuthGroup');
   const gatewayCard = document.getElementById('unauthenticatedGatewayCard');
@@ -415,7 +356,11 @@ travelPlannerSupabaseClient.auth.onAuthStateChange(async (event, session) => {
     plannerCard.style.display = 'block';
 
     const { data: profile } = await travelPlannerSupabaseClient.from('profiles').select('full_name').eq('id', session.user.id).single();
-    if (!profile) { openProfileCompletionWindow(); }
+    
+    // 💡 IDENTIFICATION LOGIC: Only trigger travelers details popup if profile row doesn't exist
+    if (!profile) { 
+      openProfileCompletionWindow(); 
+    }
     
     const displayName = profile ? profile.full_name : session.user.email;
     authContainer.innerHTML = `
@@ -448,13 +393,14 @@ function toggleGatewayInterfaceMode(mode) {
   document.getElementById('gatewayTabSignin').classList.toggle('active', mode === 'signin');
   document.getElementById('gatewayTabLogin').classList.toggle('active', mode === 'login');
   document.getElementById('gatewayTitle').textContent = mode === 'signin' ? "Create Account 🗺️" : "Welcome Back ✈️";
+  document.getElementById('gatewaySubmitBtn').textContent = mode === 'signin' ? "Create Account & Start" : "Log In Securely";
 }
 
 async function handleGatewayAuthenticationSubmit() {
   const email = document.getElementById('gatewayEmail').value.trim();
   const password = document.getElementById('gatewayPassword').value;
   const errMsg = document.getElementById('gatewayErrorMsg'); errMsg.classList.remove('show');
-  if (!email || !password) { errMsg.textContent = "Complete fields."; errMsg.classList.add('show'); return; }
+  if (!email || !password) { errMsg.textContent = "Please fill in all inputs."; errMsg.classList.add('show'); return; }
   
   securityPasswordBuffer = password;
   if (currentGatewayMode === 'signin') {
@@ -477,18 +423,18 @@ async function submitTravelerProfileDetails() {
   const { data: { user } } = await travelPlannerSupabaseClient.auth.getUser();
   if(!user || !nameVal) return;
   await travelPlannerSupabaseClient.from('profiles').upsert({ id: user.id, full_name: nameVal, age: ageVal, gender: genderVal, updated_at: new Date().toISOString() });
-  closeProfileCompletionWindow(); showAppNotification("Profile configured!");
+  closeProfileCompletionWindow(); window.location.reload();
 }
 
 async function renderPlansHistoryDashboard(userId) {
   try {
     const { data: searches } = await travelPlannerSupabaseClient.from('user_searches').select('*').eq('user_id', userId).order('created_at', { ascending: false });
     const sBox = document.getElementById('historySearchQueriesContainer');
-    sBox.innerHTML = searches?.length ? searches.map(s => `<div style="background:var(--paper); padding:10px; border-radius:8px; border:1px solid var(--border); font-size:13px;">🔍 Searched Destination: <strong>${s.search_query}</strong> from <em>${s.start_city}</em> <span style="float:right; color:var(--muted); font-size:11px;">${new Date(s.created_at).toLocaleDateString()}</span></div>`).join('') : '<div style="color:var(--muted); font-size:13px;">No searches logged yet.</div>';
+    sBox.innerHTML = searches?.length ? searches.map(s => `<div style="background:var(--paper); padding:10px; border-radius:8px; border:1px solid var(--border); font-size:13px;">🔍 Searched: <strong>${s.search_query}</strong> from <em>${s.start_city}</em></div>`).join('') : '<div style="color:var(--muted); font-size:13px;">No searches logged yet.</div>';
 
     const { data: trips } = await travelPlannerSupabaseClient.from('trips').select('*').eq('user_id', userId).order('created_at', { ascending: false });
     const tBox = document.getElementById('historySavedTripsContainer');
-    tBox.innerHTML = trips?.length ? trips.map(t => `<div style="background:var(--coral-light); padding:12px; border-radius:10px; border:1px solid var(--coral); font-size:13.5px; color:var(--ocean-dark);">🗺️ <strong>${t.trip_name}</strong> (${t.trip_state.days} Days / ${t.trip_state.nights} Nights) <span style="float:right; font-weight:700; color:var(--coral);">₹${t.trip_state.budgetVal?.toLocaleString('en-IN')}</span></div>`).join('') : '<div style="color:var(--muted); font-size:13px;">No saved trips in the cloud yet.</div>';
+    tBox.innerHTML = trips?.length ? trips.map(t => `<div style="background:var(--coral-light); padding:12px; border-radius:10px; border:1px solid var(--coral); font-size:13.5px;">🗺️ <strong>${t.trip_name}</strong> (${t.trip_state.days} Days) <span style="float:right; font-weight:700; color:var(--coral);">₹${t.trip_state.budgetVal}</span></div>`).join('') : '<div style="color:var(--muted); font-size:13px;">No saved trips in history.</div>';
   } catch(e) {}
 }
 
@@ -496,10 +442,10 @@ function generateDailyVibeSelectors() {
   const container = document.getElementById('dailyVibeContainer'); if (!container || !state.startDate) return; container.innerHTML = '';
   for (let i = 0; i < state.days; i++) {
     const div = document.createElement('div'); div.className = 'daily-card';
-    div.innerHTML = `<div>📅 Day ${i+1}: Route Plan Target Activity Block</div>
+    div.innerHTML = `<div>📅 Day ${i+1}: Route Plan Activity Matrix</div>
       <input type="text" class="daily-place-input" value="${state.destinations[0] || 'Destination'}">
       <select class="daily-transit-mode-select" style="margin-top:8px;"><option value="Local Roaming">Local Roaming</option></select>
-      <input type="text" class="daily-things-input" placeholder="Objective check goals" style="margin-top:8px;" value="Explore regional landmarks.">`;
+      <input type="text" class="daily-things-input" style="margin-top:8px;" value="Explore landmarks.">`;
     container.appendChild(div);
   }
 }
@@ -517,7 +463,6 @@ async function submitStepAndProgress(sNum, nextNum, name) {
     if (cDest) state.destinations = [cDest];
     if (state.destinations.length === 0 || !state.startCity) { if(err) err.classList.add('show'); return; }
     
-    // ⚡ AUTO-STORE FEATURE: Automatically persists query entries to Supabase SQL on step 1 click
     try {
       const qText = state.destinations.join(", ");
       const { data: { user } } = await travelPlannerSupabaseClient.auth.getUser();
@@ -534,17 +479,13 @@ async function submitStepAndProgress(sNum, nextNum, name) {
     state.dailyPlanData = [];
     document.querySelectorAll('.daily-card').forEach((card) => {
       const pNode = card.querySelector('.daily-place-input'); if(!pNode) return;
-      const place = pNode.value.trim();
-      const transit = card.querySelector('.daily-transit-mode-select').value;
-      const things = card.querySelector('.daily-things-input').value.trim();
-      state.dailyPlanData.push({ place: place, vibes: ["🍛 Local Foodie"], thingsToDo: things, dailyTransit: transit });
+      state.dailyPlanData.push({ place: pNode.value.trim(), vibes: ["🍛 Local Foodie"], thingsToDo: 'Explore landmarks', dailyTransit: 'Roaming' });
     });
   }
   if (sNum === 6) { state.budgetVal = parseInt(document.getElementById('budgetAmount').value) || 15000; }
 
   const feedback = document.getElementById('singleBetaFeedbackInput').value.trim();
-  if(!feedback) { showAppNotification("Please write experience feedback comments before moving next."); return; }
-  
+  if(!feedback) { showAppNotification("Please write experience comments first."); return; }
   await travelPlannerSupabaseClient.from('journey_feedback').insert([{ step_number: sNum, step_name: name, feedback_rating: 'v16_stable', user_comments: feedback }]);
 
   document.getElementById('singleBetaFeedbackInput').value = '';
@@ -565,17 +506,16 @@ async function saveCurrentTripToAccount() {
 }
 
 function buildSummary() {
-  document.getElementById('tripSummary').innerHTML = `🗺️ Route Vector: <strong>${state.startCity} ➔ ${state.destinations[0]}</strong><br>📅 Parameters: <strong>${state.days} Days Total Mapped Loop</strong>`;
+  document.getElementById('tripSummary').innerHTML = `🗺️ Route Summary: <strong>${state.startCity} ➔ ${state.destinations[0]}</strong><br>📅 Total: <strong>${state.days} Days Matrix Mapped</strong>`;
 }
 
 async function triggerBuiltInGeneration() {
   let html = "";
-  if(!state.dailyPlanData.length) state.dailyPlanData = [{place: state.destinations[0], thingsToDo: 'Explore regional spots', dailyTransit: 'Drive'}];
+  if(!state.dailyPlanData.length) state.dailyPlanData = [{place: state.destinations[0], thingsToDo: 'Explore landmarks', dailyTransit: 'Drive'}];
   state.dailyPlanData.forEach((day, idx) => {
     html += `<div class="daily-card" style="border-left:4px solid var(--coral); padding:15px; margin-bottom:15px;">
       <h3>☀️ Day ${idx+1} Layout Matrix View</h3>
-      <p>📍 Area Base Focus Hub: <strong>${day.place}</strong></p>
-      <p style="margin-top:5px; color:var(--muted);">🎯 Target Objective Checklist: ${day.thingsToDo}</p>
+      <p>📍 Focus Hub Base: <strong>${day.place}</strong></p>
     </div>`;
   });
   document.getElementById('step7').style.display = 'none';
