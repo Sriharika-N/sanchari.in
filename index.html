@@ -29,9 +29,11 @@
   .step-heading { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 4px; }
   .step-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
   label { display: block; font-size: 12px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 5px; text-transform: uppercase; }
-  input[type="text"], input[type="date"], input[type="number"], input[type="email"], input[type="password"], select, textarea {
+  input[type="text"], input[type="date"], input[type="time"], input[type="number"], input[type="email"], input[type="password"], select, textarea {
     width: 100%; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; background: white;
   }
+  .form-row { display: flex; gap: 16px; margin-bottom: 18px; }
+  .form-row .form-group { flex: 1; margin-bottom: 0; }
   .form-group { margin-bottom: 18px; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
   .chip { padding: 7px 14px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; background: white; }
@@ -91,6 +93,20 @@
     border: 1px solid var(--border); animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
   @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .duration-summary-card {
+    background: var(--coral-light);
+    border: 1.5px solid var(--coral);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 18px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    text-align: center;
+  }
+  .duration-metric { font-size: 18px; font-weight: 700; color: var(--ocean-dark); }
+  .duration-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -227,12 +243,45 @@
       <div class="error-box" id="err2">Please select a companion style configuration.</div>
     </div>
 
-    <!-- STEP 3: DATES -->
+    <!-- STEP 3: DATES & TIME CALCULATIONS -->
     <div class="step-panel" id="step3">
       <div class="step-heading">When is the adventure? 📅</div>
       <p class="step-sub">Provide your absolute holiday calendar start and end dates below.</p>
-      <div class="form-group"><label>Holiday Start Date</label><input type="date" id="startDate" onchange="validateDatesOnly()"></div>
-      <div class="form-group"><label>Holiday Return Date</label><input type="date" id="endDate" onchange="validateDatesOnly()"></div>
+      
+      <!-- Live Day/Night Tracker Panel -->
+      <div class="duration-summary-card" id="durationSummaryCard" style="display: none;">
+        <div>
+          <div class="duration-metric" id="computedDaysCount">0</div>
+          <div class="duration-label">☀️ Days</div>
+        </div>
+        <div style="border-left: 1px solid var(--border); height: 30px;"></div>
+        <div>
+          <div class="duration-metric" id="computedNightsCount">0</div>
+          <div class="duration-label">🌙 Nights</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Holiday Start Date</label>
+          <input type="date" id="startDate" onchange="validateDatesOnly()">
+        </div>
+        <div class="form-group">
+          <label>Holiday Return Date</label>
+          <input type="date" id="endDate" onchange="validateDatesOnly()">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Journey Start Time</label>
+          <input type="time" id="startTime" value="06:00" onchange="validateDatesOnly()">
+        </div>
+        <div class="form-group">
+          <label>Journey End Time</label>
+          <input type="time" id="endTime" value="22:00" onchange="validateDatesOnly()">
+        </div>
+      </div>
       
       <div class="error-box" id="dateErrorBox">⚠️ Danger: The return date cannot be set chronologically prior to your departure date!</div>
       
@@ -240,7 +289,7 @@
         <button class="btn btn-ghost" onclick="goBack(2)">← Back</button>
         <button class="btn btn-primary" id="btnStep3" onclick="submitStepAndProgress(3, 4, 'Date Setup')">Next — Elaborate Transit Route →</button>
       </div>
-      <div class="error-box" id="err3">Please choose valid dates.</div>
+      <div class="error-box" id="err3">Please choose valid dates and journey scheduling metrics.</div>
     </div>
 
     <!-- STEP 4: ELABORATED TRANSIT LOGISTICS ARCHITECTURE -->
@@ -418,7 +467,7 @@ let currentAuthMode = 'signin';
 
 // Segregated Multi-Modal Transport State tracking parameters
 let state = { 
-  destinations: [], startCity: '', intermediateHub: '', startDate: '', endDate: '', days: 0, transitDaysAllocation: 2,
+  destinations: [], startCity: '', intermediateHub: '', startDate: '', endDate: '', startTime: '06:00', endTime: '22:00', days: 0, nights: 0, transitDaysAllocation: 2,
   crew: '', groupSize: 1, transport: 'Full Road Trip', leg2Transport: 'Local Sightseeing', vehicleMode: 'Own Private Car', dailyPlanData: [], budgetVal: 0, budgetScope: '' ,
   flightTicketCost: 0, fuelPrice: 102, vehicleMileage: 15, calculatedDistanceKM: 0
 };
@@ -653,19 +702,51 @@ function selectThematicRandomEngine(categoryType) {
 function validateDatesOnly() {
   const startVal = document.getElementById('startDate').value;
   const endVal = document.getElementById('endDate').value;
+  const startTimeVal = document.getElementById('startTime').value;
+  const endTimeVal = document.getElementById('endTime').value;
+  
   const errBox = document.getElementById('dateErrorBox');
   const nextBtn = document.getElementById('btnStep3');
+  const durationCard = document.getElementById('durationSummaryCard');
 
   if (errBox) errBox.classList.remove('show');
   if (nextBtn) { nextBtn.disabled = false; nextBtn.style.opacity = '1'; }
-  state.startDate = startVal; state.endDate = endVal;
+  
+  state.startDate = startVal; 
+  state.endDate = endVal;
+  state.startTime = startTimeVal;
+  state.endTime = endTimeVal;
 
   if (startVal && endVal) {
     const s = new Date(startVal), e = new Date(endVal);
-    if (isNaN(s.getTime()) || isNaN(e.getTime())) { if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } return false; }
-    if (e < s) { if(errBox) errBox.classList.add('show'); if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } return false; }
-    state.days = Math.round((e - s) / 86400000) + 1;
-  } else { if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } return false; }
+    if (isNaN(s.getTime()) || isNaN(e.getTime())) { 
+      if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } 
+      durationCard.style.display = 'none';
+      return false; 
+    }
+    if (e < s) { 
+      if(errBox) errBox.classList.add('show'); 
+      if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } 
+      durationCard.style.display = 'none';
+      return false; 
+    }
+    
+    // Exact Day & Night Computation
+    const totalDays = Math.round((e - s) / 86400000) + 1;
+    const totalNights = totalDays - 1;
+    
+    state.days = totalDays;
+    state.nights = totalNights;
+
+    // Display values to user live inside UI container
+    document.getElementById('computedDaysCount').textContent = totalDays;
+    document.getElementById('computedNightsCount').textContent = totalNights;
+    durationCard.style.display = 'flex';
+  } else { 
+    if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } 
+    durationCard.style.display = 'none';
+    return false; 
+  }
   return true;
 }
 
@@ -889,7 +970,10 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   
   if (stepNum === 3) {
     const datesAreValid = validateDatesOnly();
-    if (!datesAreValid || !state.startDate || !state.endDate) { if (err) err.classList.add('show'); return; }
+    if (!datesAreValid || !state.startDate || !state.endDate || !state.startTime || !state.endTime) { 
+      if (err) err.classList.add('show'); 
+      return; 
+    }
   }
   
   if (stepNum === 4) {
@@ -1012,7 +1096,8 @@ function buildSummary() {
   document.getElementById('tripSummary').innerHTML = `
     🗺️ Route Blueprint: <strong>${state.startCity} ➔ ${state.intermediateHub ? state.intermediateHub + ' ➔ ' : ''}${state.destinations[0]}</strong><br>
     🏁 Integrated Multi-Modal Distance: <strong>~${state.calculatedDistanceKM} KM Network</strong><br>
-    📅 Timeline Breakdown: <strong>${state.days} Days Total</strong> (${state.transitDaysAllocation} Days traveling inter-city)<br>
+    📅 Timeline Breakdown: <strong>${state.days} Days / ${state.nights} Nights Total</strong><br>
+    ⏱️ Target Hours: Outbound Departure at <strong>${state.startTime}</strong> | Return Base Arrival by <strong>${state.endTime}</strong><br>
     🚗 Core Transport: <strong>${state.transport} ➔ ${state.leg2Transport} Mix</strong><br>
     💰 Financial Allotment: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR Per Head</strong>
   `;
@@ -1074,13 +1159,13 @@ async function triggerBuiltInGeneration() {
 
     if (state.transitDaysAllocation >= 2 && index === 0) {
       dayVibeHeaderString = "🛣️ Leaving Home (Day 1 Transit Hub Link)";
-      dynamicMorningStrategy = `🛫 <strong>Setting Off:</strong> Commencing your journey outward from <strong>${state.startCity}</strong> towards ${day.place} via ${state.transport}. Check into your arrival stay.`;
+      dynamicMorningStrategy = `🛫 <strong>Setting Off [Launch Time: ${state.startTime}]:</strong> Commencing your journey outward from <strong>${state.startCity}</strong> towards ${day.place} via ${state.transport}. Check into your arrival stay.`;
       dynamicEveningStrategy = `🌙 <strong>Evening:</strong> Settle down from travel hours. Grab a casual dinner nearby and rest up for tomorrow.`;
     } else if (isLastDay) {
       dayVibeHeaderString = "🏡 Returning Home leg";
       let operationalDeductionNote = (state.vehicleMode !== "No Private Vehicle") ? "Double-check fuel levels, route maps for mountain bottlenecks, and engine vitals." : "Confirm your public transport booking times and double check baggage clearances.";
       dynamicMorningStrategy = `🧳 <strong>Clear Accommodations:</strong> Complete room checkouts, settle local service invoices, and initiate packing protocols. ${operationalDeductionNote}`;
-      dynamicEveningStrategy = `🏡 <strong>Homeward Leg:</strong> Conclude return journey segments back into <strong>${state.startCity}</strong> via your chosen ${state.vehicleMode} setup. Trip complete!`;
+      dynamicEveningStrategy = `🏡 <strong>Homeward Leg [Target Arrival: ${state.endTime}]:</strong> Conclude return journey segments back into <strong>${state.startCity}</strong> via your chosen ${state.vehicleMode} setup. Trip complete!`;
     } else {
       if(day.vibes.includes("🏛️ Iconic Sights")) dynamicMorningStrategy = `🏛️ <strong>Iconic Spotlights:</strong> Beat local queues early to see: <em>"${primaryFamousSight}"</em> before peak crowd hours.`;
       if(day.vibes.includes("🏔️ Adventure Trekking")) dynamicMorningStrategy = `🏔️ <strong>Adventure Track:</strong> Pack gear early for high-energy exploration routes near ${day.place}.`;
