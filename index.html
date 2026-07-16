@@ -287,7 +287,7 @@
 
     <!-- STEP 4: TRANSIT LOGISTICS & VEHICLE SETTINGS -->
     <div class="step-panel" id="step4">
-      <div class="step-heading">Transit & Travel Day Settings 🚗💨</div>
+      <div class="step-heading">Transit & Travel Settings 🚗💨</div>
       <p class="step-sub">Choose how you want to handle your transport from start to finish.</p>
       
       <!-- SECTION 1: THE LONG DISTANCE LAUNCH -->
@@ -298,6 +298,7 @@
           <div class="chips" id="leg1TransportChips">
             <div class="chip" data-val="Flight Connected">✈️ Flying There</div>
             <div class="chip" data-val="Train Connected">🚂 Taking a Train</div>
+            <div class="chip" data-val="Bus Connected">🚌 Taking a Bus</div>
             <div class="chip" data-val="Full Road Trip">🚗 Driving All the Way</div>
           </div>
         </div>
@@ -311,18 +312,18 @@
         </div>
       </div>
 
-      <!-- SECTION 2: INTERNAL SHIFTS & COMMUTES -->
+      <!-- SECTION 2: INTERNAL SHIFTS & COMMUTES (MULTI SELECT) -->
       <div style="background: var(--white); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
-        <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🔀 Leg 2: Exploring Locally (Moving Around Town)</h4>
-        <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Choose how you will move between local regional sights or cities once you arrive.</p>
+        <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🔀 Leg 2: Exploring Locally (Multi-Select Options)</h4>
+        <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Select all the options you plan to use for transfers and roaming inside the city.</p>
         <div class="form-group">
           <div class="chips" id="leg2TransportChips">
-            <div class="chip" data-val="Hired Inter-city Cab"> taxi Hired Outstation Cab</div>
+            <div class="chip" data-val="Hired Outstation Cab">🚕 Hired Outstation Cab</div>
             <div class="chip" data-val="Pre-booked Train Link">🚂 Inter-City Rail Link</div>
             <div class="chip" data-val="Private Bus Booking">🚌 Private Buses (Sleeper/Volvo)</div>
-            <div class="chip" data-val="Public State Bus">🚏 Public Buses / State Transport</div>
+            <div class="chip" data-val="Public State Bus">🚏 Public Buses / State KSRTC</div>
             <div class="chip" data-val="Self-Drive Commute">🚗 Local Self-Drive Rental</div>
-            <div class="chip" data-val="Local Sightseeing">❌ Local Cabs & Shuttles Only</div>
+            <div class="chip" data-val="Local Cabs & Shuttles">❌ Local Cabs & Shuttles Only</div>
           </div>
         </div>
         <div class="form-group">
@@ -345,16 +346,16 @@
         </div>
       </div>
 
-      <!-- SECTION 3: THE RETURN TRAVELLING LOOP -->
+      <!-- SECTION 3: THE RETURN TRAVELLING LOOP (ALIGNED TO LEG 1 OPTIONS) -->
       <div style="background: var(--white); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
         <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🏡 Leg 3: Coming Back Home (Destination to Step-Down Arrival)</h4>
         <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Complete the full travel loop configuration to return back home safely.</p>
         <div class="form-group">
           <div class="chips" id="leg3TransportChips">
-            <div class="chip" data-val="Flight Return">✈️ Fly Back Home</div>
-            <div class="chip" data-val="Train Return">🚂 Train Journey Back</div>
-            <div class="chip" data-val="Bus Return">🚌 Bus Trip Back</div>
-            <div class="chip" data-val="Drive Return">🚗 Road Drive Back</div>
+            <div class="chip" data-val="Flight Return">✈️ Flying Back Home</div>
+            <div class="chip" data-val="Train Return">🚂 Taking a Train Back</div>
+            <div class="chip" data-val="Bus Return">🚌 Taking a Bus Back</div>
+            <div class="chip" data-val="Drive Return">🚗 Driving All the Way Back</div>
           </div>
         </div>
       </div>
@@ -474,10 +475,10 @@ const travelPlannerSupabaseClient = window.supabase.createClient(SUPABASE_URL, S
 let activeUserToken = null;
 let currentAuthMode = 'signin'; 
 
-// Segregated Multi-Modal Transport State tracking parameters
+// Tracks selections for transport configurations
 let state = { 
   destinations: [], startCity: '', intermediateHub: '', startDate: '', endDate: '', startTime: '06:00', endTime: '22:00', days: 0, nights: 0, transitDaysAllocation: 2,
-  crew: '', groupSize: 1, transport: 'Full Road Trip', leg2Transport: 'Local Sightseeing', leg3Transport: 'Drive Return', vehicleMode: 'Own Private Car', dailyPlanData: [], budgetVal: 0, budgetScope: '' ,
+  crew: '', groupSize: 1, transport: 'Full Road Trip', leg2Transport: [], leg3Transport: 'Drive Return', vehicleMode: 'Own Private Car', dailyPlanData: [], budgetVal: 0, budgetScope: '' ,
   flightTicketCost: 0, fuelPrice: 102, vehicleMileage: 15, calculatedDistanceKM: 0
 };
 let currentStep = 1;
@@ -798,7 +799,8 @@ async function runGeographicalDistanceAndSpeedSuggester() {
         const exactDrivingHours = Math.round(networkRoute.duration / 3600);
         const formattedMinutes = Math.round((networkRoute.duration % 3600) / 60);
         
-        let journeyPerformanceText = `🛣️ <strong>Leg 1 (Going There):</strong> ${state.transport}<br>🔄 <strong>Leg 2 (Local Sights):</strong> ${state.leg2Transport}<br>🏡 <strong>Leg 3 (Coming Home):</strong> ${state.leg3Transport}`;
+        let localOptionsDisplay = state.leg2Transport.length > 0 ? state.leg2Transport.join(", ") : "None chosen";
+        let journeyPerformanceText = `🛣️ <strong>Leg 1 (Going There):</strong> ${state.transport}<br>🔄 <strong>Leg 2 (Local Sights):</strong> ${localOptionsDisplay}<br>🏡 <strong>Leg 3 (Coming Home):</strong> ${state.leg3Transport}`;
         let suggestedJourneyDays = finalCalculatedKM > 500 ? 2 : 1;
 
         transitWrapper.style.display = 'block';
@@ -900,7 +902,14 @@ function generateDailyVibeSelectors() {
       }
 
       const computedDefaultPlace = (i < 2 && state.intermediateHub) ? initialBaseCity : finalBaseCity;
-      const computedDefaultTransit = (i < 2) ? "Local Sightseeing" : state.leg2Transport;
+      
+      let initialTransitOptions = "";
+      if (state.leg2Transport.length > 0) {
+         state.leg2Transport.forEach(opt => {
+            initialTransitOptions += `<option value="${opt}">Keep active link: ${opt}</option>`;
+         });
+      }
+      initialTransitOptions += `<option value="Local Sightseeing">Stay at current destination (Local exploration / Cabs / Walking)</option>`;
 
       customCardHtml = `
         <div class="daily-card">
@@ -918,15 +927,9 @@ function generateDailyVibeSelectors() {
           </div>
 
           <div class="form-group" style="margin-top: 14px; background: var(--paper); padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
-            <label style="color: var(--coral); font-size: 11px;">🔀 Moving Cities / Local Commute Today?</label>
+            <label style="color: var(--coral); font-size: 11px;">🔀 Active Route Choice For This Day:</label>
             <select class="daily-transit-mode-select" style="padding: 6px 10px; font-size: 13px;">
-              <option value="Local Sightseeing" ${computedDefaultTransit === 'Local Sightseeing' ? 'selected' : ''}>Stay at current destination (Local sightseeing / cabs / walking)</option>
-              <option value="Pre-booked Train Link" ${computedDefaultTransit === 'Pre-booked Train Link' ? 'selected' : ''}>🚂 Shift Cities: Take a Train (Book rail tickets ahead)</option>
-              <option value="Hired Inter-city Cab" ${computedDefaultTransit === 'Hired Inter-city Cab' ? 'selected' : ''}>🚕 Shift Cities: Hire an Inter-city Outstation Cab</option>
-              <option value="Private Bus Booking" ${computedDefaultTransit === 'Private Bus Booking' ? 'selected' : ''}>🚌 Shift Cities: Book Private Bus (Volvo / Inter-city Sleeper)</option>
-              <option value="Public State Bus" ${computedDefaultTransit === 'Public State Bus' ? 'selected' : ''}>🚏 Shift Cities: Take Public Bus / State KSRTC Outpost</option>
-              <option value="Domestic Connection Flight" ${computedDefaultTransit === 'Domestic Connection Flight' ? 'selected' : ''}>✈️ Shift Cities: Domestic Connecting Flight Sector</option>
-              <option value="Self-Drive Commute" ${computedDefaultTransit === 'Self-Drive Commute' ? 'selected' : ''}>🚗 Shift Cities: Continuous Road Trip Drive/Ride leg</option>
+              ${initialTransitOptions}
             </select>
           </div>
 
@@ -981,7 +984,7 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   }
   
   if (stepNum === 4) {
-    if (!state.transport || !state.leg2Transport || !state.leg3Transport || !state.vehicleMode) { document.getElementById('err4').classList.add('show'); return; }
+    if (!state.transport || state.leg2Transport.length === 0 || !state.leg3Transport || !state.vehicleMode) { document.getElementById('err4').classList.add('show'); return; }
     state.intermediateHub = document.getElementById('intermediateHubInput').value.trim();
     state.flightTicketCost = parseInt(document.getElementById('leg1FlightTicketCost').value) || 0;
     state.fuelPrice = parseInt(document.getElementById('fuelPrice').value) || 102;
@@ -1097,12 +1100,14 @@ function confirmInAppModalInjection() {
 
 function buildSummary() {
   const perPersonCost = (state.budgetScope === 'Per-Person Scope') ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
+  let localSummaryStr = state.leg2Transport.join(" + ");
+  
   document.getElementById('tripSummary').innerHTML = `
     🗺️ Route Blueprint: <strong>${state.startCity} ➔ ${state.intermediateHub ? state.intermediateHub + ' ➔ ' : ''}${state.destinations[0]} ➔ ${state.startCity}</strong><br>
     🏁 Full Route Journey Distance: <strong>~${state.calculatedDistanceKM} KM Total Loop</strong><br>
     📅 Plan Breakdown: <strong>${state.days} Days / ${state.nights} Nights Total</strong><br>
     ⏱️ Timing Schedules: Departure at <strong>${state.startTime}</strong> on Day 1 | Returning Arrival home by <strong>${state.endTime}</strong> on the Last Day<br>
-    🚗 Transport Configuration: <strong>${state.transport} ➔ ${state.leg2Transport} ➔ ${state.leg3Transport}</strong><br>
+    🚗 Transport Configuration: <strong>${state.transport} ➔ [${localSummaryStr}] ➔ ${state.leg3Transport}</strong><br>
     💰 Budget Tracking: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR Per Traveler</strong>
   `;
 }
@@ -1155,8 +1160,7 @@ async function triggerBuiltInGeneration() {
     if (day.dailyTransit && day.dailyTransit !== "Local Sightseeing" && !isLastDay) {
       transitCardLogisticsHtml = `
         <div style="margin: 10px 0; padding: 10px 14px; background: #fff8e6; color: #856404; font-size: 13.5px; border-radius: 8px; border: 1px solid #ffeeba; display: flex; flex-direction: column; gap: 4px;">
-          <div>🔀 <strong>Transit Alert:</strong> Switching places today using <strong>${day.dailyTransit}</strong>.</div>
-          <div style="font-size: 11.5px; color: var(--muted); font-style: italic;">📋 Quick Tip: Keep your bus/train tickets ready or confirm cab pick-up times early.</div>
+          <div>🔀 <strong>Transit Route Active:</strong> Moving today using options linked to: <strong>${day.dailyTransit}</strong>.</div>
         </div>
       `;
     }
@@ -1247,6 +1251,22 @@ function setupExclusiveChips(containerId, stateKey, callback) {
   });
 }
 
+// Custom handler built specifically for Leg 2 Multi-Select Operations
+function setupMultiSelectTransportChips(containerId, stateKey, callback) {
+  document.getElementById(containerId).querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('selected');
+      const val = chip.dataset.val;
+      if (chip.classList.contains('selected')) { 
+         if(!state[stateKey].includes(val)) state[stateKey].push(val); 
+      } else { 
+         state[stateKey] = state[stateKey].filter(v => v !== val); 
+      }
+      if(callback) callback();
+    });
+  });
+}
+
 function setupMultiSelectChips(containerId, stateKey, callback) {
   document.getElementById(containerId).querySelectorAll('.chip').forEach(chip => {
     chip.addEventListener('click', () => {
@@ -1274,7 +1294,8 @@ setupExclusiveChips('leg1TransportChips', 'transport', (val) => {
   runGeographicalDistanceAndSpeedSuggester();
 });
 
-setupExclusiveChips('leg2TransportChips', 'leg2Transport', (val) => {
+// Registers multi-select capability cleanly for the inner city transfers
+setupMultiSelectTransportChips('leg2TransportChips', 'leg2Transport', () => {
   runGeographicalDistanceAndSpeedSuggester();
 });
 
