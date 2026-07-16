@@ -1,9 +1,8 @@
 /**
  * AI Travel Planner — Core Generation & Calculation Engine
- * Dedicated module for handling routing, regional knowledge, and budget configurations.
+ * Dedicated module handling geographical routing, regional matrices, and layout algorithms.
  */
 
-// 1. Core Travel Knowledge Matrix
 const travelKnowledgeBase = {
   "coorg": {
     famous: ["Abbey Falls Scenic Estate Walk", "Namdroling Golden Temple", "Madikeri Historic Fort Grounds", "Raja's Seat Hanging Gardens"],
@@ -79,9 +78,8 @@ const travelKnowledgeBase = {
   }
 };
 
-// 2. Map Suggestion & Distance Estimator Engine
 async function runGeographicalDistanceAndSpeedSuggester() {
-  syncDynamicCostUIFields(); 
+  if (typeof syncDynamicCostUIFields === "function") syncDynamicCostUIFields(); 
   const suggestionBox = document.getElementById('distanceSuggestionBox');
   if (!state.destinations.length || !state.transport) {
     suggestionBox.style.display = 'none'; return;
@@ -171,7 +169,6 @@ async function runGeographicalDistanceAndSpeedSuggester() {
   }
 }
 
-// 3. Continuous Distance Point Vector Calculator
 async function queryInAppRealtimeDistance(dateKey) {
   const startLoc = document.getElementById(`local-route-start-${dateKey}`).value.trim();
   const endLoc = document.getElementById(`local-route-end-${dateKey}`).value.trim();
@@ -211,6 +208,6 @@ async function queryInAppRealtimeDistance(dateKey) {
     }
     throw new Error("Coordinates mismatch.");
   } catch(e) {
-    feedbackNode.innerHTML = `<span style="color:var(--muted); font-size:12.5px;">🏁 Fallback: <a href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startLoc)}&destination=${encodeURIComponent(endLoc)}" target="_blank" style="text-decoration:underline; font-weight:600; color:var(--coral);">Launch direct routing loops on Google Maps</a></span>`;
+    feedbackNode.innerHTML = `<span style="color:var(--muted); font-size:12.5px;">🏁 Fallback: <a href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startLoc)}&destination=${encodeURIComponent(endLoc)}" target="_blank" style="text-decoration:underline; font-weight:600; color:var(--coral);">Launch routing loop on Google Maps</a></span>`;
   }
 }
