@@ -21,9 +21,21 @@
   .card { background: var(--white); border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid var(--border); }
   .progress-bar { height: 4px; background: var(--border); }
   .progress-fill { height: 100%; background: var(--coral); transition: width 0.4s ease; width: 14%; }
+  
   .step-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--sand); overflow-x: auto; }
-  .step-tab { flex: 1; padding: 12px 8px; text-align: center; font-size: 11px; font-weight: 500; color: var(--muted); cursor: default; white-space: nowrap; }
-  .step-tab.active { color: var(--ocean); background: var(--white); font-weight: 600; border-bottom: 2px solid var(--coral); }
+  .step-tab { 
+    flex: 1; 
+    padding: 16px 12px; 
+    text-align: center; 
+    font-size: 14px; 
+    font-weight: 600; 
+    color: var(--muted); 
+    cursor: default; 
+    white-space: nowrap; 
+    letter-spacing: -0.01em;
+  }
+  .step-tab.active { color: var(--ocean); background: var(--white); font-weight: 700; border-bottom: 3px solid var(--coral); }
+  
   .step-panel { display: none; padding: 28px 24px; }
   .step-panel.active { display: block; }
   .step-heading { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 4px; }
@@ -49,6 +61,16 @@
   .vibe-checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
   .vibe-checkbox-label { font-size: 13px; display: flex; align-items: center; gap: 4px; background: var(--paper); padding: 4px 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); }
   
+  /* SLEEK LINK OPTIONS FOOTPRINT - Lettering shrunk to dynamic size like IRCTC portal sizes */
+  .live-helper-link { 
+    color: var(--white) !important; font-weight: 600; text-decoration: none; 
+    background: var(--coral); padding: 5px 10px !important; border-radius: 6px; 
+    border: 1px solid var(--coral); font-size: 12px !important; display: inline-flex; 
+    align-items: center; gap: 4px; transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 4px rgba(232, 99, 58, 0.1); text-transform: none;
+  }
+  .live-helper-link:hover { background: var(--ocean); border-color: var(--ocean); color: var(--white) !important; transform: translateY(-1px); }
+
   .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13,17,23,0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; }
   .auth-modal { background: white; border-radius: 20px; max-width: 400px; width: 90%; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
   .auth-toggle-link { color: var(--coral); font-weight: 600; cursor: pointer; text-decoration: underline; font-size: 13px; }
@@ -71,16 +93,6 @@
     border: 1px solid var(--ocean-mid); max-width: 90%; width: 500px;
   }
   .app-notification-toast.show { top: 20px; }
-
-  .live-helper-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
-  .live-helper-link { 
-    color: var(--white); font-weight: 600; text-decoration: none; 
-    background: var(--coral); padding: 8px 16px; border-radius: 8px; 
-    border: 1px solid var(--coral); font-size: 18px; display: inline-flex; 
-    align-items: center; gap: 6px; transition: all 0.2s ease-in-out;
-    box-shadow: 0 4px 10px rgba(232, 99, 58, 0.15);
-  }
-  .live-helper-link:hover { background: var(--ocean); border-color: var(--ocean); color: var(--white); transform: translateY(-1px); }
 
   .injection-modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -246,7 +258,6 @@
       <div class="step-heading">When is the adventure? 📅</div>
       <p class="step-sub">Provide your absolute holiday calendar start and end dates below.</p>
       
-      <!-- Live Day/Night Tracker Panel -->
       <div class="duration-summary-card" id="durationSummaryCard" style="display: none;">
         <div>
           <div class="duration-metric" id="computedDaysCount">0</div>
@@ -773,6 +784,7 @@ function removeStopoverRow(rowId) {
   syncStopoverValuesIntoState();
 }
 
+// Complex multi-city state tracker array synchronization compiler
 function syncStopoverValuesIntoState() {
   state.stopoverCities = [];
   document.querySelectorAll('.stopover-card-block').forEach(block => {
@@ -800,7 +812,7 @@ function syncHomewardStartCityValue() {
   runGeographicalDistanceAndSpeedSuggester();
 }
 
-// BULLETPROOF CORRECTION PASS: Checks keywords with absolute security profiles to swap dynamic inputs
+// STABLE UNIFIED SYNC CONFIGURATIONS ENGINE: Perfectly handles standard layout checks without bugs
 function syncDynamicCostUIFields() {
   const leg1Group = document.getElementById('leg1CostDynamicGroup');
   const leg1FareWrap = document.getElementById('leg1FareWrapper');
@@ -1012,7 +1024,6 @@ async function queryInAppRealtimeDistance(dateKey) {
   }
 }
 
-// VALIDATION SYNTAX ERROR RESOLVED PASS: Perfectly counts calendar boundaries
 function validateDatesOnly() {
   const startVal = document.getElementById('startDate').value;
   const endVal = document.getElementById('endDate').value;
@@ -1045,7 +1056,6 @@ function validateDatesOnly() {
       return false; 
     }
     
-    // Clear dynamic counters injection logic
     const totalDays = Math.round((e - s) / 86400000) + 1;
     const totalNights = totalDays - 1;
     
@@ -1197,9 +1207,9 @@ function generateDailyVibeSelectors() {
           <div class="form-group" style="margin-top:8px;">
             <label>Target Location/City for this Day:</label>
             <input type="text" class="daily-place-input" oninput="updateLiveHelperMapLinks(this, '${dateStr}')" data-date="${dateStr}" value="${computedDefaultPlace}" placeholder="e.g. Jaipur, Udaipur...">
-            <div class="live-helper-bar">
-              <a href="https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(computedDefaultPlace)}" target="_blank" id="live-link-food-${dateStr}" class="live-helper-link">🍛 Live Restaurant Deals nearby</a>
-              <a href="https://www.google.com/maps/search/${encodeURIComponent(computedDefaultPlace)}+top+attractions+things+to+do" target="_blank" id="live-link-sights-${dateStr}" class="live-helper-link">🏛️ Top Attractions List</a>
+            <div class="live-helper-bar" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
+              <a href="https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodeURIComponent(computedDefaultPlace)}" target="_blank" id="live-link-food-${dateStr}" class="live-helper-link">🍛 Live Restaurants</a>
+              <a href="https://www.google.com/maps/search/${encodeURIComponent(computedDefaultPlace)}+top+attractions+things+to+do" target="_blank" id="live-link-sights-${dateStr}" class="live-helper-link">🏛️ Top Sights</a>
               <a href="https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(computedDefaultPlace)}" target="_blank" id="live-link-stay-${dateStr}" class="live-helper-link">🏨 Live Room Stays</a>
             </div>
           </div>
@@ -1593,7 +1603,6 @@ setupExclusiveChips('crewChips', 'crew', (val) => {
 });
 
 setupExclusiveChips('leg1TransportChips', 'transport', (val) => {
-  document.getElementById('firstHubFieldGroup').style.display = (val === 'Full Road Trip') ? 'none' : 'block';
   runGeographicalDistanceAndSpeedSuggester();
 });
 
