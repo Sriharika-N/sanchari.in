@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Travel Planner — Let's Explore!</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --ink: #0d1117; --paper: #faf8f4; --sand: #f0ebe1; --ocean: #1a3a5c;
@@ -417,13 +416,44 @@ function openProfileCompletionWindow() { document.getElementById('profileComplet
 function closeProfileCompletionWindow() { document.getElementById('profileCompletionOverlay').style.display = 'none'; }
 
 async function submitTravelerProfileDetails() {
+  console.log("Save button clicked..."); // Debug log
   const nameVal = document.getElementById('profileName').value.trim();
   const ageVal = parseInt(document.getElementById('profileAge').value);
   const genderVal = document.getElementById('profileGender').value;
+  
   const { data: { user } } = await travelPlannerSupabaseClient.auth.getUser();
-  if(!user || !nameVal) return;
-  await travelPlannerSupabaseClient.from('profiles').upsert({ id: user.id, full_name: nameVal, age: ageVal, gender: genderVal, updated_at: new Date().toISOString() });
-  closeProfileCompletionWindow(); window.location.reload();
+  
+  // Debug log: See what the browser is seeing
+  console.log("User detected:", user);
+  
+  if(!user) {
+    alert("Error: User session not found. Please log out and log in again.");
+    return;
+  }
+  
+  if(!nameVal) {
+    alert("Please enter your name.");
+    return;
+  }
+
+  const { error } = await travelPlannerSupabaseClient
+    .from('profiles')
+    .upsert({ 
+      id: user.id, 
+      full_name: nameVal, 
+      age: ageVal, 
+      gender: genderVal, 
+      updated_at: new Date().toISOString() 
+    });
+
+  if(error) {
+    console.error("Database error:", error);
+    alert("Database Error: " + error.message);
+  } else {
+    console.log("Profile saved successfully!");
+    closeProfileCompletionWindow(); 
+    window.location.reload();
+  }
 }
 
 async function renderPlansHistoryDashboard(userId) {
