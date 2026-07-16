@@ -282,7 +282,7 @@
           <div class="chip" data-val="Solo">🧍 Solo (Individual Budget)</div>
           <div class="chip" data-val="Couple">💑 Couple (Dual Split)</div>
           <div class="chip" data-val="Friends">👯 Friends Group (Per-Head Split)</div>
-          <div class="chip" data-val="Family">Family (Consolidated Group Budget)</div>
+          <div class="chip" data-val="Family">👨‍👩‍👧 Family (Consolidated Group Budget)</div>
         </div>
       </div>
       <div class="form-group" id="groupSizeField" style="display:none;">
@@ -584,7 +584,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const travelPlannerSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let activeUserToken = null;
 let currentAuthMode = 'signin'; 
-let securityPasswordBuffer = ""; // Safely caches plain password temporarily during submission step loops to check matching variants
+let securityPasswordBuffer = ""; // Caches plain password during signup chain to check matching inputs
 
 let state = { 
   destinations: [], startCity: '', startDate: '', endDate: '', startTime: '06:00', endTime: '22:00', days: 0, nights: 0, transitDaysAllocation: 2,
@@ -683,12 +683,21 @@ function showAppNotification(messageString) {
   setTimeout(() => { toast.classList.remove('show'); }, 4500);
 }
 
-// Global hooks setup to listen directly for dynamic user login modifications cleanly
-travelPlannerSupabaseClient.auth.onAuthStateChange((event, session) => {
+// Global state hook syncing user authentication state updates
+travelPlannerSupabaseClient.auth.onAuthStateChange(async (event, session) => {
   const authContainer = document.getElementById('navAuthGroup');
   if (session) {
     activeUserToken = session.access_token;
-    authContainer.innerHTML = `<span class="user-badge">🟢 ${session.user.email}</span>`;
+    
+    // Fetch the name directly from profile records
+    const { data: profile } = await travelPlannerSupabaseClient
+      .from('profiles')
+      .select('full_name')
+      .eq('id', session.user.id)
+      .single();
+      
+    const displayName = profile ? profile.full_name : session.user.email;
+    authContainer.innerHTML = `<span class="user-badge">🟢 Hello, ${displayName}</span>`;
   } else {
     activeUserToken = null;
     authContainer.innerHTML = `
@@ -702,7 +711,9 @@ window.addEventListener('load', async () => {
   const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
   if (session) {
     activeUserToken = session.access_token;
-    document.getElementById('navAuthGroup').innerHTML = `<span class="user-badge">🟢 ${session.user.email}</span>`;
+    const { data: profile } = await travelPlannerSupabaseClient.from('profiles').select('full_name').eq('id', session.user.id).single();
+    const displayName = profile ? profile.full_name : session.user.email;
+    document.getElementById('navAuthGroup').innerHTML = `<span class="user-badge">🟢 Hello, ${displayName}</span>`;
   }
   updateProgressBar();
 });
@@ -760,7 +771,6 @@ async function handleCredentialAuth() {
     errMsg.classList.add('show'); return;
   }
   
-  // Cache the entered credentials password safely to cross verify inside the next profile parameters completion stage
   securityPasswordBuffer = password;
 
   if (currentAuthMode === 'signin') {
@@ -782,7 +792,6 @@ async function handleCredentialAuth() {
       activeUserToken = data.session.access_token;
       closeAuthModal();
       
-      // Check if profile exists; if not, ask for data values directly
       const { data: profileCheck } = await travelPlannerSupabaseClient.from('profiles').select('*').eq('id', data.user.id).single();
       if(!profileCheck) {
          openProfileCompletionWindow();
@@ -799,7 +808,6 @@ async function handleCredentialAuth() {
   }
 }
 
-// Profile details processing workflows logic loops
 function openProfileCompletionWindow() {
   document.getElementById('profileErrorMsg').classList.remove('show');
   document.getElementById('profileCompletionOverlay').style.display = 'flex';
@@ -846,16 +854,16 @@ async function submitTravelerProfileDetails() {
     
   if(profileWriteError) {
      console.error("Profile write error:", profileWriteError);
-     profileErr.textContent = "Couldn't save profiles metadata variables into database layers.";
+     profileErr.textContent = "Couldn't save profile parameters inside database layers.";
      profileErr.classList.add('show');
   } else {
-     securityPasswordBuffer = ""; // Reset safe validation buffer channels cleanly
+     securityPasswordBuffer = ""; 
      closeProfileCompletionWindow();
+     document.getElementById('navAuthGroup').innerHTML = `<span class="user-badge">🟢 Hello, ${nameVal}</span>`;
      showAppNotification(`Travel profile initialized beautifully for ${nameVal}!`);
   }
 }
 
-// Multi City Workflow Logic Tools
 function toggleRouteStyle(chosenStyle) {
   state.routeStyle = chosenStyle;
   const chips = document.querySelectorAll('#routePaceChips .chip');
@@ -1471,7 +1479,7 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
     await travelPlannerSupabaseClient.from('journey_feedback').insert({
       step_number: stepNum, step_name: stepName, feedback_rating: 'v15_multimodal_enabled', user_comments: betaFeedbackText
     });
-  } catch(e) { console.warn("Logged safely."); }
+  } catch(e) { console.warn("Feedback recorded safely."); }
 
   document.getElementById('singleBetaFeedbackInput').value = '';
   
@@ -1547,7 +1555,7 @@ function confirmInAppModalInjection() {
   showAppNotification(`${modalContextItem.type.toUpperCase()} option added to Day ${targetDayVal} safely inside layout.`);
 }
 
-// Secure Data Storage Pipeline
+// Secure Data Storage Pipeline saving travel structures to cloud tables
 async function saveCurrentTripToAccount() {
   const { data: { user }, error: authError } = await travelPlannerSupabaseClient.auth.getUser();
 
