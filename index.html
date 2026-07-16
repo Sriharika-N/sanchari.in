@@ -151,8 +151,8 @@
     </div>
 
     <div class="auth-tabs">
-      <div class="auth-tab active" id="authTabSignin" onclick="setAuthInterfaceMode('signin')">Sign In (New User)</div>
-      <div class="auth-tab" id="authTabLogin" onclick="setAuthInterfaceMode('login')">Log In (Existing User)</div>
+      <div class="auth-tab active" id="authTabSignup" onclick="setAuthInterfaceMode('signup')">Sign Up (New)</div>
+      <div class="auth-tab" id="authTabLogin" onclick="setAuthInterfaceMode('login')">Log In (Existing)</div>
     </div>
     
     <div id="authFormContainer">
@@ -169,15 +169,13 @@
       <button class="btn btn-ghost" style="width:100%; gap:8px; margin-bottom:16px;" onclick="loginWithGoogle()">
         <img src="https://www.google.com/favicon.ico" width="16" height="16" alt="G"> Continue via Google
       </button>
-
-      <div style="text-align:center; font-size:13px; color:var(--muted);">
-        <span class="auth-toggle-link" style="color:var(--muted); font-size:12px;" id="forgotPasswordLink" onclick="triggerForgotPasswordRecovery()">Forgot your password?</span>
-      </div>
     </div>
     <div class="error-box" id="authErrorMsg" style="margin-top:12px;"></div>
   </div>
 </div>
 
+<script>
+let currentAuthMode = 'signup';
 <div class="main">
   <div class="card">
     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
@@ -652,20 +650,12 @@ function setAuthInterfaceMode(mode) {
   currentAuthMode = mode;
   const errMsg = document.getElementById('authErrorMsg');
   errMsg.classList.remove('show');
-  document.getElementById('authTabSignin').classList.toggle('active', mode === 'signin');
-  document.getElementById('authTabLogin').classList.toggle('active', mode === 'login');
   
-  if (mode === 'signin') {
-    document.getElementById('authModalTitle').textContent = "Create Account";
-    document.getElementById('passwordGroup').style.display = 'block';
-    document.getElementById('forgotPasswordLink').style.display = 'none';
-  } else {
-    document.getElementById('authModalTitle').textContent = "Log In to Account";
-    document.getElementById('passwordGroup').style.display = 'block';
-    document.getElementById('forgotPasswordLink').style.display = 'inline-block';
-  }
+  // Toggle UI Tabs
+  document.getElementById('authTabSignup').classList.toggle('active', mode === 'signup');
+  document.getElementById('authTabLogin').classList.toggle('active', mode === 'login');
+  document.getElementById('authModalTitle').textContent = mode === 'signup' ? "Create Account" : "Log In";
 }
-
 function toggleAuthMode() { setAuthInterfaceMode(currentAuthMode === 'signin' ? 'login' : 'signin'); }
 
 function triggerForgotPasswordRecovery() {
@@ -691,37 +681,41 @@ async function handleCredentialAuth() {
   const errMsg = document.getElementById('authErrorMsg');
   errMsg.classList.remove('show');
 
-  if (!email || (currentAuthMode !== 'recovery' && !password)) {
-    errMsg.textContent = "Please fill out all fields completely.";
-    errMsg.classList.add('show'); return;
+  if (!email || !password) {
+    errMsg.textContent = "Please provide both an email and a password.";
+    errMsg.classList.add('show');
+    return;
   }
 
-  if (currentAuthMode === 'signup' || currentAuthMode === 'signin') {
+  if (currentAuthMode === 'signup') {
+    // Attempt Sign Up
     const { data, error } = await travelPlannerSupabaseClient.auth.signUp({ email, password });
     if (error) {
-      if(error.message.toLowerCase().includes("already registered") || error.status === 422) {
-        setAuthInterfaceMode('login');
-        errMsg.textContent = "Account verified. Please enter your password to log in directly.";
+      if (error.message.includes("already registered")) {
+        errMsg.textContent = "Email already exists. Please switch to 'Log In' or use Google.";
         errMsg.classList.add('show');
-      } else { errMsg.textContent = error.message; errMsg.classList.add('show'); }
-    } else { showAppNotification("Verification link dispatched to your inbox!"); closeAuthModal(); }
-  } else if (currentAuthMode === 'login') {
+      } else {
+        errMsg.textContent = error.message;
+        errMsg.classList.add('show');
+      }
+    } else {
+      showAppNotification("Account created! Please check your email to verify.");
+      closeAuthModal();
+    }
+  } else {
+    // Attempt Log In
     const { data, error } = await travelPlannerSupabaseClient.auth.signInWithPassword({ email, password });
-    if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); }
-    else {
+    if (error) {
+      errMsg.textContent = "Invalid credentials. Please check your email/password.";
+      errMsg.classList.add('show');
+    } else {
       activeUserToken = data.session.access_token;
       document.getElementById('authHeaderBtn').textContent = `🟢 ${data.user.email}`;
       closeAuthModal();
+      showAppNotification("Successfully logged in!");
     }
-  } else if (currentAuthMode === 'recovery') {
-    const { error } = await travelPlannerSupabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); }
-    else { showAppNotification("Password initialization link sent."); closeAuthModal(); }
   }
 }
-
 function toggleRouteStyle(chosenStyle) {
   state.routeStyle = chosenStyle;
   const chips = document.querySelectorAll('#routePaceChips .chip');
