@@ -712,110 +712,6 @@ async function handleCredentialAuth() {
   }
 }
 
-function selectThematicRandomEngine(categoryType) {
-  const allChips = document.querySelectorAll('#destChips .chip');
-  allChips.forEach(c => c.classList.remove('selected'));
-  state.destinations = [];
-
-  let chosenDestinationValue = "";
-  if (categoryType === 'mountains') {
-    const mountainPool = ["Spiti Valley, HP", "Munnar, Kerala", "Leh Ladakh, JK", "Manali, HP"];
-    chosenDestinationValue = mountainPool[Math.floor(Math.random() * mountainPool.length)];
-    const baseHub = chosenDestinationValue.includes("Munnar") ? "Kochi" : "Delhi";
-    document.getElementById('startCity').value = baseHub;
-    state.startCity = baseHub;
-  } else if (categoryType === 'beaches') {
-    const beachPool = ["Gokarna, Karnataka", "Goa, India", "Varkala, Kerala"];
-    chosenDestinationValue = beachPool[Math.floor(Math.random() * beachPool.length)];
-    document.getElementById('startCity').value = "Bangalore";
-    state.startCity = "Bangalore";
-  } else {
-    const heritagePool = ["Hampi, Karnataka", "Udaipur, Rajasthan", "Jaipur, Rajasthan", "Varanasi, UP"];
-    chosenDestinationValue = heritagePool[Math.floor(Math.random() * heritagePool.length)];
-    const baseHub = chosenDestinationValue.includes("Hampi") ? "Bangalore" : "Delhi";
-    document.getElementById('startCity').value = baseHub;
-    state.startCity = baseHub;
-  }
-
-  document.getElementById('customDest').value = "";
-
-  let chipFound = false;
-  allChips.forEach(chip => {
-    if (chip.dataset.val === chosenDestinationValue) {
-      chip.classList.add('selected');
-      chipFound = true;
-    }
-  });
-
-  if (!chipFound) {
-    const destChipsContainer = document.getElementById('destChips');
-    const newChip = document.createElement('div');
-    newChip.className = 'chip selected';
-    newChip.dataset.val = chosenDestinationValue;
-    const cleanShortTitle = chosenDestinationValue.split(',')[0];
-    newChip.innerHTML = `✨ ${cleanShortTitle}`;
-    
-    newChip.addEventListener('click', () => {
-      newChip.classList.toggle('selected');
-      state.destinations = newChip.classList.contains('selected') ? [chosenDestinationValue] : [];
-    });
-    destChipsContainer.appendChild(newChip);
-  }
-
-  state.destinations.push(chosenDestinationValue);
-  showAppNotification(`Theme Matrix selected: ${chosenDestinationValue}`);
-  generateDailyVibeSelectors();
-}
-
-function validateDatesOnly() {
-  const startVal = document.getElementById('startDate').value;
-  const endVal = document.getElementById('endDate').value;
-  const startTimeVal = document.getElementById('startTime').value;
-  const endTimeVal = document.getElementById('endTime').value;
-  
-  const errBox = document.getElementById('dateErrorBox');
-  const nextBtn = document.getElementById('btnStep3');
-  const durationCard = document.getElementById('durationSummaryCard');
-
-  if (errBox) errBox.classList.remove('show');
-  if (nextBtn) { nextBtn.disabled = false; nextBtn.style.opacity = '1'; }
-  
-  state.startDate = startVal; 
-  state.endDate = endVal;
-  state.startTime = startTimeVal;
-  state.endTime = endTimeVal;
-
-  if (startVal && endVal) {
-    const s = new Date(startVal), e = new Date(endVal);
-    if (isNaN(s.getTime()) || isNaN(e.getTime())) { 
-      if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } 
-      durationCard.style.display = 'none';
-      return false; 
-    }
-    if (e < s) { 
-      if(errBox) errBox.classList.add('show'); 
-      if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } 
-      durationCard.style.display = 'none';
-      return false; 
-    }
-    
-    const totalDays = Math.round((e - s) / 86400000) + 1;
-    const totalNights = totalDays - 1;
-    
-    state.days = totalDays;
-    state.nights = totalNights;
-
-    document.getElementById('computedDaysCount').textContent = totalDays;
-    document.getElementById('computedNightsCount').textContent = totalNights;
-    durationCard.style.display = 'flex';
-  } else { 
-    if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } 
-    durationCard.style.display = 'none';
-    return false; 
-  }
-  return true;
-}
-
 function toggleRouteStyle(chosenStyle) {
   state.routeStyle = chosenStyle;
   const chips = document.querySelectorAll('#routePaceChips .chip');
@@ -905,6 +801,7 @@ function syncHomewardStartCityValue() {
   runGeographicalDistanceAndSpeedSuggester();
 }
 
+// COMPLETE UNIFIED RESOLUTION PASS: Solves dynamic input swaps perfectly for Phase 1 and 4
 function syncDynamicCostUIFields() {
   const leg1Group = document.getElementById('leg1CostDynamicGroup');
   const leg1FareWrap = document.getElementById('leg1FareWrapper');
@@ -912,18 +809,18 @@ function syncDynamicCostUIFields() {
   
   if (state.transport) {
     leg1Group.style.display = 'block';
-    if (state.transport === 'Full Road Trip') {
+    if (state.transport.includes('Road') || state.transport.includes('Driving')) {
       leg1FuelWrap.style.display = 'flex'; leg1FareWrap.style.display = 'none';
     } else {
       leg1FuelWrap.style.display = 'none'; 
       leg1FareWrap.style.display = 'block';
       
-      let parsedLabelText = "Ticket";
-      if (state.transport.includes("Flight")) parsedLabelText = "Flight Ticket";
-      if (state.transport.includes("Train")) parsedLabelText = "Train Ticket";
-      if (state.transport.includes("Bus")) parsedLabelText = "Bus Ticket";
+      let labelMappingValue = "Ticket";
+      if (state.transport.includes("Flight")) labelMappingValue = "Flight Ticket";
+      if (state.transport.includes("Train")) labelMappingValue = "Train Ticket";
+      if (state.transport.includes("Bus")) labelMappingValue = "Bus Ticket";
       
-      document.getElementById('leg1FareLabel').textContent = `${parsedLabelText} Fare per Person (INR)`;
+      document.getElementById('leg1FareLabel').textContent = `${labelMappingValue} Fare per Person (INR)`;
     }
   }
 
@@ -936,18 +833,18 @@ function syncDynamicCostUIFields() {
   
   if (state.leg3Transport) {
     leg3Group.style.display = 'block';
-    if (state.leg3Transport === 'Drive Return') {
+    if (state.leg3Transport.includes('Drive') || state.leg3Transport.includes('Road')) {
       leg3FuelWrap.style.display = 'flex'; leg3FareWrap.style.display = 'none';
     } else {
       leg3FuelWrap.style.display = 'none'; 
       leg3FareWrap.style.display = 'block';
       
-      let parsedReturnLabelText = "Return Ticket";
-      if (state.leg3Transport.includes("Flight")) parsedReturnLabelText = "Flight Return Ticket";
-      if (state.leg3Transport.includes("Train")) parsedReturnLabelText = "Train Return Ticket";
-      if (state.leg3Transport.includes("Bus")) parsedReturnLabelText = "Bus Return Ticket";
+      let labelReturnMappingValue = "Return Ticket";
+      if (state.leg3Transport.includes("Flight")) labelReturnMappingValue = "Flight Return Ticket";
+      if (state.leg3Transport.includes("Train")) labelReturnMappingValue = "Train Return Ticket";
+      if (state.leg3Transport.includes("Bus")) labelReturnMappingValue = "Bus Return Ticket";
       
-      document.getElementById('leg3FareLabel').textContent = `${parsedReturnLabelText} Fare per Person (INR)`;
+      document.getElementById('leg3FareLabel').textContent = `${labelReturnMappingValue} Fare per Person (INR)`;
     }
   }
 }
@@ -1016,8 +913,8 @@ async function runGeographicalDistanceAndSpeedSuggester() {
 
     state.calculatedDistanceKM = finalCalculatedKM;
     
-    let outboundCostPerHead = state.transport === 'Full Road Trip' ? Math.round((finalCalculatedKM / state.leg1VehicleMileage) * state.leg1FuelPrice / state.groupSize) : state.leg1TicketCost;
-    let returnCostPerHead = state.leg3Transport === 'Drive Return' ? Math.round((finalCalculatedKM / state.leg3VehicleMileage) * state.leg3FuelPrice / state.groupSize) : state.leg3TicketCost;
+    let outboundCostPerHead = (state.transport === 'Full Road Trip' || state.transport.includes('Drive')) ? Math.round((finalCalculatedKM / state.leg1VehicleMileage) * state.leg1FuelPrice / state.groupSize) : state.leg1TicketCost;
+    let returnCostPerHead = (state.leg3Transport === 'Drive Return' || state.leg3Transport.includes('Drive')) ? Math.round((finalCalculatedKM / state.leg3VehicleMileage) * state.leg3FuelPrice / state.groupSize) : state.leg3TicketCost;
     let totalLocalCommuteCostPerHead = Math.round((state.leg2DailyCost * (state.days || 1)) / state.groupSize);
     let cumulativeTransitSpend = outboundCostPerHead + returnCostPerHead + totalLocalCommuteCostPerHead;
     
@@ -1072,7 +969,6 @@ function broadcastVibesLiveToTimeline() {
   });
 }
 
-/* Free Route-Checking API Integration Wrapper Function */
 async function queryInAppRealtimeDistance(dateKey) {
   const startLoc = document.getElementById(`local-route-start-${dateKey}`).value.trim();
   const endLoc = document.getElementById(`local-route-end-${dateKey}`).value.trim();
@@ -1201,12 +1097,10 @@ function generateDailyVibeSelectors() {
          }
       }
 
-      // Populate loop selections options dynamically matching active configurations chosen from Step 4
       let transitOptionsMarkup = "";
       let recommendedOptionValue = "Local Sightseeing";
       
       if(stopoverNoticeString !== "") {
-         // Migration day priority logic selection parameters
          let contextHopObj = (i === 0) ? state.stopoverCities[0] : state.stopoverCities[1];
          let firstPrimaryMode = contextHopObj.transitModes[0] || "Hired Outstation Cab";
          recommendedOptionValue = firstPrimaryMode;
@@ -1249,12 +1143,11 @@ function generateDailyVibeSelectors() {
             </select>
           </div>
 
-          <!-- FREE GOOGLE MAPS LINKED IN-APP TELEMETRY BUILDER PANEL NODE -->
           <div class="form-group" style="background:#f9f6f0; border:1px dashed var(--gold); border-radius:10px; padding:12px; margin-top:14px;">
             <label style="font-size:10.5px; color:var(--ocean-dark); font-weight:700;">🗺️ Free In-App Distance & Layover Checker</label>
             <div style="display:flex; gap:8px; margin-top:5px;">
-              <input type="text" id="local-route-start-${dateStr}" placeholder="Starting point (e.g. Hotel / Station)" value="${computedDefaultPlace}" style="font-size:12px; padding:6px 10px;">
-              <input type="text" id="local-route-end-${dateStr}" placeholder="Ending viewpoint (e.g. Abbey Falls / Monument)" style="font-size:12px; padding:6px 10px;">
+              <input type="text" id="local-route-start-${dateStr}" placeholder="Starting point" value="${computedDefaultPlace}" style="font-size:12px; padding:6px 10px;">
+              <input type="text" id="local-route-end-${dateStr}" placeholder="Ending point" style="font-size:12px; padding:6px 10px;">
             </div>
             <button class="btn btn-ghost" onclick="queryInAppRealtimeDistance('${dateStr}')" style="width:100%; font-size:12px; padding:6px; margin-top:8px; background:white; border-color:var(--gold); color:var(--gold);">Calculate Distance & Route Vectors 🔄</button>
             <div id="local-route-result-${dateStr}"></div>
@@ -1276,7 +1169,6 @@ function generateDailyVibeSelectors() {
             <input type="text" class="daily-things-input" data-date="${dateStr}" value="${stopoverNoticeString ? automaticPlaceholderStrategyText : ''}" placeholder="${automaticPlaceholderStrategyText}">
           </div>
           
-          <!-- LIVE COMPANION TICKET SEARCH HELPERS LINKS BAR -->
           <div style="display:flex; gap:6px; margin-top:12px; border-top:1px solid var(--border); padding-top:10px;">
             <a href="https://www.google.com/travel/flights" target="_blank" style="flex:1; font-size:11px; color:white; background:var(--ocean-mid); padding:6px; border-radius:6px; text-align:center; text-decoration:none; font-weight:600;">✈️ Search Flights</a>
             <a href="https://www.irctc.co.in" target="_blank" style="flex:1; font-size:11px; color:white; background:var(--success); padding:6px; border-radius:6px; text-align:center; text-decoration:none; font-weight:600;">🚂 Book IRCTC Rail</a>
@@ -1433,8 +1325,8 @@ function buildSummary() {
   const perPersonCost = (state.budgetScope === 'Per-Person Scope') ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
   let localSummaryStr = state.leg2Transport.join(" + ");
   
-  let outboundCostPerHead = state.transport === 'Full Road Trip' ? Math.round((state.calculatedDistanceKM / state.leg1VehicleMileage) * state.leg1FuelPrice / state.groupSize) : state.leg1TicketCost;
-  let returnCostPerHead = state.leg3Transport === 'Drive Return' ? Math.round((state.calculatedDistanceKM / state.leg3VehicleMileage) * state.leg3FuelPrice / state.groupSize) : state.leg3TicketCost;
+  let outboundCostPerHead = (state.transport === 'Full Road Trip' || state.transport.includes('Drive')) ? Math.round((state.calculatedDistanceKM / state.leg1VehicleMileage) * state.leg1FuelPrice / state.groupSize) : state.leg1TicketCost;
+  let returnCostPerHead = (state.leg3Transport === 'Drive Return' || state.leg3Transport.includes('Drive')) ? Math.round((state.calculatedDistanceKM / state.leg3VehicleMileage) * state.leg3FuelPrice / state.groupSize) : state.leg3TicketCost;
   let totalLocalCommuteCostPerHead = Math.round((state.leg2DailyCost * state.days) / state.groupSize);
   let aggregateTransitExpense = outboundCostPerHead + returnCostPerHead + totalLocalCommuteCostPerHead;
 
@@ -1460,8 +1352,8 @@ async function triggerBuiltInGeneration() {
   const statusEl = document.getElementById('apiStatusMessage');
   statusEl.style.color = "green"; statusEl.textContent = "Processing layout configurations...";
 
-  let outboundCostPerHead = state.transport === 'Full Road Trip' ? Math.round((state.calculatedDistanceKM / state.leg1VehicleMileage) * state.leg1FuelPrice / state.groupSize) : state.leg1TicketCost;
-  let returnCostPerHead = state.leg3Transport === 'Drive Return' ? Math.round((state.calculatedDistanceKM / state.leg3VehicleMileage) * state.leg3FuelPrice / state.groupSize) : state.leg3TicketCost;
+  let outboundCostPerHead = (state.transport === 'Full Road Trip' || state.transport.includes('Drive')) ? Math.round((state.calculatedDistanceKM / state.leg1VehicleMileage) * state.leg1FuelPrice / state.groupSize) : state.leg1TicketCost;
+  let returnCostPerHead = (state.leg3Transport === 'Drive Return' || state.leg3Transport.includes('Drive')) ? Math.round((state.calculatedDistanceKM / state.leg3VehicleMileage) * state.leg3FuelPrice / state.groupSize) : state.leg3TicketCost;
   let totalLocalCommuteCostPerHead = Math.round((state.leg2DailyCost * state.days) / state.groupSize);
   let aggregateTransitExpense = outboundCostPerHead + returnCostPerHead + totalLocalCommuteCostPerHead;
 
