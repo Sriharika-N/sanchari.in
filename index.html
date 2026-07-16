@@ -816,16 +816,23 @@ let currentStep = 1;
 const TOTAL_STEPS = 7;
 let modalContextItem = { type: '', value: '' };
 
-// Global Watcher hooking session tracking changes to greet travelers dynamically
+// Global state hook syncing user authentication state updates
 travelPlannerSupabaseClient.auth.onAuthStateChange(async (event, session) => {
   const authContainer = document.getElementById('navAuthGroup');
   if (session) {
     activeUserToken = session.access_token;
+    
+    // Check if this logged-in traveler has a profile record yet
     const { data: profile } = await travelPlannerSupabaseClient
       .from('profiles')
       .select('full_name')
       .eq('id', session.user.id)
       .single();
+      
+    // 💡 SAFETY NET: If they are logged in but don't have a profile yet, force the window open!
+    if (!profile) {
+      openProfileCompletionWindow();
+    }
       
     const displayName = profile ? profile.full_name : session.user.email;
     authContainer.innerHTML = `<span class="user-badge">🟢 Hello, ${displayName}</span>`;
@@ -837,7 +844,6 @@ travelPlannerSupabaseClient.auth.onAuthStateChange(async (event, session) => {
     `;
   }
 });
-
 window.addEventListener('load', async () => {
   const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
   if (session) {
