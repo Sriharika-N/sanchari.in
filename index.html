@@ -95,15 +95,8 @@
   @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
   .duration-summary-card {
-    background: var(--coral-light);
-    border: 1.5px solid var(--coral);
-    border-radius: 12px;
-    padding: 14px 18px;
-    margin-bottom: 18px;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    text-align: center;
+    background: var(--coral-light); border: 1.5px solid var(--coral); border-radius: 12px;
+    padding: 14px 18px; margin-bottom: 18px; display: flex; justify-content: space-around; align-items: center; text-align: center;
   }
   .duration-metric { font-size: 18px; font-weight: 700; color: var(--ocean-dark); }
   .duration-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
@@ -292,16 +285,16 @@
       <div class="error-box" id="err3">Please choose valid dates and journey scheduling metrics.</div>
     </div>
 
-    <!-- STEP 4: ELABORATED TRANSIT LOGISTICS ARCHITECTURE -->
+    <!-- STEP 4: TRANSIT LOGISTICS & VEHICLE SETTINGS -->
     <div class="step-panel" id="step4">
       <div class="step-heading">Transit & Travel Day Settings 🚗💨</div>
-      <p class="step-sub">Configure your multi-modal transition legs to map exact connection metrics.</p>
+      <p class="step-sub">Choose how you want to handle your transport from start to finish.</p>
       
       <!-- SECTION 1: THE LONG DISTANCE LAUNCH -->
-      <div style="background: var(--paper); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
-        <h4 style="font-family:'Fraunces', serif; font-size:15px; color:var(--ocean-dark); margin-bottom:8px;">🛫 Leg 1: Long-Distance Launch (Home to First Hub)</h4>
+      <div style="background: var(--white); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+        <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🛫 Leg 1: Getting There (Home to Destination Hub)</h4>
+        <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Choose how you are reaching your primary vacation city area first.</p>
         <div class="form-group">
-          <label>How are you reaching your initial city stop/hub?</label>
           <div class="chips" id="leg1TransportChips">
             <div class="chip" data-val="Flight Connected">✈️ Flying There</div>
             <div class="chip" data-val="Train Connected">🚂 Taking a Train</div>
@@ -319,19 +312,21 @@
       </div>
 
       <!-- SECTION 2: INTERNAL SHIFTS & COMMUTES -->
-      <div style="background: var(--paper); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
-        <h4 style="font-family:'Fraunces', serif; font-size:15px; color:var(--ocean-dark); margin-bottom:8px;">🔀 Leg 2: Regional Transfers & Local Connections</h4>
+      <div style="background: var(--white); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+        <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🔀 Leg 2: Exploring Locally (Moving Around Town)</h4>
+        <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Choose how you will move between local regional sights or cities once you arrive.</p>
         <div class="form-group">
-          <label>How will you move between regional cities or get around locally?</label>
           <div class="chips" id="leg2TransportChips">
-            <div class="chip" data-val="Hired Inter-city Cab">🚕 Hired Outstation Cab</div>
-            <div class="chip" data-val="Pre-booked Train Link">🚂 Inter-City Rail Corridor</div>
+            <div class="chip" data-val="Hired Inter-city Cab"> taxi Hired Outstation Cab</div>
+            <div class="chip" data-val="Pre-booked Train Link">🚂 Inter-City Rail Link</div>
+            <div class="chip" data-val="Private Bus Booking">🚌 Private Buses (Sleeper/Volvo)</div>
+            <div class="chip" data-val="Public State Bus">🚏 Public Buses / State Transport</div>
             <div class="chip" data-val="Self-Drive Commute">🚗 Local Self-Drive Rental</div>
             <div class="chip" data-val="Local Sightseeing">❌ Local Cabs & Shuttles Only</div>
           </div>
         </div>
         <div class="form-group">
-          <label>Vehicle Configuration Setup</label>
+          <label>Vehicle Options Configuration</label>
           <div class="chips" id="vehicleChips">
             <div class="chip" data-val="Own Private Car">🚗 Personal Car</div>
             <div class="chip" data-val="Own Private Bike">🏍️ Personal Bike</div>
@@ -346,6 +341,20 @@
           <div class="form-group">
             <label>Vehicle Mileage / Fuel Economy (KM per Litre)</label>
             <input type="number" id="vehicleMileage" value="15" min="1">
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: THE RETURN TRAVELLING LOOP -->
+      <div style="background: var(--white); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+        <h4 style="font-family:'Fraunces', serif; font-size:16px; color:var(--ocean-dark); margin-bottom:4px;">🏡 Leg 3: Coming Back Home (Destination to Step-Down Arrival)</h4>
+        <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Complete the full travel loop configuration to return back home safely.</p>
+        <div class="form-group">
+          <div class="chips" id="leg3TransportChips">
+            <div class="chip" data-val="Flight Return">✈️ Fly Back Home</div>
+            <div class="chip" data-val="Train Return">🚂 Train Journey Back</div>
+            <div class="chip" data-val="Bus Return">🚌 Bus Trip Back</div>
+            <div class="chip" data-val="Drive Return">🚗 Road Drive Back</div>
           </div>
         </div>
       </div>
@@ -365,7 +374,7 @@
         <button class="btn btn-ghost" onclick="goBack(3)">← Back</button>
         <button class="btn btn-primary" onclick="submitStepAndProgress(4, 5, 'Transit Configuration')">Next — Tailor Daily Vibes →</button>
       </div>
-      <div class="error-box" id="err4">Please select your transport preferences across both journey segments.</div>
+      <div class="error-box" id="err4">Please select your transport preferences across all three journey steps.</div>
     </div>
 
     <!-- STEP 5: PER-DAY VIBES -->
@@ -468,7 +477,7 @@ let currentAuthMode = 'signin';
 // Segregated Multi-Modal Transport State tracking parameters
 let state = { 
   destinations: [], startCity: '', intermediateHub: '', startDate: '', endDate: '', startTime: '06:00', endTime: '22:00', days: 0, nights: 0, transitDaysAllocation: 2,
-  crew: '', groupSize: 1, transport: 'Full Road Trip', leg2Transport: 'Local Sightseeing', vehicleMode: 'Own Private Car', dailyPlanData: [], budgetVal: 0, budgetScope: '' ,
+  crew: '', groupSize: 1, transport: 'Full Road Trip', leg2Transport: 'Local Sightseeing', leg3Transport: 'Drive Return', vehicleMode: 'Own Private Car', dailyPlanData: [], budgetVal: 0, budgetScope: '' ,
   flightTicketCost: 0, fuelPrice: 102, vehicleMileage: 15, calculatedDistanceKM: 0
 };
 let currentStep = 1;
@@ -731,14 +740,12 @@ function validateDatesOnly() {
       return false; 
     }
     
-    // Exact Day & Night Computation
     const totalDays = Math.round((e - s) / 86400000) + 1;
     const totalNights = totalDays - 1;
     
     state.days = totalDays;
     state.nights = totalNights;
 
-    // Display values to user live inside UI container
     document.getElementById('computedDaysCount').textContent = totalDays;
     document.getElementById('computedNightsCount').textContent = totalNights;
     durationCard.style.display = 'flex';
@@ -750,7 +757,6 @@ function validateDatesOnly() {
   return true;
 }
 
-/* 🌟 HIGH-PRECISION MULTI-STAGE GEOGRAPHIC TELEMETRY ROUTER API EXTENSION */
 async function runGeographicalDistanceAndSpeedSuggester() {
   const suggestionBox = document.getElementById('distanceSuggestionBox');
   const transitWrapper = document.getElementById('transitDaysWrapper');
@@ -760,16 +766,14 @@ async function runGeographicalDistanceAndSpeedSuggester() {
   }
 
   suggestionBox.style.display = 'block';
-  suggestionBox.innerHTML = `⏳ Calculating live multi-modal route corridors from OpenStreetMap API...`;
+  suggestionBox.innerHTML = `⏳ Figuring out the best route options and mapping driving distances...`;
 
   try {
     const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=`;
     
-    // Resolve location vector nodes natively
     const resStart = await fetch(geocodeUrl + encodeURIComponent(state.startCity));
     const dataStart = await resStart.json();
     
-    // Check if intermediate hub contains string data, if not route to primary destination hub directly
     const targetMidCity = state.intermediateHub || state.destinations[0];
     const resMid = await fetch(geocodeUrl + encodeURIComponent(targetMidCity));
     const dataMid = await resMid.json();
@@ -782,7 +786,6 @@ async function runGeographicalDistanceAndSpeedSuggester() {
       const midPoint = `${dataMid[0].lon},${dataMid[0].lat}`;
       const finalPoint = `${dataFinal[0].lon},${dataFinal[0].lat}`;
       
-      // Multi-stage coordinate array generation pass mapping full corridor lengths
       const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startPoint};${midPoint};${finalPoint}?overview=false`;
       const osrmRes = await fetch(osrmUrl);
       const osrmData = await osrmRes.json();
@@ -795,15 +798,15 @@ async function runGeographicalDistanceAndSpeedSuggester() {
         const exactDrivingHours = Math.round(networkRoute.duration / 3600);
         const formattedMinutes = Math.round((networkRoute.duration % 3600) / 60);
         
-        let journeyPerformanceText = `🛣️ <strong>Leg 1 (${state.transport}):</strong> Outbound corridors matching structural network hubs.<br>🔄 <strong>Leg 2 (${state.leg2Transport}):</strong> Local connections mapped natively inside final base locations.`;
+        let journeyPerformanceText = `🛣️ <strong>Leg 1 (Going There):</strong> ${state.transport}<br>🔄 <strong>Leg 2 (Local Sights):</strong> ${state.leg2Transport}<br>🏡 <strong>Leg 3 (Coming Home):</strong> ${state.leg3Transport}`;
         let suggestedJourneyDays = finalCalculatedKM > 500 ? 2 : 1;
 
         transitWrapper.style.display = 'block';
         suggestionBox.innerHTML = `
-          🗺️ <strong>Multi-Modal Map Distance:</strong> ~${finalCalculatedKM} KM cumulative route mapping.<br>
+          🗺️ <strong>Total Map Distance:</strong> ~${finalCalculatedKM} KM cumulative route mapping.<br>
           ${journeyPerformanceText}<br>
-          ⏱️ <strong>Estimated Continuous Road Duration:</strong> ~${exactDrivingHours}h ${formattedMinutes}m.<br>
-          💡 <strong>Our Recommendation:</strong> We suggest allocating exactly <strong>${suggestedJourneyDays} Travel Day(s)</strong>.
+          ⏱️ <strong>Estimated Continuous Driving Time:</strong> ~${exactDrivingHours}h ${formattedMinutes}m.<br>
+          💡 <strong>Our Recommendation:</strong> We suggest allocating exactly <strong>${suggestedJourneyDays} Travel Day(s)</strong> total on the road.
         `;
 
         document.getElementById('transitDaysCount').value = suggestedJourneyDays;
@@ -812,7 +815,7 @@ async function runGeographicalDistanceAndSpeedSuggester() {
         return;
       }
     }
-    throw new Error("Geocoding coordinates sequence mismatch.");
+    throw new Error("Geocoding coordinates mismatch.");
   } catch (apiError) {
     console.warn("API fallback loops triggered safely.", apiError);
     let fallbackKM = 420;
@@ -822,7 +825,7 @@ async function runGeographicalDistanceAndSpeedSuggester() {
     
     state.calculatedDistanceKM = fallbackKM;
     transitWrapper.style.display = 'block';
-    suggestionBox.innerHTML = `🏁 <strong>Corridor Projection (Cached Fallback):</strong> ~${fallbackKM} KM across combined multi-modal segments.<br>💡 Recommended: Allocate 2 Travel Days standard setup.`;
+    suggestionBox.innerHTML = `🏁 <strong>Estimated Travel Distance:</strong> ~${fallbackKM} KM across combined journey segments.<br>💡 Recommended: Allocate 2 Travel Days for the road route loops.`;
     document.getElementById('transitDaysCount').value = 2;
     state.transitDaysAllocation = 2;
     generateDailyVibeSelectors();
@@ -856,20 +859,20 @@ function generateDailyVibeSelectors() {
       let platformLogisticsCheckboxes = "";
       if(state.vehicleMode === "No Private Vehicle") {
         platformLogisticsCheckboxes = `
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 📱 Check return transport ticket status loops (Day before & Morning of travel)</label>
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🚕 Schedule local transfer cab connection to airport/railway terminal</label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 📱 Confirm return transit bookings (Check status loops early morning)</label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🚕 Pre-book airport shuttle / local transfer link to terminal gates</label>
         `;
       } else {
         platformLogisticsCheckboxes = `
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> ⛽ Gas Station Top-Up: Fill fuel tank to maximum before leaving final regional stops</label>
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🔧 Check car/bike engine vitals, fluid pressure indices, and tire health layers</label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> ⛽ Gas Station Top-Up: Refuel vehicle completely before exiting town stops</label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🔧 Quick fluid check, tire inflation parameters verification before launch</label>
         `;
       }
 
       customCardHtml = `
         <div class="daily-card" style="border-left: 4px solid var(--coral);">
           <div style="font-weight:600; color:var(--ocean-dark);">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
-          <p style="color:var(--coral); font-size:12px; font-weight:600; margin-top:2px;">🏡 Last Day Traveling Home — Return Journey Logistics</p>
+          <p style="color:var(--coral); font-size:12px; font-weight:600; margin-top:2px;">🏡 Leg 3: Return Route Commenced — Heading Home</p>
           
           <div class="form-group" style="margin-top:10px;">
             <label>Current Location Base:</label>
@@ -878,10 +881,10 @@ function generateDailyVibeSelectors() {
           </div>
 
           <div class="form-group">
-            <label style="color:var(--ocean-dark);">📋 Mandatory Return Checklist Parameters:</label>
+            <label style="color:var(--ocean-dark);">📋 Departure Travel Checklist:</label>
             <div style="display:flex; flex-direction:column; gap:4px; margin-top:5px;">
-              <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🛌 Complete room inventory check & clear hotel locker layouts</label>
-              <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🧾 Settle pending hotel restaurant bills and collect clearance invoices</label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🛌 Clear accommodations locker inventories, pick up credentials packs</label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:normal; margin-bottom:4px;"><input type="checkbox" checked> 🧾 Clear local dining vouchers, settle boutique property clearings</label>
               ${platformLogisticsCheckboxes}
             </div>
           </div>
@@ -893,10 +896,9 @@ function generateDailyVibeSelectors() {
     } else {
       let conditionalInputLayout = "";
       if (state.transitDaysAllocation >= 2 && i === 0) {
-        conditionalInputLayout = `<p style="color:var(--coral); font-size:12px; font-weight:600;">🛣️ Day 1 Traveling There — Journey Commenced</p>`;
+        conditionalInputLayout = `<p style="color:var(--coral); font-size:12px; font-weight:600;">🛣️ Day 1: Leg 1 Launch — Driving Outwards</p>`;
       }
 
-      // Pre-populate logical intermediate stops on initial days vs final destinations contextually
       const computedDefaultPlace = (i < 2 && state.intermediateHub) ? initialBaseCity : finalBaseCity;
       const computedDefaultTransit = (i < 2) ? "Local Sightseeing" : state.leg2Transport;
 
@@ -921,6 +923,8 @@ function generateDailyVibeSelectors() {
               <option value="Local Sightseeing" ${computedDefaultTransit === 'Local Sightseeing' ? 'selected' : ''}>Stay at current destination (Local sightseeing / cabs / walking)</option>
               <option value="Pre-booked Train Link" ${computedDefaultTransit === 'Pre-booked Train Link' ? 'selected' : ''}>🚂 Shift Cities: Take a Train (Book rail tickets ahead)</option>
               <option value="Hired Inter-city Cab" ${computedDefaultTransit === 'Hired Inter-city Cab' ? 'selected' : ''}>🚕 Shift Cities: Hire an Inter-city Outstation Cab</option>
+              <option value="Private Bus Booking" ${computedDefaultTransit === 'Private Bus Booking' ? 'selected' : ''}>🚌 Shift Cities: Book Private Bus (Volvo / Inter-city Sleeper)</option>
+              <option value="Public State Bus" ${computedDefaultTransit === 'Public State Bus' ? 'selected' : ''}>🚏 Shift Cities: Take Public Bus / State KSRTC Outpost</option>
               <option value="Domestic Connection Flight" ${computedDefaultTransit === 'Domestic Connection Flight' ? 'selected' : ''}>✈️ Shift Cities: Domestic Connecting Flight Sector</option>
               <option value="Self-Drive Commute" ${computedDefaultTransit === 'Self-Drive Commute' ? 'selected' : ''}>🚗 Shift Cities: Continuous Road Trip Drive/Ride leg</option>
             </select>
@@ -977,7 +981,7 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   }
   
   if (stepNum === 4) {
-    if (!state.transport || !state.leg2Transport || !state.vehicleMode) { document.getElementById('err4').classList.add('show'); return; }
+    if (!state.transport || !state.leg2Transport || !state.leg3Transport || !state.vehicleMode) { document.getElementById('err4').classList.add('show'); return; }
     state.intermediateHub = document.getElementById('intermediateHubInput').value.trim();
     state.flightTicketCost = parseInt(document.getElementById('leg1FlightTicketCost').value) || 0;
     state.fuelPrice = parseInt(document.getElementById('fuelPrice').value) || 102;
@@ -1094,12 +1098,12 @@ function confirmInAppModalInjection() {
 function buildSummary() {
   const perPersonCost = (state.budgetScope === 'Per-Person Scope') ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
   document.getElementById('tripSummary').innerHTML = `
-    🗺️ Route Blueprint: <strong>${state.startCity} ➔ ${state.intermediateHub ? state.intermediateHub + ' ➔ ' : ''}${state.destinations[0]}</strong><br>
-    🏁 Integrated Multi-Modal Distance: <strong>~${state.calculatedDistanceKM} KM Network</strong><br>
-    📅 Timeline Breakdown: <strong>${state.days} Days / ${state.nights} Nights Total</strong><br>
-    ⏱️ Target Hours: Outbound Departure at <strong>${state.startTime}</strong> | Return Base Arrival by <strong>${state.endTime}</strong><br>
-    🚗 Core Transport: <strong>${state.transport} ➔ ${state.leg2Transport} Mix</strong><br>
-    💰 Financial Allotment: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR Per Head</strong>
+    🗺️ Route Blueprint: <strong>${state.startCity} ➔ ${state.intermediateHub ? state.intermediateHub + ' ➔ ' : ''}${state.destinations[0]} ➔ ${state.startCity}</strong><br>
+    🏁 Full Route Journey Distance: <strong>~${state.calculatedDistanceKM} KM Total Loop</strong><br>
+    📅 Plan Breakdown: <strong>${state.days} Days / ${state.nights} Nights Total</strong><br>
+    ⏱️ Timing Schedules: Departure at <strong>${state.startTime}</strong> on Day 1 | Returning Arrival home by <strong>${state.endTime}</strong> on the Last Day<br>
+    🚗 Transport Configuration: <strong>${state.transport} ➔ ${state.leg2Transport} ➔ ${state.leg3Transport}</strong><br>
+    💰 Budget Tracking: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR Per Traveler</strong>
   `;
 }
 
@@ -1142,34 +1146,34 @@ async function triggerBuiltInGeneration() {
     }
 
     let dayVibeHeaderString = day.vibes.join(" + ");
-    let dynamicMorningStrategy = `🥞 <strong>Breakfast Run:</strong> Try local specialties near your stay area like: <em>"${morningBreakfastVibe}"</em>.`;
-    let dynamicEveningStrategy = `🌙 <strong>Evening Strategy:</strong> Head down to the popular local hub to try: <em>"${eveningCulinaryVibe}"</em>. Keep it casual and explore nearby alleys.`;
+    let dynamicMorningStrategy = `🥞 <strong>Breakfast Spotting:</strong> Try local options near your room: <em>"${morningBreakfastVibe}"</em>.`;
+    let dynamicEveningStrategy = `🌙 <strong>Evening Highlights:</strong> Head out to explore local markets and try: <em>"${eveningCulinaryVibe}"</em>.`;
 
     const isLastDay = (state.transitDaysAllocation >= 1 && index === (state.days - 1));
 
     let transitCardLogisticsHtml = "";
     if (day.dailyTransit && day.dailyTransit !== "Local Sightseeing" && !isLastDay) {
       transitCardLogisticsHtml = `
-        <div style="margin: 10px 0; padding: 10px 14px; background: #fffide6; color: #856404; font-size: 13.5px; border-radius: 8px; border: 1px solid #ffeeba; display: flex; flex-direction: column; gap: 4px;">
-          <div>🔀 <strong>Inter-City Multi-Modal Commute:</strong> Today features a cross-city route switch utilizing <strong>${day.dailyTransit}</strong>.</div>
-          <div style="font-size: 11.5px; color: var(--muted); font-style: italic;">📋 Checklist context added: Download digital ticket vouchers or confirm outstation vehicle deployment layers ahead of departure time parameters.</div>
+        <div style="margin: 10px 0; padding: 10px 14px; background: #fff8e6; color: #856404; font-size: 13.5px; border-radius: 8px; border: 1px solid #ffeeba; display: flex; flex-direction: column; gap: 4px;">
+          <div>🔀 <strong>Transit Alert:</strong> Switching places today using <strong>${day.dailyTransit}</strong>.</div>
+          <div style="font-size: 11.5px; color: var(--muted); font-style: italic;">📋 Quick Tip: Keep your bus/train tickets ready or confirm cab pick-up times early.</div>
         </div>
       `;
     }
 
     if (state.transitDaysAllocation >= 2 && index === 0) {
-      dayVibeHeaderString = "🛣️ Leaving Home (Day 1 Transit Hub Link)";
-      dynamicMorningStrategy = `🛫 <strong>Setting Off [Launch Time: ${state.startTime}]:</strong> Commencing your journey outward from <strong>${state.startCity}</strong> towards ${day.place} via ${state.transport}. Check into your arrival stay.`;
+      dayVibeHeaderString = "🛣️ Leg 1: Travel Day (Heading Out)";
+      dynamicMorningStrategy = `🛫 <strong>Departure [Leaving at: ${state.startTime}]:</strong> Commencing your journey outward from <strong>${state.startCity}</strong> towards ${day.place} via ${state.transport}. Check into your arrival stay.`;
       dynamicEveningStrategy = `🌙 <strong>Evening:</strong> Settle down from travel hours. Grab a casual dinner nearby and rest up for tomorrow.`;
     } else if (isLastDay) {
-      dayVibeHeaderString = "🏡 Returning Home leg";
+      dayVibeHeaderString = "🏡 Leg 3: Travel Day (Heading Home)";
       let operationalDeductionNote = (state.vehicleMode !== "No Private Vehicle") ? "Double-check fuel levels, route maps for mountain bottlenecks, and engine vitals." : "Confirm your public transport booking times and double check baggage clearances.";
-      dynamicMorningStrategy = `🧳 <strong>Clear Accommodations:</strong> Complete room checkouts, settle local service invoices, and initiate packing protocols. ${operationalDeductionNote}`;
-      dynamicEveningStrategy = `🏡 <strong>Homeward Leg [Target Arrival: ${state.endTime}]:</strong> Conclude return journey segments back into <strong>${state.startCity}</strong> via your chosen ${state.vehicleMode} setup. Trip complete!`;
+      dynamicMorningStrategy = `🧳 <strong>Packing Up:</strong> Complete your hotel check-out, settle outstanding bills, and pack your luggage. ${operationalDeductionNote}`;
+      dynamicEveningStrategy = `🏡 <strong>Arrival Home [Target Time: ${state.endTime}]:</strong> Conclude your return leg back into <strong>${state.startCity}</strong> via ${state.leg3Transport}. Full loop complete!`;
     } else {
-      if(day.vibes.includes("🏛️ Iconic Sights")) dynamicMorningStrategy = `🏛️ <strong>Iconic Spotlights:</strong> Beat local queues early to see: <em>"${primaryFamousSight}"</em> before peak crowd hours.`;
-      if(day.vibes.includes("🏔️ Adventure Trekking")) dynamicMorningStrategy = `🏔️ <strong>Adventure Track:</strong> Pack gear early for high-energy exploration routes near ${day.place}.`;
-      if(day.vibes.includes("🧘 Wellness & Slow")) dynamicEveningStrategy = `🧘 <strong>Slow Pace:</strong> Wind down at a quiet riverbank or rooftop cafe with traditional local tea blends.`;
+      if(day.vibes.includes("🏛️ Iconic Sights")) dynamicMorningStrategy = `🏛️ <strong>Top Landmarks:</strong> Visit popular spots early to beat the crowd: <em>"${primaryFamousSight}"</em>.`;
+      if(day.vibes.includes("🏔️ Adventure Trekking")) dynamicMorningStrategy = `🏔️ <strong>Adventure Time:</strong> Gear up for an outdoor trail or morning exploration explore near ${day.place}.`;
+      if(day.vibes.includes("🧘 Wellness & Slow")) dynamicEveningStrategy = `🧘 <strong>Relaxed Pace:</strong> Wind down at a quiet local cafe with regional tea/coffee blends.`;
     }
 
     const finalFood = Math.round(dailyFoodBase * (1 + ((index % 3) - 1) * 0.1));
@@ -1188,34 +1192,34 @@ async function triggerBuiltInGeneration() {
           <h3 style="color:var(--ocean-dark); font-family:'Fraunces', serif; font-size:18px;">☀️ Day ${index + 1} — ${getDayName(day.date)}, ${day.date}</h3>
           <span style="background:var(--coral-light); color:var(--coral); font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; text-transform:uppercase;">${dayVibeHeaderString}</span>
         </div>
-        <p style="margin-bottom:12px; font-size:14px;">📍 <strong>Today's Active Base Area:</strong> <span style="color:var(--ocean); font-weight:600;">${day.place}</span></p>
+        <p style="margin-bottom:12px; font-size:14px;">📍 <strong>Active Base Area:</strong> <span style="color:var(--ocean); font-weight:600;">${day.place}</span></p>
         
         ${transitCardLogisticsHtml}
 
         <div style="display:flex; flex-direction:column; gap:12px; font-size:14px;">
-          <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);"><strong>🌅 Morning & Mid-Day:</strong> <p style="margin-top:3px; color:var(--ink);">${dynamicMorningStrategy}</p></div>
+          <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);"><strong>🌅 Morning plan:</strong> <p style="margin-top:3px; color:var(--ink);">${dynamicMorningStrategy}</p></div>
           ${!(isLastDay) ? `
           <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);">
-            <strong>☀️ Afternoon Spotlight:</strong> 
-            <div style="margin-bottom:6px; padding:6px; background:var(--coral-light); border-radius:6px; font-size:13px;">🎯 Objective: <em>"${day.thingsToDo || 'Explore customized attractions chosen from deep-links.'}"</em></div>
+            <strong>☀️ Afternoon Sightseeing:</strong> 
+            <div style="margin-bottom:6px; padding:6px; background:var(--coral-light); border-radius:6px; font-size:13px;">🎯 Your Plan: <em>"${day.thingsToDo || 'Explore local spots and attractions.'}"</em></div>
             <div id="injectedExploreBox-day-${index}" style="display:none; padding:8px; background:var(--success-bg); border-left:3px solid var(--success); border-radius:6px; font-size:13px; margin-bottom:10px; color:var(--success);"></div>
             <ul style="padding-left:18px; font-size:13px; color:var(--ocean-mid);">
-              <li>📸 Famous Highlight: ${primaryFamousSight}</li>
-              <li>🌿 Detour Gem: ${secondaryGemSight}</li>
+              <li>📸 Acclaimed Sights: ${primaryFamousSight}</li>
+              <li>🌿 Hidden Local Gems: ${secondaryGemSight}</li>
             </ul>
           </div>` : ''}
-          <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);"><strong>🌙 Evening & Nightfall:</strong> <p style="margin-top:3px; color:var(--ink);">${dynamicEveningStrategy}</p></div>
+          <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);"><strong>🌙 Evening plan:</strong> <p style="margin-top:3px; color:var(--ink);">${dynamicEveningStrategy}</p></div>
         </div>
         
         ${!isLastDay ? `
         <div style="margin-top:18px; display:flex; flex-wrap:wrap; gap:10px; border-top:1px solid var(--border); padding-top:14px;">
-          <a href="${liveHotelPortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--ocean); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">🏨 Live Rates & Availability</a>
-          <a href="${liveFoodPortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--success); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">🍛 Live Restaurant Reviews</a>
-          <a href="${liveExplorePortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--ocean-mid); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">🗺️ Explore Live Attractions</a>
+          <a href="${liveHotelPortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--ocean); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">🏨 Live Stays & Prices</a>
+          <a href="${liveFoodPortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--success); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">🍛 Top Restaurants Reviews</a>
+          <a href="${liveExplorePortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--ocean-mid); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">🗺️ Explore Sights Live</a>
         </div>` : ''}
 
         <div style="margin-top:18px; border-top:1px dashed var(--border); padding-top:12px; display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; font-size:12px; background:var(--sand); padding:10px; border-radius:8px;">
-          <div>🍲 <strong>Food/Entry:</strong> ₹${finalFood}</div><div>🚌 <strong>Local Route:</strong> ₹${finalTransit}</div><div>🛌 <strong>Stay Allocation:</strong> ₹${finalStay}</div>
+          <div>🍲 <strong>Food & Tickets:</strong> ₹${finalFood}</div><div>🚌 <strong>Local Travel:</strong> ₹${finalTransit}</div><div>🛌 <strong>Stay Budgets:</strong> ₹${finalStay}</div>
         </div>
       </div>
     `;
@@ -1271,6 +1275,10 @@ setupExclusiveChips('leg1TransportChips', 'transport', (val) => {
 });
 
 setupExclusiveChips('leg2TransportChips', 'leg2Transport', (val) => {
+  runGeographicalDistanceAndSpeedSuggester();
+});
+
+setupExclusiveChips('leg3TransportChips', 'leg3Transport', (val) => {
   runGeographicalDistanceAndSpeedSuggester();
 });
 
