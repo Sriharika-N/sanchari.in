@@ -1,1054 +1,569 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Travel Planner — Let's Explore!</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-  :root {
-    --ink: #0d1117; --paper: #faf8f4; --sand: #f0ebe1; --ocean: #1a3a5c;
-    --ocean-dark: #0f2340; --ocean-mid: #2a5580; --coral: #e8633a;
-    --coral-light: #fdf0eb; --gold: #c9a44a; --muted: #6b7280; --border: #e5e0d8; --white: #ffffff;
-    --success: #2d6647; --success-bg: #e8f5ee;
-  }
+import { useState, useRef } from "react";
+
+const STEPS = ["Destination", "Crew", "Dates", "Transit", "Vibes", "Budget", "Review"];
+
+const DESTINATIONS = [
+  { val: "Coorg, Karnataka", label: "Coorg ☕" },
+  { val: "Munnar, Kerala", label: "Munnar 🍵" },
+  { val: "Gokarna, Karnataka", label: "Gokarna 🏖️" },
+  { val: "Hampi, Karnataka", label: "Hampi 🗿" },
+  { val: "Spiti Valley, HP", label: "Spiti Valley 🏔️" },
+  { val: "Manali, HP", label: "Manali ❄️" },
+  { val: "Udaipur, Rajasthan", label: "Udaipur 🏯" },
+  { val: "Goa, India", label: "Goa 🌊" },
+];
+
+const CREW_OPTIONS = [
+  { val: "Solo", label: "🧍 Solo", size: 1 },
+  { val: "Couple", label: "💑 Couple", size: 2 },
+  { val: "Friends", label: "👯 Friends Group", size: 4 },
+  { val: "Family", label: "👨‍👩‍👧 Family", size: 4 },
+];
+
+const TRANSPORT_OPTIONS = [
+  { val: "Flight", label: "✈️ Flying there" },
+  { val: "Train", label: "🚂 Train" },
+  { val: "Road Trip", label: "🚗 Road trip" },
+];
+
+const VIBE_OPTIONS = [
+  { val: "Iconic Sights", emoji: "🏛️" },
+  { val: "Offbeat Gems", emoji: "🌿" },
+  { val: "Adventure", emoji: "🏔️" },
+  { val: "Local Food", emoji: "🍛" },
+  { val: "Wellness", emoji: "🧘" },
+];
+
+const css = `
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--paper); color: var(--ink); font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6; min-height: 100vh; position: relative; }
-  nav { background: var(--ocean-dark); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
-  .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; font-weight:600; font-family: 'Fraunces', serif; }
-  .main { max-width: 780px; margin: 40px auto; padding: 0 16px; }
-  .card { background: var(--white); border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid var(--border); }
-  .progress-bar { height: 4px; background: var(--border); }
-  .progress-fill { height: 100%; background: var(--coral); transition: width 0.4s ease; width: 14%; }
-  .step-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--sand); overflow-x: auto; }
-  .step-tab { flex: 1; padding: 12px 8px; text-align: center; font-size: 11px; font-weight: 500; color: var(--muted); cursor: default; white-space: nowrap; }
-  .step-tab.active { color: var(--ocean); background: var(--white); font-weight: 600; border-bottom: 2px solid var(--coral); }
-  .step-panel { display: none; padding: 28px 24px; }
-  .step-panel.active { display: block; }
-  .step-heading { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 4px; }
-  .step-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
-  label { display: block; font-size: 12px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 5px; text-transform: uppercase; }
-  input[type="text"], input[type="date"], input[type="number"], input[type="email"], input[type="password"], select, textarea {
-    width: 100%; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; background: white;
+  :root {
+    --ocean: #1a3a5c; --coral: #e85d3a; --coral-light: #fdf0eb;
+    --sand: #f7f4ef; --ink: #1a1a1a; --muted: #6b7280;
+    --border: #e5e0d8; --white: #ffffff; --gold: #c9a44a;
   }
-  .form-group { margin-bottom: 18px; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: var(--sand); color: var(--ink); }
+  .wrapper { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+  .card { background: var(--white); border-radius: 20px; border: 1px solid var(--border); overflow: hidden; }
+  .card-header { background: var(--ocean); padding: 20px 24px; }
+  .card-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; color: white; }
+  .card-sub { font-size: 13px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+  .progress { height: 3px; background: rgba(255,255,255,0.2); }
+  .progress-fill { height: 100%; background: var(--coral); transition: width 0.4s ease; }
+  .step-tabs { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; background: #fafaf8; }
+  .step-tab { flex: 1; padding: 10px 6px; font-size: 11px; font-weight: 500; color: var(--muted); text-align: center; white-space: nowrap; cursor: default; min-width: 64px; }
+  .step-tab.active { color: var(--ocean); font-weight: 600; border-bottom: 2px solid var(--coral); background: var(--white); }
+  .step-tab.done { color: var(--coral); }
+  .panel { padding: 28px 24px; }
+  .step-title { font-family: 'Playfair Display', serif; font-size: 21px; color: var(--ocean); margin-bottom: 4px; }
+  .step-desc { font-size: 13px; color: var(--muted); margin-bottom: 22px; }
+  .field-label { font-size: 11px; font-weight: 700; color: var(--ocean); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; display: block; }
+  .field-group { margin-bottom: 18px; }
+  input[type=text], input[type=date], input[type=number], select {
+    width: 100%; padding: 10px 13px; border: 1.5px solid var(--border); border-radius: 10px;
+    font-size: 14px; outline: none; background: white; font-family: inherit; color: var(--ink);
+  }
+  input:focus, select:focus { border-color: var(--ocean); }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip { padding: 7px 14px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; background: white; }
-  .chip.selected { border-color: var(--coral); color: var(--coral); background: var(--coral-light); font-weight: 600; }
-  .compulsory-feedback-card { background: var(--coral-light); border: 1.5px solid var(--coral); border-radius: 14px; padding: 16px; margin: 20px 24px 24px; }
+  .chip { padding: 8px 14px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 13px;
+    color: var(--muted); cursor: pointer; background: white; transition: all 0.15s; user-select: none; }
+  .chip:hover { border-color: var(--coral); color: var(--coral); }
+  .chip.sel { border-color: var(--coral); color: var(--coral); background: var(--coral-light); font-weight: 600; }
   .btn-row { display: flex; gap: 10px; margin-top: 24px; }
-  .btn { padding: 11px 22px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
+  .btn { padding: 11px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; }
   .btn-primary { background: var(--coral); color: white; flex: 1; }
+  .btn-primary:hover { background: #d44d2a; }
+  .btn-primary:disabled { background: #ddd; cursor: not-allowed; }
   .btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--border); }
-  .error-box { background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 10px; padding: 12px 16px; margin-top: 14px; display: none; font-size: 13px; color: #991b1b; }
-  .error-box.show { display: block; }
-  .daily-card { background: var(--white); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 16px; }
-  .vibe-checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
-  .vibe-checkbox-label { font-size: 13px; display: flex; align-items: center; gap: 4px; background: var(--paper); padding: 4px 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); }
-  
-  .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13,17,23,0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; }
-  .auth-modal { background: white; border-radius: 20px; max-width: 400px; width: 90%; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-  .auth-toggle-link { color: var(--coral); font-weight: 600; cursor: pointer; text-decoration: underline; font-size: 13px; }
+  .btn-ghost:hover { border-color: var(--ocean); color: var(--ocean); }
+  .btn-ocean { background: var(--ocean); color: white; flex: 1; }
+  .btn-ocean:hover { background: #0f2340; }
+  .error { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #991b1b; margin-top: 10px; }
+  .vibe-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+  .vibe-chip { padding: 5px 12px; border: 1px solid var(--border); border-radius: 16px; font-size: 12px; cursor: pointer; background: white; color: var(--muted); }
+  .vibe-chip.sel { border-color: var(--coral); background: var(--coral-light); color: var(--coral); font-weight: 600; }
+  .day-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+  .day-card-title { font-weight: 600; font-size: 14px; color: var(--ocean); margin-bottom: 10px; }
+  .summary-box { background: var(--sand); border-radius: 12px; padding: 16px; margin-bottom: 16px; font-size: 14px; line-height: 2; }
+  .summary-row { display: flex; align-items: center; gap: 8px; }
+  .summary-val { font-weight: 600; color: var(--ocean); }
+  .output-wrap { padding: 0; }
+  .output-header { padding: 20px 24px 14px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .output-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--ocean); }
+  .output-body { padding: 20px 24px; }
+  .stream-box { background: var(--sand); border-radius: 14px; padding: 20px; font-size: 14px; line-height: 1.8; color: var(--ink); min-height: 120px; white-space: pre-wrap; }
+  .stream-box strong { color: var(--ocean); }
+  .loading-dots { display: inline-flex; gap: 4px; align-items: center; padding: 8px 0; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--coral); animation: bounce 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,80%,100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
+  .modify-btn { font-size: 12px; padding: 6px 14px; border-radius: 8px; color: var(--coral); border-color: var(--coral); }
+  .day-block { border-left: 4px solid var(--coral); border-radius: 14px; border: 1px solid var(--border); border-left-width: 4px; padding: 18px 20px; margin-bottom: 18px; background: white; }
+  .day-block-header { font-family: 'Playfair Display', serif; font-size: 16px; color: var(--ocean); margin-bottom: 12px; font-weight: 600; }
+  .day-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border); }
+  .day-link { font-size: 12px; padding: 6px 12px; border-radius: 8px; background: var(--ocean); color: white; text-decoration: none; font-weight: 500; }
+  .day-link:hover { background: #0f2340; }
+  .budget-pill { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; background: var(--sand); padding: 10px; border-radius: 8px; font-size: 12px; }
+  .budget-pill div { text-align: center; }
+  .budget-num { font-weight: 700; color: var(--ocean); font-size: 14px; }
+  .infobox { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 15px; font-size: 13px; color: #1e40af; margin-bottom: 14px; }
+`;
 
-  .auth-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
-  .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); }
-  .auth-tab.active { color: var(--coral); border-bottom: 2px solid var(--coral); }
-  
-  .discovery-hub { display: flex; flex-direction: column; gap: 8px; background: var(--sand); padding: 12px; border-radius: 8px; margin-top: 8px; }
-  .discovery-item { background: var(--white); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: space-between; }
-  .discovery-item:hover { border-color: var(--coral); background: var(--coral-light); color: var(--coral); }
-  .discovery-tag { font-size: 10px; text-transform: uppercase; background: var(--paper); padding: 2px 6px; border-radius: 4px; font-weight: 600; color: var(--muted); }
-
-  .app-notification-toast {
-    position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-    background: var(--ocean-dark); color: white; padding: 14px 24px;
-    border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-    z-index: 2000; font-size: 14px; font-weight: 500; display: flex;
-    align-items: center; gap: 10px; transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    border: 1px solid var(--ocean-mid); max-width: 90%; width: 500px;
-  }
-  .app-notification-toast.show { top: 20px; }
-
-  .live-helper-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
-  .live-helper-link { 
-    color: var(--white); font-weight: 600; text-decoration: none; 
-    background: var(--coral); padding: 8px 16px; border-radius: 8px; 
-    border: 1px solid var(--coral); font-size: 18px; display: inline-flex; 
-    align-items: center; gap: 6px; transition: all 0.2s ease-in-out;
-    box-shadow: 0 4px 10px rgba(232, 99, 58, 0.15);
-  }
-  .live-helper-link:hover { background: var(--ocean); border-color: var(--ocean); color: var(--white); transform: translateY(-1px); }
-
-  .injection-modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(15, 35, 64, 0.6); backdrop-filter: blur(4px);
-    display: none; justify-content: center; align-items: center; z-index: 3000;
-  }
-  .injection-modal-container {
-    background: var(--white); border-radius: 16px; padding: 24px;
-    width: 90%; max-width: 440px; box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-    border: 1px solid var(--border); animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-  @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-</style>
-</head>
-<body>
-
-<div id="appNotificationToast" class="app-notification-toast"></div>
-
-<div id="injectionModal" class="injection-modal-overlay">
-  <div class="injection-modal-container">
-    <h3 style="font-family:'Fraunces', serif; color:var(--ocean-dark); font-size:18px; margin-bottom:8px;">Add Spotlight Item</h3>
-    <p id="injectionModalLabel" style="font-size:13.5px; color:var(--muted); margin-bottom:16px;"></p>
-    <div class="form-group">
-      <label>Target Trip Day Number:</label>
-      <input type="number" id="injectionDayInput" min="1" step="1" value="1" style="font-weight: 600;">
-    </div>
-    <div class="btn-row" style="margin-top: 16px;">
-      <button class="btn btn-ghost" onclick="closeInAppModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmInAppModalInjection()" style="background: var(--ocean-mid);">Confirm Addition</button>
-    </div>
-  </div>
-</div>
-
-<nav>
-  <a class="nav-brand" href="#">✈️ AI Travel Planner</a>
-  <button id="authHeaderBtn" class="btn" style="background: var(--coral); color: white; padding: 6px 16px; font-size: 13px;" onclick="openAuthModal()">🔑 Account Access</button>
-</nav>
-
-<div class="auth-overlay" id="authOverlay">
-  <div class="auth-modal">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-      <h3 id="authModalTitle" style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark);">Account Portal</h3>
-      <button style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted);" onclick="closeAuthModal()">×</button>
-    </div>
-
-    <div class="auth-tabs">
-      <div class="auth-tab active" id="authTabSignin" onclick="setAuthInterfaceMode('signin')">Sign In (New User)</div>
-      <div class="auth-tab" id="authTabLogin" onclick="setAuthInterfaceMode('login')">Log In (Existing User)</div>
-    </div>
-    
-    <div id="authFormContainer">
-      <div class="form-group">
-        <label>Email Address</label>
-        <input type="email" id="authEmail" placeholder="name@example.com">
-      </div>
-      <div class="form-group" id="passwordGroup">
-        <label>Password</label>
-        <input type="password" id="authPassword" placeholder="••••••••">
-      </div>
-      
-      <button class="btn btn-primary" id="mainAuthSubmitBtn" style="width:100%; margin-bottom:12px;" onclick="handleCredentialAuth()">Continue</button>
-      <button class="btn btn-ghost" style="width:100%; gap:8px; margin-bottom:16px;" onclick="loginWithGoogle()">
-        <img src="https://www.google.com/favicon.ico" width="16" height="16" alt="G"> Continue via Google
-      </button>
-
-      <div style="text-align:center; font-size:13px; color:var(--muted);">
-        <span class="auth-toggle-link" style="color:var(--muted); font-size:12px;" id="forgotPasswordLink" onclick="triggerForgotPasswordRecovery()">Forgot your password?</span>
-      </div>
-    </div>
-    <div class="error-box" id="authErrorMsg" style="margin-top:12px;"></div>
-  </div>
-</div>
-
-<div class="main">
-  <div class="card">
-    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-
-    <div class="step-tabs" id="stepTabs">
-      <div class="step-tab active">🗺️ Dest</div>
-      <div class="step-tab">👥 Crew</div>
-      <div class="step-tab">📅 Dates</div>
-      <div class="step-tab">🚗 Transit</div>
-      <div class="step-tab">✨ Vibes</div>
-      <div class="step-tab">💰 Budget</div>
-      <div class="step-tab">🚀 Review</div>
-    </div>
-
-    <!-- STEP 1: DESTINATIONS -->
-    <div class="step-panel active" id="step1">
-      <div class="step-heading">Where are we exploring? 🗺️</div>
-      <p class="step-sub">Select your primary travel destination hub below.</p>
-      
-      <div class="form-group">
-        <label>💡 Explore by Travel Theme (Auto-Generates Destination):</label>
-        <div class="chips" style="margin-bottom: 12px;">
-          <div class="chip" onclick="selectThematicRandomEngine('mountains')">🏔️ The Himalayas / Mountains</div>
-          <div class="chip" onclick="selectThematicRandomEngine('beaches')">🏖️ Sun-Kissed Beaches</div>
-          <div class="chip" onclick="selectThematicRandomEngine('heritage')">🗿 Historic Heritage Sights</div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>Or Choose Manually:</label>
-        <div class="chips" id="destChips">
-          <div class="chip" data-val="Coorg, Karnataka">Coorg, KA ☕</div>
-          <div class="chip" data-val="Munnar, Kerala">Munnar, KL 🍵</div>
-          <div class="chip" data-val="Gokarna, Karnataka">Gokarna, KA 🏖️</div>
-          <div class="chip" data-val="Hampi, Karnataka">Hampi, KA 🗿</div>
-          <div class="chip" data-val="Spiti Valley, HP">Spiti Valley, HP 🏔️</div>
-        </div>
-      </div>
-      
-      <div class="form-group">
-        <label>Or enter custom location</label>
-        <input type="text" id="customDest" placeholder="e.g. Ooty, Wayanad, Jaipur, Udaipur...">
-      </div>
-      <div class="form-group">
-        <label>Starting Location</label>
-        <input type="text" id="startCity" placeholder="e.g. Bangalore">
-      </div>
-      <button class="btn btn-primary" onclick="submitStepAndProgress(1, 2, 'Destinations Selection')">Next — Companion Crew →</button>
-      <div class="error-box" id="err1">Please select at least one destination and fill in your starting location.</div>
-    </div>
-
-    <!-- STEP 2: COMPANION CREW -->
-    <div class="step-panel" id="step2">
-      <div class="step-heading">Who is traveling? 👥</div>
-      <p class="step-sub">This determines individual vs. group budget splitting ratios automatically.</p>
-      <div class="form-group">
-        <label>Select Companion Setup</label>
-        <div class="chips" id="crewChips">
-          <div class="chip" data-val="Solo">🧍 Solo (Individual Budget)</div>
-          <div class="chip" data-val="Couple">💑 Couple (Dual Split)</div>
-          <div class="chip" data-val="Friends">👯 Friends Group (Per-Head Split)</div>
-          <div class="chip" data-val="Family">👨‍👩‍👧 Family (Consolidated Group Budget)</div>
-        </div>
-      </div>
-      <div class="form-group" id="groupSizeField" style="display:none;">
-        <label>Total Number of Travelers</label>
-        <input type="number" id="groupSize" min="1" value="1" onchange="state.groupSize = parseInt(this.value) || 1">
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-ghost" onclick="goBack(1)">← Back</button>
-        <button class="btn btn-primary" onclick="submitStepAndProgress(2, 3, 'Companion Mapping')">Next — Pick Dates →</button>
-      </div>
-      <div class="error-box" id="err2">Please select a companion style configuration.</div>
-    </div>
-
-    <!-- STEP 3: DATES -->
-    <div class="step-panel" id="step3">
-      <div class="step-heading">When is the adventure? 📅</div>
-      <p class="step-sub">Provide your absolute holiday calendar start and end dates below.</p>
-      <div class="form-group"><label>Holiday Start Date</label><input type="date" id="startDate" onchange="validateDatesOnly()"></div>
-      <div class="form-group"><label>Holiday Return Date</label><input type="date" id="endDate" onchange="validateDatesOnly()"></div>
-      
-      <div class="error-box" id="dateErrorBox">⚠️ Danger: The return date cannot be set chronologically prior to your departure date!</div>
-      
-      <div class="btn-row">
-        <button class="btn btn-ghost" onclick="goBack(2)">← Back</button>
-        <button class="btn btn-primary" id="btnStep3" onclick="submitStepAndProgress(3, 4, 'Date Setup')">Next — Transit Options →</button>
-      </div>
-      <div class="error-box" id="err3">Please choose valid dates.</div>
-    </div>
-
-    <!-- STEP 4: ELABORATED TRANSIT SETTINGS -->
-    <div class="step-panel" id="step4">
-      <div class="step-heading">Transit & Travel Day Settings 🚗💨</div>
-      <p class="step-sub">Configure your multi-modal transition legs to map exact connection metrics.</p>
-      
-      <!-- SECTION 1: THE LONG DISTANCE LAUNCH -->
-      <div style="background: var(--paper); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
-        <h4 style="font-family:'Fraunces', serif; font-size:15px; color:var(--ocean-dark); margin-bottom:8px;">🛫 Leg 1: Heading Out (Home to First Stop)</h4>
-        <div class="form-group">
-          <label>How are you reaching your initial city stop/hub? (Check all that apply)</label>
-          <div class="vibe-checkbox-group" id="leg1MultiTransportGroup">
-            <label class="vibe-checkbox-label"><input type="checkbox" value="Flight Connected"> ✈️ Flight Sector</label>
-            <label class="vibe-checkbox-label"><input type="checkbox" value="Train Connected"> 🚂 Rail Journey</label>
-            <label class="vibe-checkbox-label"><input type="checkbox" value="Private Sleeper Bus"> 🚌 Private Sleeper Bus</label>
-            <label class="vibe-checkbox-label"><input type="checkbox" value="Govt State Bus"> 🚍 Govt State Bus</label>
-            <label class="vibe-checkbox-label"><input type="checkbox" value="Full Road Trip"> 🚗 Continuous Road Trip</label>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Where are you arriving first?</label>
-          <input type="text" id="intermediateHubInput" placeholder="e.g. Jaipur (Before moving to Udaipur)">
-        </div>
-        <div class="form-group">
-          <label>Estimated Tickets Cost per Person (INR)</label>
-          <input type="number" id="leg1TicketCostInput" value="0" min="0">
-        </div>
-      </div>
-
-      <!-- SECTION 2: INTERNAL SHIFTS & COMMUTES -->
-      <div style="background: var(--paper); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
-        <h4 style="font-family:'Fraunces', serif; font-size:15px; color:var(--ocean-dark); margin-bottom:8px;">🔀 Leg 2: Moving Around Locally</h4>
-        <div class="form-group">
-          <label>How will you move between regional cities or get around? (Check all that apply)</label>
-          <div class="vibe-checkbox-group" id="leg2MultiTransportGroup">
-            <label class="vibe-checkbox-label"><input type="checkbox" value="Hired Inter-city Cab"> 🚕 Hired Outstation Cab</label>
-            <label class="vibe-checkbox-label"><input type="checkbox" value="Pre-booked Train Link"> 🚂 Inter-City Rail Link</label>
-            <label class="vibe-checkbox-label"><input type="checkbox" value="Private Sleeper Bus Link"> 🚌 Private Sleeper/AC Bus</label>
-            <label class="vibe-checkbox-label"><input type="checkbox" value="Govt State Bus Link"> 🚍 Govt State Bus (KSRTC/RSRTC)</label>
-            <label class="vibe-checkbox-label"><input type="checkbox" value="Self-Drive Commute"> 🚗 Local Self-Drive Rental</label>
-            <label class="vibe-checkbox-label"><input type="checkbox" value="Local Sightseeing" checked> ❌ Local Shuttles & Walking Only</label>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Vehicle Options Setup</label>
-          <div class="chips" id="vehicleChips">
-            <div class="chip" data-val="Own Private Car">🚗 Personal Car</div>
-            <div class="chip" data-val="Own Private Bike">🏍️ Personal Bike</div>
-            <div class="chip" data-val="No Private Vehicle" class="selected">❌ Public/Rental Vehicles Only</div>
-          </div>
-        </div>
-        <div id="mileageInputGroup" style="display:none;">
-          <div class="form-group">
-            <label>Estimated Fuel Price per Litre (INR)</label>
-            <input type="number" id="fuelPrice" value="102" min="0">
-          </div>
-          <div class="form-group">
-            <label>Vehicle Mileage / Fuel Economy (KM per Litre)</label>
-            <input type="number" id="vehicleMileage" value="15" min="1">
-          </div>
-        </div>
-      </div>
-      
-      <div id="distanceSuggestionBox" style="background:var(--sand); padding:16px; border-radius:12px; font-size:14px; margin-bottom:18px; display:none; color:var(--ocean-dark); border-left: 4px solid var(--gold);"></div>
-
-      <div class="form-group" id="transitDaysWrapper" style="display:none;">
-        <label style="color:var(--coral);">How many days will be spent traveling inter-city?</label>
-        <select id="transitDaysCount" onchange="updateJourneyDaysState()">
-          <option value="2">2 Days (Day 1 traveling there + Last Day traveling home)</option>
-          <option value="1">1 Day (Quick morning travel segment)</option>
-          <option value="0">0 Days (Exploring from Day 1 directly)</option>
-        </select>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn btn-ghost" onclick="goBack(3)">← Back</button>
-        <button class="btn btn-primary" onclick="submitTransitStepAndProgress()">Next — Tailor Daily Vibes →</button>
-      </div>
-      <div class="error-box" id="err4">Please select your transport preferences across both segments.</div>
-    </div>
-
-    <!-- STEP 5: PER-DAY VIBES -->
-    <div class="step-panel" id="step5">
-      <div class="step-heading">Daily Customization Matrix ✨</div>
-      <p class="step-sub">Select multiple preferences per day below. Checking any option in Fast Pass instantly copies it to all days automatically.</p>
-      
-      <div style="background: var(--paper); border: 1.5px dashed var(--coral); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
-        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--ocean-dark); margin-bottom: 8px;">⚡ Fast Pass: Apply Same Vibes to All Days</div>
-        <div class="vibe-checkbox-group" id="globalMassSchedulerGroup">
-          <label class="vibe-checkbox-label"><input type="checkbox" class="fast-pass-cb" value="🏛️ Iconic Sights"> 🏛️ Iconic Sights</label>
-          <label class="vibe-checkbox-label"><input type="checkbox" class="fast-pass-cb" value="🌿 Offbeat Gems"> 🌿 Offbeat Gems</label>
-          <label class="vibe-checkbox-label"><input type="checkbox" class="fast-pass-cb" value="🏔️ Adventure Trekking"> 🏔️ Adventure Trekking</label>
-          <label class="vibe-checkbox-label"><input type="checkbox" class="fast-pass-cb" value="🍛 Local Foodie" checked> 🍛 Local Foodie</label>
-          <label class="vibe-checkbox-label"><input type="checkbox" class="fast-pass-cb" value="🧘 Slow & Wellness"> 🧘 Slow & Wellness</label>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <div id="dailyVibeContainer">
-          <p style="color:var(--muted); font-size:13px;">Please configure your dates in step 3 to populate daily blocks.</p>
-        </div>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-ghost" onclick="goBack(4)">← Back</button>
-        <button class="btn btn-primary" onclick="submitDailyVibesStepAndProgress()">Next — Budget Allocations →</button>
-      </div>
-    </div>
-
-    <!-- STEP 6: FINANCIAL PLAN -->
-    <div class="step-panel" id="step6">
-      <div class="step-heading">Financial Parameters 💰</div>
-      <p class="step-sub">State your limits to compute optimal hotel clusters and stays.</p>
-      <div class="form-group">
-        <label id="budgetInputLabel">Target Budget Allocation Amount (INR)</label>
-        <input type="number" id="budgetAmount" placeholder="e.g. 20000" min="1000">
-      </div>
-      <div class="form-group">
-        <label>Budget Scope Focus Calculation Focus</label>
-        <div class="chips" id="budgetScopeChips">
-          <div class="chip" data-val="Per-Person Scope" id="scopeIndividual">Individual Basis Budget</div>
-          <div class="chip" data-val="Entire Group Scope" id="scopeTotal">Total Consolidated Budget</div>
-        </div>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-ghost" onclick="goBack(5)">← Back</button>
-        <button class="btn btn-primary" onclick="submitStepAndProgress(6, 7, 'Budget Mapping')">Next — Review Blueprint →</button>
-      </div>
-      <div class="error-box" id="err6">Please define your budget configurations focus.</div>
-    </div>
-
-    <!-- STEP 7: REVIEW -->
-    <div class="step-panel" id="step7">
-      <div class="step-heading" style="color: var(--coral);">Adventure is calling! Pack your bags! 🎒🔥</div>
-      <p class="step-sub">Everything checks out perfectly. Get ready for an absolutely phenomenal journey!</p>
-      <div id="tripSummary" class="info-box" style="background:var(--sand); padding:16px; border-radius:10px; margin-bottom:15px;"></div>
-      
-      <div class="compulsory-feedback-card" id="compulsoryFeedbackContainer">
-        <div class="feedback-title" style="font-weight:600; font-size:14px; color: var(--ocean-dark); margin-bottom: 4px;">📋 Beta Tester Portal Review</div>
-        <p style="font-size: 12px; color: var(--muted); margin-bottom: 10px;">Please share how this application workflow feels and what additional details or features you think this layout page should display to advance.</p>
-        <textarea id="singleBetaFeedbackInput" rows="3" placeholder="How does the app feel, and what else should this page show?..." style="resize: none; font-family: inherit; font-size: 13px;"></textarea>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn btn-ghost" onclick="goBack(6)">← Back</button>
-        <button class="btn btn-primary" style="background: var(--ocean-dark);" onclick="triggerBuiltInGeneration()">🚀 Generate My Optimized Route Plan</button>
-      </div>
-      <div id="apiStatusMessage" style="margin-top:14px; font-weight:600;"></div>
-    </div>
-
-    <!-- OUTPUT SCREEN -->
-    <div id="outputPanel" style="display:none; padding: 24px; background: #fff;">
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--border); padding-bottom:10px; margin-bottom:20px;">
-        <h2 style="font-family:'Fraunces', serif; color: var(--ocean-dark);">✨ Your Custom Live Itinerary Blueprint</h2>
-        <button class="btn btn-ghost" style="padding: 6px 14px; font-size:12px; color:var(--coral); border-color:var(--coral);" onclick="modifyItinerary()">✏️ Modify & Adjust</button>
-      </div>
-
-      <div style="background:var(--sand); padding:16px; border-radius:12px; margin-bottom:20px;">
-        <h4 style="font-family:'Fraunces', serif; color: var(--ocean-dark);">🔍 Explore Regional Showcase Spotlights</h4>
-        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Click any item below to choose exactly which day of your custom itinerary it should be added to.</p>
-        <div class="discovery-hub" id="itineraryExploreShowcaseHub"></div>
-      </div>
-
-      <div id="outputBody"></div>
-    </div>
-
-  </div>
-</div>
-
-<script>
-const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlic3FsbGdpdG50d2EiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNzEwNTE4OSwiZXhwIjoyMDUyNjgxMTg5fQ.q0zM8gK1M0k4q0m1_K0k4q0m1_K0k4q0m1_K0k4q0m1"; 
-
-const travelPlannerSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let activeUserToken = null;
-let currentAuthMode = 'signin'; 
-
-let state = { 
-  destinations: [], startCity: '', intermediateHub: '', startDate: '', endDate: '', days: 0, transitDaysAllocation: 2,
-  crew: '', groupSize: 1, transportList: [], leg2TransportList: [], vehicleMode: 'No Private Vehicle', dailyPlanData: [], budgetVal: 0, budgetScope: '' ,
-  flightTicketCost: 0, fuelPrice: 102, vehicleMileage: 15, calculatedDistanceKM: 0
-};
-let currentStep = 1;
-const TOTAL_STEPS = 7;
-
-let modalContextItem = { type: '', value: '' };
-
-const travelKnowledgeBase = {
-  "coorg": {
-    famous: ["Abbey Falls Scenic Estate Walk", "Namdroling Golden Temple", "Madikeri Historic Fort Grounds", "Raja's Seat Hanging Gardens"],
-    gems: ["Chelavara Falls Ridge Trek", "Kote Betta Mountain Trail", "Sanapur Whispering Streams", "Nishani Motte Hidden Offbeat Outpost"],
-    breakfast: ["Local filter coffee paired with Akki Roti", "Fresh plantation-side spice tea spreads"],
-    eats: ["Coorg Cuisine Restaurant for authentic Pandi Curry", "Tiger Tiger Cafe specialty local plates"]
-  },
-  "munnar": {
-    famous: ["Eravikulam High Plateau Valley", "Mattupetty Lake Boating Gates", "Top Station Horizon Peak", "Tea Museum Heritage Walk"],
-    gems: ["Lockhart Gap Panoramic Ridge Way", "Attukad Waterfalls Secluded Glade", "Anamudi Foothill Secret Trails", "Pothamedu Hidden Clouds Viewpoint"],
-    breakfast: ["Freshly picked Munnar leaf blends with local idlis", "Highland cardamon tea with appam variants"],
-    eats: ["Rapsy Restaurant regional specialty dishes", "Guru's Malabar spice parotta counters"]
-  },
-  "gokarna": {
-    famous: ["Om Beach Rocky Waterfront Trail", "Mahabaleshwar Temple Courtyard", "Kudle Beach Main Surfer Strip", "Half Moon Beach Ridge Overlook"],
-    gems: ["Paradise Beach Secluded Jungle Spot", "Belekan Beach Offbeat Bay Trail", "Nirvana Coastal Meadow Path", "God's Own Beach Cliffside Overlook"],
-    breakfast: ["Beachside shack continental items & banana buns", "Traditional South Kannada style dosa plates"],
-    eats: ["Prema Restaurant legendary local ice cream & meals", "Namaste Cafe absolute oceanfront seafood dinner"]
-  },
-  "hampi": {
-    famous: ["Virupaksha Temple Sacred Courtyard", "Vittala Temple Stone Chariot Monument", "Hemakuta Hill Historic Complex View"],
-    gems: ["Sanapur Lake Offbeat Coracle Boat Run", "Anegundi Ancient Heritage Village Walk"],
-    breakfast: ["Local crisp ghee roast dosas from rural setups", "Traditional filter decoctions with idlis"],
-    eats: ["Mango Tree Restaurant river-facing dishes", "Local organic banana flower curries hub"]
-  },
-  "spiti valley": {
-    famous: ["Key Monastery Mountain Cliffside Retreat", "Chandratal High-Altitude Emerald Lake", "Dhankar Monastery Fort Lookout"],
-    gems: ["Langza Mountain Ridge Fossil Beds", "Mud Village Pin Valley Mountain Outpost"],
-    breakfast: ["Warm butter tea paired with local Tsampa breads", "Highland barley porridges with honey matrices"],
-    eats: ["The Sol Cafe local hot seabuckthorn juices", "Authentic steaming Tibetan momo street shacks"]
-  },
-  "manali": {
-    famous: ["Hidimba Devi Temple Pagoda Shrine", "Solang Valley Adventure Meadows", "Rohtang Pass Himalayan Snow View", "Old Manali Heritage Village"],
-    gems: ["Jogni Waterfall Cedar Trek Route", "Naggar Castle Timber Palace Lookout", "Vashisht Natural Sulphur Hot Springs"],
-    breakfast: ["Freshly steamed Himachali Siddu platter", "Mall Road masala omelette and spiced chai buns"],
-    eats: ["Johnson's Cafe wood-fired valley trout fillets", "The Lazy Dog continental backpacker spreads"]
-  },
-  "goa": {
-    famous: ["Fontainhas Historic Latin Quarter Walk", "Dudhsagar Jungle Waterfalls Track", "Aguada Historic Coastal Fort Outpost"],
-    gems: ["Cola Beach Hidden Fresh Lagoon Side", "Chorao Island Offbeat Mangrove Boat Paths"],
-    breakfast: ["Freshly wood-fired Goan Poi bread with local spreads", "Seaside shack continental fruit salad matrices"],
-    eats: ["Mum's Kitchen local authentic Goan fish curry", "Fisherman's Wharf classic coastal seafood dine"]
-  },
-  "varkala": {
-    famous: ["Varkala Cliffside Ocean Overlook Strip", "Janardanaswamy Ancient Coastal Temple"],
-    gems: ["Edava Beach Secluded Backwater-Sea Interface", "Kapil Lake Silent Coastal Drive Corridors"],
-    breakfast: ["Kerala style layered flaky parotta with egg roast", "Fresh tender coconut shakes on the cliff paths"],
-    eats: ["Darjeeling Cafe oceanfront slow-cooked regional dinners", "Local daily-catch fresh grill fish counters"]
-  },
-  "udaipur": {
-    famous: ["City Palace Waterfront Complex", "Lake Pichola Panoramic Shared Boat Routes", "Jagdish Historic Stone Temple Carvings"],
-    gems: ["Sajjangarh Monsoon Palace Ridge Lookout", "Badi Lake Offbeat Silent Mountain Edge Path"],
-    breakfast: ["Traditional hot Poha topped with regional sev blends", "Freshly fried Kachoris from legacy bazaar lanes"],
-    eats: ["Ambrai Restaurant absolute lakeside dining view", "Traditional Mewari royal thali slow-cooked setups"]
-  },
-  "jaipur": {
-    famous: ["Amer Fort Hilltop Palace", "Hawa Mahal Palace of Winds", "City Palace Royal Residence", "Jantar Mantar Historic Observatory"],
-    gems: ["Nahargarh Fort Sunset Ridge", "Panna Meena ka Kund Stepwell", "Galta Ji Monkey Temple"],
-    breakfast: ["Traditional Pyaz Kachori with sweet lassi", "Legacy market Pandit kulfi blends"],
-    eats: ["LMB Restaurant authentic Rajasthani Thali", "Chokhi Dhani ethnic village dining spread"]
-  },
-  "default": {
-    famous: ["Central Heritage Landmark Exploration", "Panoramic Valley Lookout Point", "Ancient Historical Quarter Run", "Main City Botanical Garden"],
-    gems: ["Hidden Eco Forest Trail Pathway", "Offbeat River Stream Overlook", "Rustic Artisanal Heritage District Walk", "Secluded Sunset Cliff Outpost"],
-    breakfast: ["Traditional regional breakfast morning spread"],
-    eats: ["Acclaimed traditional regional cuisine diner", "Vibrant local food street alleyways"]
-  }
-};
-
-function showAppNotification(messageString) {
-  const toast = document.getElementById('appNotificationToast');
-  if (toast) {
-    toast.innerHTML = `✨ ${messageString}`;
-    toast.classList.add('show');
-    setTimeout(() => { toast.classList.remove('show'); }, 4500);
-  }
+function Chip({ label, selected, onClick }) {
+  return <div className={`chip${selected ? " sel" : ""}`} onClick={onClick}>{label}</div>;
 }
 
-function selectThematicRandomEngine(categoryType) {
-  const allChips = document.querySelectorAll('#destChips .chip');
-  allChips.forEach(c => c.classList.remove('selected'));
-  state.destinations = [];
-
-  let chosenDestinationValue = "";
-  if (categoryType === 'mountains') {
-    const mountainPool = ["Spiti Valley, HP", "Munnar, Kerala", "Leh Ladakh, JK", "Manali, HP"];
-    chosenDestinationValue = mountainPool[Math.floor(Math.random() * mountainPool.length)];
-    const baseHub = chosenDestinationValue.includes("Munnar") ? "Kochi" : "Delhi";
-    document.getElementById('startCity').value = baseHub;
-    state.startCity = baseHub;
-  } else if (categoryType === 'beaches') {
-    const beachPool = ["Gokarna, Karnataka", "Goa, India", "Varkala, Kerala"];
-    chosenDestinationValue = beachPool[Math.floor(Math.random() * beachPool.length)];
-    document.getElementById('startCity').value = "Bangalore";
-    state.startCity = "Bangalore";
-  } else {
-    const heritagePool = ["Hampi, Karnataka", "Udaipur, Rajasthan", "Jaipur, Rajasthan", "Varanasi, UP"];
-    chosenDestinationValue = heritagePool[Math.floor(Math.random() * heritagePool.length)];
-    const baseHub = chosenDestinationValue.includes("Hampi") ? "Bangalore" : "Delhi";
-    document.getElementById('startCity').value = baseHub;
-    state.startCity = baseHub;
-  }
-
-  document.getElementById('customDest').value = "";
-  allChips.forEach(chip => {
-    if (chip.dataset.val === chosenDestinationValue) chip.classList.add('selected');
-  });
-
-  state.destinations.push(chosenDestinationValue);
-  showAppNotification(`Theme Selected: ${chosenDestinationValue}`);
-  generateDailyVibeSelectors();
+function VibeChip({ emoji, label, selected, onClick }) {
+  return <div className={`vibe-chip${selected ? " sel" : ""}`} onClick={onClick}>{emoji} {label}</div>;
 }
 
-async function runGeographicalDistanceAndSpeedSuggester() {
-  const suggestionBox = document.getElementById('distanceSuggestionBox');
-  const transitWrapper = document.getElementById('transitDaysWrapper');
-  
-  if (!state.destinations.length) {
-    if (suggestionBox) suggestionBox.style.display = 'none'; 
-    if (transitWrapper) transitWrapper.style.display = 'none'; return;
-  }
-  if (suggestionBox) {
-    suggestionBox.style.display = 'block';
-    suggestionBox.innerHTML = `⏳ Loading map connection layouts...`;
-  }
-
-  try {
-    const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=`;
-    const resStart = await fetch(geocodeUrl + encodeURIComponent(state.startCity || 'Delhi'));
-    const dataStart = await resStart.json();
-    
-    const targetMidCity = state.intermediateHub || state.destinations[0];
-    const resMid = await fetch(geocodeUrl + encodeURIComponent(targetMidCity));
-    const dataMid = await resMid.json();
-    
-    const resFinal = await fetch(geocodeUrl + encodeURIComponent(state.destinations[0]));
-    const dataFinal = await resFinal.json();
-    
-    if (dataStart.length && dataMid.length && dataFinal.length) {
-      const startLonLat = `${dataStart[0].lon},${dataStart[0].lat}`;
-      const midLonLat = `${dataMid[0].lon},${dataMid[0].lat}`;
-      const destLonLat = `${dataFinal[0].lon},${dataFinal[0].lat}`;
-      
-      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startLonLat};${midLonLat};${destLonLat}?overview=false`;
-      const osrmRes = await fetch(osrmUrl);
-      const osrmData = await osrmRes.json();
-      
-      if (osrmData.routes && osrmData.routes.length) {
-        const networkRoute = osrmData.routes[0];
-        const finalCalculatedKM = Math.round(networkRoute.distance / 1000);
-        state.calculatedDistanceKM = finalCalculatedKM;
-
-        if (transitWrapper) transitWrapper.style.display = 'block';
-        if (suggestionBox) {
-          suggestionBox.innerHTML = `🗺️ <strong>Journey Distance Lines:</strong> ~${finalCalculatedKM} KM route tracks across targets.`;
-        }
-        return;
-      }
-    }
-    throw new Error("Geocoding mismatch.");
-  } catch (apiError) {
-    let fallbackKM = 499;
-    if(state.destinations[0] && state.destinations[0].toLowerCase().includes("udaipur")) fallbackKM = 760;
-    state.calculatedDistanceKM = fallbackKM;
-    if (transitWrapper) transitWrapper.style.display = 'block';
-    if (suggestionBox) suggestionBox.innerHTML = `🏁 <strong>Mapped Distance (approx.):</strong> ~${fallbackKM} KM across connected points.`;
-  }
+function LoadingDots() {
+  return <div className="loading-dots"><div className="dot"/><div className="dot"/><div className="dot"/></div>;
 }
 
-function updateJourneyDaysState() {
-  state.transitDaysAllocation = parseInt(document.getElementById('transitDaysCount').value) || 0;
-  generateDailyVibeSelectors();
-}
+export default function GhoomioPlanner() {
+  const [step, setStep] = useState(0);
+  const [dest, setDest] = useState("");
+  const [startCity, setStartCity] = useState("");
+  const [crew, setCrew] = useState("");
+  const [groupSize, setGroupSize] = useState(1);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [transport, setTransport] = useState("");
+  const [transitDays, setTransitDays] = useState(1);
+  const [budget, setBudget] = useState("");
+  const [budgetScope, setBudgetScope] = useState("");
+  const [dailyData, setDailyData] = useState([]);
+  const [error, setError] = useState("");
+  const [output, setOutput] = useState("");
+  const [streaming, setStreaming] = useState(false);
+  const [done, setDone] = useState(false);
+  const abortRef = useRef(null);
 
-function validateDatesOnly() {
-  const startVal = document.getElementById('startDate').value;
-  const endVal = document.getElementById('endDate').value;
-  const errBox = document.getElementById('dateErrorBox');
-  const nextBtn = document.getElementById('btnStep3');
+  const getDays = () => {
+    if (!startDate || !endDate) return 0;
+    const d = Math.round((new Date(endDate) - new Date(startDate)) / 86400000) + 1;
+    return d > 0 ? d : 0;
+  };
 
-  if (errBox) errBox.classList.remove('show');
-  if (nextBtn) { nextBtn.disabled = false; nextBtn.style.opacity = '1'; }
-  state.startDate = startVal; state.endDate = endVal;
+  const days = getDays();
 
-  if (startVal && endVal) {
-    const s = new Date(startVal), e = new Date(endVal);
-    if (isNaN(s.getTime()) || isNaN(e.getTime())) { if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } return false; }
-    if (e < s) { if(errBox) errBox.classList.add('show'); if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } return false; }
-    state.days = Math.round((e - s) / 86400000) + 1;
-  } else { if(nextBtn) { nextBtn.disabled = true; nextBtn.style.opacity = '0.4'; } return false; }
-  return true;
-}
+  const buildDailyData = () => {
+    const start = new Date(startDate);
+    return Array.from({ length: days }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const dateStr = d.toISOString().split("T")[0];
+      const dayName = d.toLocaleDateString("en-US", { weekday: "long" });
+      const isLast = transitDays >= 1 && i === days - 1;
+      return {
+        date: dateStr,
+        dayName,
+        place: dest,
+        vibes: isLast ? ["Return day"] : ["Local Food"],
+        notes: "",
+        isTransitDay: i === 0 && transitDays >= 2,
+        isReturnDay: isLast,
+      };
+    });
+  };
 
-function hookAutomatedFastPassSyncListeners() {
-  document.querySelectorAll('.fast-pass-cb').forEach(cb => {
-    cb.addEventListener('change', () => {
-      const value = cb.value;
-      const isChecked = cb.checked;
-      
-      document.querySelectorAll('.daily-card').forEach((card, idx) => {
-        if(state.transitDaysAllocation >= 1 && idx === (state.days - 1)) return; 
-        const matchCardCb = card.querySelector(`.daily-vibe-cb[value="${value}"]`);
-        if(matchCardCb) matchCardCb.checked = isChecked;
+  const updateDay = (i, field, val) => {
+    setDailyData(prev => {
+      const next = [...prev];
+      next[i] = { ...next[i], [field]: val };
+      return next;
+    });
+  };
+
+  const toggleVibe = (i, vibe) => {
+    setDailyData(prev => {
+      const next = [...prev];
+      const vibes = next[i].vibes.includes(vibe)
+        ? next[i].vibes.filter(v => v !== vibe)
+        : [...next[i].vibes, vibe];
+      next[i] = { ...next[i], vibes };
+      return next;
+    });
+  };
+
+  const validate = () => {
+    if (step === 0 && !dest) return "Pick a destination";
+    if (step === 0 && !startCity.trim()) return "Enter your starting city";
+    if (step === 1 && !crew) return "Choose your travel crew";
+    if (step === 2 && (!startDate || !endDate)) return "Set your travel dates";
+    if (step === 2 && new Date(endDate) < new Date(startDate)) return "Return date must be after start date";
+    if (step === 3 && !transport) return "Choose how you're getting there";
+    if (step === 5 && (!budget || !budgetScope)) return "Set your budget details";
+    return "";
+  };
+
+  const next = () => {
+    const err = validate();
+    if (err) { setError(err); return; }
+    setError("");
+    if (step === 2 || step === 3) setDailyData(buildDailyData());
+    setStep(s => s + 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const back = () => {
+    setError("");
+    setStep(s => s - 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const generate = async () => {
+    setStreaming(true);
+    setOutput("");
+    setDone(false);
+
+    const perHead = budgetScope === "total" ? Math.round(parseInt(budget) / groupSize) : parseInt(budget);
+    const dailyBudget = Math.round(perHead / days);
+
+    const prompt = `You are Ghoomio AI, a warm and knowledgeable Indian travel planner.
+
+Create a detailed ${days}-day trip itinerary for:
+- Destination: ${dest}
+- Traveling from: ${startCity}
+- Crew: ${crew} (${groupSize} person${groupSize > 1 ? "s" : ""})
+- Dates: ${startDate} to ${endDate}
+- Transport to destination: ${transport}
+- Transit days (travel only): ${transitDays}
+- Per-person daily budget: ₹${dailyBudget} INR
+
+Daily preferences:
+${dailyData.map((d, i) => `Day ${i + 1} (${d.dayName}, ${d.date}): ${d.isTransitDay ? "Travel day — arriving at destination" : d.isReturnDay ? "Return home day" : `Explore ${d.place} — vibes: ${d.vibes.join(", ")}. Notes: ${d.notes || "Open to suggestions"}`}`).join("\n")}
+
+Format each day clearly with:
+🗓️ DAY [N] — [Day of week], [Date]
+📍 [Location]
+🌅 Morning: [specific morning plan with real place names]
+☀️ Afternoon: [specific afternoon plan]
+🌙 Evening: [dinner/sunset/night plan with specific restaurant or spot]
+💰 Budget breakdown: Food ₹X | Transit ₹X | Stay ₹X
+💡 Insider tip: [one local tip specific to this day/place]
+
+Use real, specific place names, local food spots, and insider knowledge. Be warm and practical. Keep each day concise but vivid — around 120 words per day. End with a short "Trip Essentials" section with 3 practical tips.`;
+
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 2000,
+          stream: true,
+          messages: [{ role: "user", content: prompt }],
+        }),
       });
-      showAppNotification(`Instantly applied vibe updates across all days!`);
-    });
-  });
-}
 
-function generateDailyVibeSelectors() {
-  const container = document.getElementById('dailyVibeContainer');
-  if (!container || !state.startDate || isNaN(state.days) || state.days <= 0) return;
-  container.innerHTML = '';
-  
-  const start = new Date(state.startDate);
-  const initialBaseCity = state.intermediateHub || state.destinations[0] || "Jaipur, Rajasthan";
-  const finalBaseCity = state.destinations[0] || "Udaipur, Rajasthan";
+      if (!res.ok) throw new Error("API error");
 
-  let preCheckedFastPassValues = [];
-  document.querySelectorAll('.fast-pass-cb:checked').forEach(cb => preCheckedFastPassValues.push(cb.value));
-  
-  for (let i = 0; i < state.days; i++) {
-    const current = new Date(start.getTime());
-    current.setDate(start.getDate() + i);
-    const dayName = current.toLocaleDateString('en-US', { weekday: 'long' });
-    const dateStr = current.toISOString().split('T')[0];
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-    const isLastDayOfTravel = (state.transitDaysAllocation >= 1 && i === (state.days - 1));
-    let customCardHtml = "";
+      while (true) {
+        const { done: readerDone, value } = await reader.read();
+        if (readerDone) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6);
+            if (data === "[DONE]") continue;
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.type === "content_block_delta" && parsed.delta?.text) {
+                setOutput(prev => prev + parsed.delta.text);
+              }
+            } catch {}
+          }
+        }
+      }
+      setDone(true);
+    } catch (e) {
+      setOutput("Oops — couldn't connect to the itinerary engine. Try again in a moment.");
+      setDone(true);
+    }
+    setStreaming(false);
+  };
 
-    if (isLastDayOfTravel) {
-      customCardHtml = `
-        <div class="daily-card" style="border-left: 4px solid var(--coral);">
-          <div style="font-weight:600; color:var(--ocean-dark);">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
-          <p style="color:var(--coral); font-size:12px; font-weight:600; margin-top:2px;">🏡 Wrapping up the trip & traveling home safely</p>
-          <div class="form-group" style="margin-top:10px;">
-            <label>Current Location Base:</label>
-            <input type="text" class="daily-place-input" data-date="${dateStr}" value="${finalBaseCity}">
-          </div>
-          <input type="hidden" class="daily-things-input" value="Heading home smoothly.">
-          <input type="hidden" class="daily-transit-cb" value="Local Sightseeing">
-        </div>
-      `;
-    } else {
-      const computedDefaultPlace = (i < 2 && state.intermediateHub) ? initialBaseCity : finalBaseCity;
+  const perHead = budgetScope === "total" ? Math.round(parseInt(budget || 0) / groupSize) : parseInt(budget || 0);
 
-      customCardHtml = `
-        <div class="daily-card">
-          <div style="font-weight:600; color:var(--ocean-dark); margin-bottom:4px;">📅 Day ${i+1}: ${dayName} (${dateStr})</div>
-          
-          <div class="form-group" style="margin-top:8px;">
-            <label>Target City for this Day:</label>
-            <input type="text" class="daily-place-input" data-date="${dateStr}" value="${computedDefaultPlace}">
-          </div>
+  const encodedDest = encodeURIComponent(dest);
 
-          <div class="form-group" style="margin-top: 14px; background: var(--paper); padding: 12px; border-radius: 10px; border: 1px solid var(--border);">
-            <label style="color: var(--coral); font-size: 11px;">🔀 Moving Cities or Local Commuting Choices Today? (Select all that apply):</label>
-            <div style="display:flex; flex-direction:column; gap:6px; margin-top:5px;">
-              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Local Sightseeing" checked> Stay at current destination (local cabs / wandering on foot)</label>
-              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Pre-booked Train Link"> 🚂 Shift Cities: Take a Train</label>
-              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Hired Inter-city Cab"> 🚕 Shift Cities: Hire an Inter-City Private Cab</label>
-              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Private Sleeper Bus Link"> 🚌 Booking a Private Sleeper/AC Bus Ticket</label>
-              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Govt State Bus Link"> 🚍 Regional State Transport Bus (RSRTC/KSRTC)</label>
-              <label style="font-size:13px; font-weight:normal; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="daily-transit-cb" value="Self-Drive Commute"> 🚗 Cruising via Local Self-Drive Car/Bike Rental</label>
+  return (
+    <>
+      <style>{css}</style>
+      <div className="wrapper">
+
+        {done ? (
+          <div className="card">
+            <div className="output-wrap">
+              <div className="output-header">
+                <div className="output-title">✨ Your {dest} Itinerary</div>
+                <button className="btn btn-ghost modify-btn" onClick={() => { setDone(false); setOutput(""); setStep(6); }}>
+                  ✏️ Modify
+                </button>
+              </div>
+              <div className="output-body">
+                <div className="day-links" style={{ marginBottom: 18 }}>
+                  <a className="day-link" href={`https://www.google.com/travel/search?q=Hotels+in+${encodedDest}`} target="_blank">🏨 Browse Hotels</a>
+                  <a className="day-link" href={`https://www.google.com/maps/search/${encodedDest}+top+restaurants`} target="_blank">🍛 Find Restaurants</a>
+                  <a className="day-link" href={`https://www.google.com/maps/search/${encodedDest}+attractions`} target="_blank">🗺️ Explore Attractions</a>
+                </div>
+                <div className="stream-box">{output}</div>
+                <div className="btn-row" style={{ marginTop: 20 }}>
+                  <button className="btn btn-ghost" onClick={() => { setDone(false); setOutput(""); setStep(0); setDest(""); setStartCity(""); setCrew(""); setStartDate(""); setEndDate(""); setTransport(""); setBudget(""); setBudgetScope(""); }}>
+                    Plan Another Trip
+                  </button>
+                  <button className="btn btn-primary" onClick={() => { setDone(false); setOutput(""); generate(); }}>
+                    ↻ Regenerate
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-
-          <div class="form-group">
-            <label>Select Daily Vibes:</label>
-            <div class="vibe-checkbox-group">
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🏛️ Iconic Sights" ${preCheckedFastPassValues.includes('🏛️ Iconic Sights')?'checked':''}> 🏛️ Iconic Sights</label>
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🌿 Offbeat Gems" ${preCheckedFastPassValues.includes('🌿 Offbeat Gems')?'checked':''}> 🌿 Offbeat Gems</label>
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🏔️ Adventure Trekking" ${preCheckedFastPassValues.includes('🏔️ Adventure Trekking')?'checked':''}> 🏔️ Adventure Trekking</label>
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🍛 Local Foodie" ${preCheckedFastPassValues.includes('🍛 Local Foodie')?'checked':''}> 🍛 Local Foodie</label>
-              <label class="vibe-checkbox-label"><input type="checkbox" class="daily-vibe-cb" data-date="${dateStr}" value="🧘 Slow & Wellness" ${preCheckedFastPassValues.includes('🧘 Slow & Wellness')?'checked':''}> 🧘 Slow & Wellness</label>
+        ) : (
+          <div className="card">
+            <div className="card-header">
+              <div className="card-title">Ghoomio AI ✈️</div>
+              <div className="card-sub">Your AI-powered travel planner</div>
+              <div className="progress" style={{ marginTop: 12 }}>
+                <div className="progress-fill" style={{ width: `${((step + 1) / 7) * 100}%` }} />
+              </div>
             </div>
+
+            <div className="step-tabs">
+              {STEPS.map((s, i) => (
+                <div key={s} className={`step-tab${i === step ? " active" : i < step ? " done" : ""}`}>{s}</div>
+              ))}
+            </div>
+
+            {/* STEP 0: DESTINATION */}
+            {step === 0 && (
+              <div className="panel">
+                <div className="step-title">Where are we headed? 🗺️</div>
+                <p className="step-desc">Pick your destination and tell us where you're starting from.</p>
+                <div className="field-group">
+                  <span className="field-label">Choose a destination</span>
+                  <div className="chips">
+                    {DESTINATIONS.map(d => (
+                      <Chip key={d.val} label={d.label} selected={dest === d.val} onClick={() => setDest(d.val)} />
+                    ))}
+                  </div>
+                </div>
+                <div className="field-group">
+                  <span className="field-label">Or enter a custom destination</span>
+                  <input type="text" placeholder="e.g. Ooty, Pondicherry, Varanasi..." value={dest.includes(",") || DESTINATIONS.find(d => d.val === dest) ? "" : dest}
+                    onChange={e => setDest(e.target.value)} />
+                </div>
+                <div className="field-group">
+                  <span className="field-label">Starting from</span>
+                  <input type="text" placeholder="e.g. Bangalore, Hyderabad, Mumbai..." value={startCity} onChange={e => setStartCity(e.target.value)} />
+                </div>
+                {error && <div className="error">{error}</div>}
+                <div className="btn-row">
+                  <button className="btn btn-primary" onClick={next}>Next — Who's coming? →</button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 1: CREW */}
+            {step === 1 && (
+              <div className="panel">
+                <div className="step-title">Who's traveling? 👥</div>
+                <p className="step-desc">This helps us split budgets and tailor recommendations.</p>
+                <div className="field-group">
+                  <div className="chips">
+                    {CREW_OPTIONS.map(c => (
+                      <Chip key={c.val} label={c.label} selected={crew === c.val}
+                        onClick={() => { setCrew(c.val); setGroupSize(c.size); }} />
+                    ))}
+                  </div>
+                </div>
+                {(crew === "Friends" || crew === "Family") && (
+                  <div className="field-group">
+                    <span className="field-label">Total travelers</span>
+                    <input type="number" min="2" max="20" value={groupSize} onChange={e => setGroupSize(Math.max(2, parseInt(e.target.value) || 2))} />
+                  </div>
+                )}
+                {error && <div className="error">{error}</div>}
+                <div className="btn-row">
+                  <button className="btn btn-ghost" onClick={back}>← Back</button>
+                  <button className="btn btn-primary" onClick={next}>Next — Pick dates →</button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: DATES */}
+            {step === 2 && (
+              <div className="panel">
+                <div className="step-title">When's the trip? 📅</div>
+                <p className="step-desc">Set your departure and return dates.</p>
+                <div className="field-group">
+                  <span className="field-label">Departure date</span>
+                  <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                </div>
+                <div className="field-group">
+                  <span className="field-label">Return date</span>
+                  <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                </div>
+                {days > 0 && (
+                  <div className="infobox">📆 That's <strong>{days} days</strong> total — great length for {dest}!</div>
+                )}
+                {error && <div className="error">{error}</div>}
+                <div className="btn-row">
+                  <button className="btn btn-ghost" onClick={back}>← Back</button>
+                  <button className="btn btn-primary" onClick={next}>Next — Getting there →</button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: TRANSIT */}
+            {step === 3 && (
+              <div className="panel">
+                <div className="step-title">How are you getting there? 🚗</div>
+                <p className="step-desc">This shapes Day 1 and the return journey plan.</p>
+                <div className="field-group">
+                  <span className="field-label">Main mode of transport</span>
+                  <div className="chips">
+                    {TRANSPORT_OPTIONS.map(t => (
+                      <Chip key={t.val} label={t.label} selected={transport === t.val} onClick={() => setTransport(t.val)} />
+                    ))}
+                  </div>
+                </div>
+                <div className="field-group">
+                  <span className="field-label">Transit days (travel only, not exploring)</span>
+                  <div className="chips">
+                    {[0, 1, 2].map(n => (
+                      <Chip key={n} label={`${n} day${n !== 1 ? "s" : ""}`} selected={transitDays === n} onClick={() => setTransitDays(n)} />
+                    ))}
+                  </div>
+                </div>
+                {error && <div className="error">{error}</div>}
+                <div className="btn-row">
+                  <button className="btn btn-ghost" onClick={back}>← Back</button>
+                  <button className="btn btn-primary" onClick={next}>Next — Daily vibes →</button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 4: VIBES */}
+            {step === 4 && (
+              <div className="panel">
+                <div className="step-title">Daily vibe check ✨</div>
+                <p className="step-desc">Customize what each day should feel like. Mix and match freely.</p>
+                <div style={{ marginBottom: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 12, color: "var(--muted)", alignSelf: "center" }}>Apply to all days:</span>
+                  {VIBE_OPTIONS.map(v => (
+                    <div key={v.val} className="vibe-chip" onClick={() => setDailyData(prev => prev.map(d => d.isReturnDay ? d : { ...d, vibes: d.vibes.includes(v.val) ? d.vibes.filter(x => x !== v.val) : [...d.vibes, v.val] }))}>
+                      {v.emoji} {v.val}
+                    </div>
+                  ))}
+                </div>
+                {dailyData.length === 0 && <p style={{ color: "var(--muted)", fontSize: 13 }}>Go back and set your dates first.</p>}
+                {dailyData.map((d, i) => (
+                  <div className="day-card" key={d.date}>
+                    <div className="day-card-title">
+                      {d.isReturnDay ? "🏡" : d.isTransitDay ? "🛣️" : "📅"} Day {i + 1} — {d.dayName}
+                      {d.isReturnDay && <span style={{ fontSize: 11, color: "var(--coral)", marginLeft: 6 }}>Return home</span>}
+                      {d.isTransitDay && <span style={{ fontSize: 11, color: "var(--coral)", marginLeft: 6 }}>Travel day</span>}
+                    </div>
+                    {!d.isReturnDay && !d.isTransitDay && (
+                      <>
+                        <div className="vibe-row">
+                          {VIBE_OPTIONS.map(v => (
+                            <VibeChip key={v.val} emoji={v.emoji} label={v.val}
+                              selected={d.vibes.includes(v.val)}
+                              onClick={() => toggleVibe(i, v.val)} />
+                          ))}
+                        </div>
+                        <div style={{ marginTop: 10 }}>
+                          <input type="text" placeholder="Anything specific you want to do today?" value={d.notes} onChange={e => updateDay(i, "notes", e.target.value)} />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+                <div className="btn-row">
+                  <button className="btn btn-ghost" onClick={back}>← Back</button>
+                  <button className="btn btn-primary" onClick={() => { setError(""); setStep(5); }}>Next — Budget →</button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 5: BUDGET */}
+            {step === 5 && (
+              <div className="panel">
+                <div className="step-title">What's the budget? 💰</div>
+                <p className="step-desc">We'll use this to suggest stays, food spots, and activities that fit.</p>
+                <div className="field-group">
+                  <span className="field-label">Budget amount (₹ INR)</span>
+                  <input type="number" placeholder="e.g. 25000" value={budget} onChange={e => setBudget(e.target.value)} />
+                </div>
+                <div className="field-group">
+                  <span className="field-label">This budget is...</span>
+                  <div className="chips">
+                    <Chip label="Per person" selected={budgetScope === "person"} onClick={() => setBudgetScope("person")} />
+                    <Chip label="Total for the group" selected={budgetScope === "total"} onClick={() => setBudgetScope("total")} />
+                  </div>
+                </div>
+                {budget && budgetScope && (
+                  <div className="infobox">
+                    ₹{perHead.toLocaleString("en-IN")} per person across {days} days = roughly <strong>₹{Math.round(perHead / days).toLocaleString("en-IN")}/day</strong>
+                  </div>
+                )}
+                {error && <div className="error">{error}</div>}
+                <div className="btn-row">
+                  <button className="btn btn-ghost" onClick={back}>← Back</button>
+                  <button className="btn btn-primary" onClick={next}>Next — Review plan →</button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 6: REVIEW */}
+            {step === 6 && (
+              <div className="panel">
+                <div className="step-title">Ready to plan your trip! 🎒</div>
+                <p className="step-desc">Everything looks great. Hit generate and Ghoomio AI will build your itinerary.</p>
+                <div className="summary-box">
+                  <div className="summary-row">🗺️ <span>Destination:</span> <span className="summary-val">{dest}</span></div>
+                  <div className="summary-row">📍 <span>From:</span> <span className="summary-val">{startCity}</span></div>
+                  <div className="summary-row">👥 <span>Crew:</span> <span className="summary-val">{crew} ({groupSize} {groupSize === 1 ? "person" : "people"})</span></div>
+                  <div className="summary-row">📅 <span>Dates:</span> <span className="summary-val">{startDate} → {endDate} ({days} days)</span></div>
+                  <div className="summary-row">🚗 <span>Transport:</span> <span className="summary-val">{transport}</span></div>
+                  <div className="summary-row">💰 <span>Budget:</span> <span className="summary-val">₹{perHead.toLocaleString("en-IN")}/person</span></div>
+                </div>
+                {streaming && (
+                  <div style={{ textAlign: "center", padding: "20px 0" }}>
+                    <LoadingDots />
+                    <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 8 }}>Ghoomio AI is crafting your itinerary...</p>
+                  </div>
+                )}
+                {output && !done && (
+                  <div className="stream-box">{output}<span style={{ animation: "blink 1s infinite" }}>▋</span></div>
+                )}
+                <div className="btn-row">
+                  <button className="btn btn-ghost" onClick={back} disabled={streaming}>← Back</button>
+                  <button className="btn btn-ocean" onClick={generate} disabled={streaming}>
+                    {streaming ? "Generating..." : "🚀 Generate my itinerary"}
+                  </button>
+                </div>
+              </div>
+            )}
+
           </div>
+        )}
 
-          <div class="form-group">
-            <label>Things you want to do here specifically:</label>
-            <input type="text" class="daily-things-input" data-date="${dateStr}" placeholder="e.g. Try special dishes, check lakeside architecture maps...">
-          </div>
-        </div>
-      `;
-    }
-
-    const elementWrapper = document.createElement('div');
-    elementWrapper.innerHTML = customCardHtml;
-    container.appendChild(elementWrapper.firstElementChild);
-  }
-  hookAutomatedFastPassSyncListeners();
-}
-
-function submitTransitStepAndProgress() {
-  state.transportList = [];
-  document.querySelectorAll('#leg1MultiTransportGroup input:checked').forEach(cb => { state.transportList.push(cb.value); });
-  
-  state.leg2TransportList = [];
-  document.querySelectorAll('#leg2MultiTransportGroup input:checked').forEach(cb => { state.leg2TransportList.push(cb.value); });
-
-  if (state.transportList.length === 0 || state.leg2TransportList.length === 0) {
-    document.getElementById('err4').classList.add('show'); return;
-  }
-  
-  state.intermediateHub = document.getElementById('intermediateHubInput').value.trim();
-  state.flightTicketCost = parseInt(document.getElementById('leg1TicketCostInput').value) || 0;
-  state.fuelPrice = parseInt(document.getElementById('fuelPrice').value) || 102;
-  state.vehicleMileage = parseInt(document.getElementById('vehicleMileage').value) || 15;
-
-  submitStepAndProgress(4, 5, 'Transit Configuration');
-}
-
-function submitDailyVibesStepAndProgress() {
-  state.dailyPlanData = [];
-  document.querySelectorAll('.daily-card').forEach((card, idx) => {
-    const placeInp = card.querySelector('.daily-place-input');
-    if (!placeInp) return;
-    const dateStr = placeInp.dataset.date;
-    const placeVal = placeInp.value.trim();
-    
-    let transitSelections = [];
-    card.querySelectorAll('.daily-transit-cb:checked').forEach(cb => { transitSelections.push(cb.value); });
-    if(transitSelections.length === 0) transitSelections.push("Local Sightseeing");
-
-    const thingsInp = card.querySelector('.daily-things-input');
-    const thingsVal = thingsInp ? thingsInp.value.trim() : "Wander local city quarters.";
-    
-    let selectedVibes = [];
-    if (idx === (state.days - 1)) {
-      selectedVibes.push("🏡 Heading Home");
-    } else {
-      card.querySelectorAll('.daily-vibe-cb:checked').forEach(cb => selectedVibes.push(cb.value));
-    }
-
-    state.dailyPlanData.push({ 
-      date: dateStr, place: placeVal, vibes: selectedVibes, thingsToDo: thingsVal, dailyTransitList: transitSelections 
-    });
-  });
-
-  submitStepAndProgress(5, 6, 'Vibe Mapping');
-}
-
-async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
-  const err = document.getElementById(`err${stepNum}`); if (err) err.classList.remove('show');
-
-  if (stepNum === 1) {
-    state.startCity = document.getElementById('startCity').value.trim();
-    const customInputVal = document.getElementById('customDest').value.trim();
-    if (customInputVal && !state.destinations.includes(customInputVal)) { state.destinations = [customInputVal]; }
-    if (state.destinations.length === 0 || !state.startCity) { if(err) err.classList.add('show'); return; }
-  }
-  if (stepNum === 2 && !state.crew) { if(err) err.classList.add('show'); return; }
-  if (stepNum === 3) {
-    const datesAreValid = validateDatesOnly();
-    if (!datesAreValid || !state.startDate || !state.endDate) { if (err) err.classList.add('show'); return; }
-  }
-  if (stepNum === 6) {
-    state.budgetVal = parseInt(document.getElementById('budgetAmount').value);
-    if (!state.budgetVal || !state.budgetScope) { if(err) err.classList.add('show'); return; }
-  }
-
-  const activePanel = document.getElementById(`step${stepNum}`);
-  if(activePanel) activePanel.classList.remove('active');
-  
-  currentStep = nextStepNum;
-  const nextPanel = document.getElementById(`step${nextStepNum}`);
-  if(nextPanel) nextPanel.classList.add('active');
-  updateProgressBar();
-  
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  if (nextStepNum === 4) runGeographicalDistanceAndSpeedSuggester();
-  if (nextStepNum === 5) generateDailyVibeSelectors();
-  if (nextStepNum === 7) buildSummary();
-}
-
-function injectExploreTargetIntoItinerary(targetType, contentValue) {
-  modalContextItem.type = targetType;
-  modalContextItem.value = contentValue;
-  
-  const modalLabel = document.getElementById('injectionModalLabel');
-  if (modalLabel) modalLabel.innerHTML = `Enter the day number (<strong>1 to ${state.days}</strong>) where you want to add <em>"${contentValue}"</em> to your generated itinerary:`;
-  
-  const dayInputField = document.getElementById('injectionDayInput');
-  if (dayInputField) {
-    dayInputField.max = state.days;
-    dayInputField.value = 1;
-  }
-  
-  document.getElementById('injectionModal').style.display = 'flex';
-}
-
-function closeInAppModal() { document.getElementById('injectionModal').style.display = 'none'; }
-
-function confirmInAppModalInjection() {
-  const dayInp = document.getElementById('injectionDayInput');
-  const targetDayVal = dayInp ? parseInt(dayInp.value) : 1;
-  const parsedDayIndex = targetDayVal - 1;
-
-  if (isNaN(parsedDayIndex) || parsedDayIndex < 0 || parsedDayIndex >= state.days) {
-    alert(`Invalid day target selection window. Choose a number between 1 and ${state.days}.`); return;
-  }
-
-  const container = document.getElementById(`injectedExploreBox-day-${parsedDayIndex}`);
-  if (!container) { alert("This card layer cannot accept spotlight additions."); closeInAppModal(); return; }
-
-  container.style.display = "block";
-  if (modalContextItem.type === 'cuisine') {
-    container.innerHTML = `🍲 <strong>Added Local Food Pick:</strong> Enjoy local food spots highlighting: <em>${modalContextItem.value}</em>.`;
-  } else if (modalContextItem.type === 'famous') {
-    container.innerHTML = `📸 <strong>Added Main Sight Check:</strong> Squeeze in a visit to: <em>${modalContextItem.value}</em>.`;
-  } else {
-    container.innerHTML = `🌿 <strong>Added Offbeat Path Exploration:</strong> Take a quiet detour to discover: <em>${modalContextItem.value}</em>.`;
-  }
-  
-  closeInAppModal();
-  showAppNotification(`Spotlight target successfully added to Day ${targetDayVal}!`);
-}
-
-function buildSummary() {
-  const perPersonCost = (state.budgetScope === 'Per-Person Scope') ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
-  document.getElementById('tripSummary').innerHTML = `
-    🗺️ Route Plan: <strong>${state.startCity} ➔ ${state.intermediateHub ? state.intermediateHub + ' ➔ ' : ''}${state.destinations[0]}</strong><br>
-    🏁 Map Distance Calculation: <strong>~${state.calculatedDistanceKM} KM</strong><br>
-    📅 Duration Properties: <strong>${state.days} Total Days</strong> (${state.transitDaysAllocation} Days Purely Traveling)<br>
-    💰 Total Planned Budget per Person: <strong>₹${perPersonCost.toLocaleString('en-IN')} INR</strong>
-  `;
-}
-
-async function triggerBuiltInGeneration() {
-  const betaFeedbackText = document.getElementById('singleBetaFeedbackInput').value.trim();
-  if (!betaFeedbackText) { alert("Please share your feedback below to generate the custom itinerary blueprint plan views!"); return; }
-
-  let travelLaunchTicketCost = state.flightTicketCost || 450;
-  if(state.transportList.includes("Road Trip") && state.vehicleMode !== "No Private Vehicle") {
-    travelLaunchTicketCost = Math.round(((state.calculatedDistanceKM * 2 / state.vehicleMileage) * state.fuelPrice) / state.groupSize);
-  }
-
-  const totalHeadPoolCapital = (state.budgetScope === 'Per-Person Scope') ? state.budgetVal : Math.round(state.budgetVal / state.groupSize);
-  const leftSpendableBalance = Math.max(1500, totalHeadPoolCapital - travelLaunchTicketCost);
-  
-  const singleDayFoodPool = Math.round((leftSpendableBalance * 0.33) / state.days); 
-  const singleDayTransitPool = Math.round((leftSpendableBalance * 0.22) / state.days);
-  const singleDayAccommodationPool = Math.round((leftSpendableBalance * 0.38) / state.days);
-
-  let htmlBody = ""; let commonHubExploreItems = "";
-  let totalComputedExpensesSum = travelLaunchTicketCost;
-
-  state.dailyPlanData.forEach((day, index) => {
-    const matchedKey = day.place.toLowerCase().trim();
-    let baseLookup = travelKnowledgeBase["default"];
-    for (const key in travelKnowledgeBase) { if (matchedKey.includes(key)) { baseLookup = travelKnowledgeBase[key]; break; } }
-
-    const primaryFamousSight = baseLookup.famous[index % baseLookup.famous.length];
-    const secondaryGemSight = baseLookup.gems[(index + 1) % baseLookup.gems.length];
-    const morningBreakfastVibe = baseLookup.breakfast[index % baseLookup.breakfast.length];
-    const eveningCulinaryVibe = baseLookup.eats[(index + 2) % baseLookup.eats.length];
-
-    if (index === 0) {
-      commonHubExploreItems = `
-        <div class="discovery-item" onclick="injectExploreTargetIntoItinerary('famous', '${primaryFamousSight}')"><span>🏛️ ${primaryFamousSight}</span> <span class="discovery-tag">Famous</span></div>
-        <div class="discovery-item" onclick="injectExploreTargetIntoItinerary('offbeat', '${secondaryGemSight}')"><span>🌲 ${secondaryGemSight}</span> <span class="discovery-tag">Offbeat</span></div>
-        <div class="discovery-item" onclick="injectExploreTargetIntoItinerary('cuisine', '${eveningCulinaryVibe}')"><span>🍛 ${eveningCulinaryVibe}</span> <span class="discovery-tag">Cuisine</span></div>
-      `;
-    }
-
-    let dayVibeHeaderString = day.vibes.join(" + ");
-    let dynamicMorningStrategy = `🥞 <strong>Morning Vibe:</strong> Start your morning slow with a local breakfast to sample: <em>"${morningBreakfastVibe}"</em>.`;
-    let dynamicEveningStrategy = `🌙 <strong>Evening Vibe:</strong> Head down to the local food stalls to try out: <em>"${eveningCulinaryVibe}"</em>. Keep it light and wander around local lanes.`;
-
-    const isLastDay = (index === (state.days - 1));
-
-    let localCommuteInjectedHtml = "";
-    if (day.dailyTransitList && !day.dailyTransitList.includes("Local Sightseeing") && !isLastDay) {
-      localCommuteInjectedHtml = `
-        <div style="margin: 10px 0; padding: 10px 14px; background: #fffde6; color: #856404; font-size: 13.5px; border-radius: 8px; border: 1px solid #ffeeba;">
-          🔀 <strong>Transit Choices Active Today:</strong> [${day.dailyTransitList.join(', ')}]. Keep transit vouchers ready.
-        </div>
-      `;
-    }
-
-    if (index === 0 && state.days > 1) {
-      dayVibeHeaderString = "🛣️ Travel Day";
-      dynamicMorningStrategy = `🛫 <strong>Setting Off:</strong> Commencing your journey outward from <strong>${state.startCity}</strong> heading to ${day.place}. Settle into your room base and refresh.`;
-      dynamicEveningStrategy = `🌙 <strong>Evening:</strong> Unwind completely from travel. Grab a relaxed meal nearby and charge up for active exploration tomorrow.`;
-    } else if (isLastDay) {
-      dayVibeHeaderString = "🏡 Heading Home";
-      dynamicMorningStrategy = `🧳 <strong>Clear Accommodations:</strong> Complete room checks, pack your souvenirs, and finalize hotel checkout parameters.`;
-      dynamicEveningStrategy = `🏡 <strong>Homeward Leg:</strong> Conclude return journey segments safely back into <strong>${state.startCity}</strong>. Trip complete!`;
-    } else {
-      if(day.vibes.includes("🏛️ Iconic Sights")) dynamicMorningStrategy = `🏛️ <strong>Iconic Sights:</strong> Head out early to beat tourist crowds and wander around: <em>"${primaryFamousSight}"</em>.`;
-      if(day.vibes.includes("🏔️ Adventure Trekking")) dynamicMorningStrategy = `🏔️ <strong>Adventure Track:</strong> Pack fresh hydration goals and hit the outdoor nature exploration paths near ${day.place}.`;
-      if(day.vibes.includes("🧘 Wellness & Slow")) dynamicEveningStrategy = `🧘 <strong>Slow Vibe:</strong> Relax at an uncrowded rooftop cafe or tranquil lake view balcony spot with local spiced tea spreads.`;
-    }
-
-    const foodVar = 1 + ((index % 3) - 1) * 0.12;
-    const stayVar = 1 - (((index + 1) % 3) - 1) * 0.06;
-    
-    const finalFood = Math.floor((singleDayFoodPool * foodVar) / 10) * 10;
-    const finalTransit = Math.floor((singleDayTransitPool * (1 + ((index % 2) * 0.06))) / 10) * 10;
-    const finalStay = Math.floor((singleDayAccommodationPool * stayVar) / 10) * 10;
-    const dayCostAccumulatedTotal = finalFood + finalTransit + finalStay;
-    
-    totalComputedExpensesSum += dayCostAccumulatedTotal;
-
-    const encodedLocation = encodeURIComponent(day.place);
-    const checkInDate = day.date;
-    const liveHotelPortal = `https://www.google.com/travel/search?q=Hotels+in+${encodedLocation}+check+in+${checkInDate}`;
-    const liveFoodPortal = `https://www.google.com/maps/search/Top+Restaurants+and+Food+in+${encodedLocation}`;
-    const liveExplorePortal = `https://www.google.com/maps/search/${encodedLocation}+top+attractions+things+to+do`;
-
-    htmlBody += `
-      <div class="daily-card" style="border-left: 5px solid var(--coral); padding: 20px; margin-bottom: 24px; background:#fff; border-radius:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--border); padding-bottom:10px; margin-bottom:15px;">
-          <h3 style="color:var(--ocean-dark); font-family:'Fraunces', serif; font-size:18px;">☀️ Day ${index + 1} — ${getDayName(day.date)}, ${day.date}</h3>
-          <span style="background:var(--coral-light); color:var(--coral); font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; text-transform:uppercase;">${dayVibeHeaderString}</span>
-        </div>
-        <p style="margin-bottom:12px; font-size:14px;">📍 <strong>Today's Location Base:</strong> <span style="color:var(--ocean); font-weight:600;">${day.place}</span></p>
-        
-        ${localCommuteInjectedHtml}
-
-        <div style="display:flex; flex-direction:column; gap:12px; font-size:14px;">
-          <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);"><strong>🌅 Morning & Mid-Day:</strong> <p style="margin-top:3px; color:var(--ink);">${dynamicMorningStrategy}</p></div>
-          ${!(isLastDay) ? `
-          <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);">
-            <strong>☀️ Afternoon Spotlight:</strong> 
-            <div style="margin-bottom:6px; padding:6px; background:var(--coral-light); border-radius:6px; font-size:13px;">🎯 Custom Choice: <em>"${day.thingsToDo || 'Discover unique attractions chosen straight from live links.'}"</em></div>
-            <div id="injectedExploreBox-day-${index}" style="display:none; padding:8px; background:var(--success-bg); border-left:3px solid var(--success); border-radius:6px; font-size:13px; margin-bottom:10px; color:var(--success);"></div>
-            <ul style="padding-left:18px; font-size:13px; color:var(--ocean-mid);">
-              <li>📸 Local Spot: ${primaryFamousSight}</li>
-              <li>🌲 Secluded Track: ${secondaryGemSight}</li>
-            </ul>
-          </div>` : ''}
-          <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);"><strong>🌙 Evening Delights:</strong> <p style="margin-top:3px; color:var(--ink);">${dynamicEveningStrategy}</p></div>
-        </div>
-        
-        ${!isLastDay ? `
-        <div style="margin-top:18px; display:flex; flex-wrap:wrap; gap:10px; border-top:1px solid var(--border); padding-top:14px;">
-          <a href="${liveHotelPortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--ocean); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">🏨 Live Rates & Availability</a>
-          <a href="${liveFoodPortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--success); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">🍛 Live Restaurant Reviews</a>
-          <a href="${liveExplorePortal}" target="_blank" class="btn" style="flex:1; min-width:140px; background:var(--ocean-mid); color:white; font-size:12px; text-decoration:none; padding:8px 12px; border-radius:8px; text-align:center;">🗺️ Explore Live Attractions</a>
-        </div>` : ''}
-
-        <div style="margin-top:18px; border-top:1px dashed var(--border); padding-top:12px; display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; font-size:12px; background:var(--sand); padding:10px; border-radius:8px;">
-          <div>🍲 <strong>Local Food & Entry:</strong> (₹${finalFood.toLocaleString('en-IN')} approx.)</div>
-          <div>🚌 <strong>Daily Commute:</strong> (₹${finalTransit.toLocaleString('en-IN')} approx.)</div>
-          <div>🛌 <strong>Stay Allocation:</strong> (₹${finalStay.toLocaleString('en-IN')} approx.)</div>
-        </div>
+        <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted)", marginTop: 20 }}>
+          Powered by Ghoomio AI × Claude · Sanchari & Co.
+        </p>
       </div>
-    `;
-  });
-
-  const finalWalletSavingsPerHead = Math.max(0, totalHeadPoolCapital - totalComputedExpensesSum);
-
-  htmlBody += `
-    <div class="daily-card" style="border: 2px solid var(--success); background: var(--success-bg); padding: 22px; border-radius: 16px; margin-top: 28px;">
-      <h3 style="font-family:'Fraunces', serif; color:var(--success); font-size:19px; margin-bottom:8px;">📊 Trip Budget Summary</h3>
-      <div style="font-size:14px; color:var(--ink); line-height:1.7; display:flex; flex-direction:column; gap:4px;">
-        <div>💰 <strong>Your Budget (Per Head):</strong> ₹${totalHeadPoolCapital.toLocaleString('en-IN')} INR</div>
-        <div>🚌 <strong>Travel & Getting There:</strong> ₹${travelLaunchTicketCost.toLocaleString('en-IN')} INR</div>
-        <div>🎒 <strong>Daily Stays, Food, Local Commutes:</strong> ₹${(totalComputedExpensesSum - travelLaunchTicketCost).toLocaleString('en-IN')} INR</div>
-        <hr style="border:0; border-top:1px solid var(--border); margin:8px 0;">
-        <div style="font-size:16px; font-weight:700; color:var(--ocean-dark);">
-          💵 Total Journey Cost: ₹${totalComputedExpensesSum.toLocaleString('en-IN')} INR
-        </div>
-        <div style="font-size:15.5px; font-weight:700; color:var(--success); margin-top:6px; padding:8px 12px; background:white; border-radius:8px; display:inline-block; border:1px solid var(--success);">
-          🎉 <strong>Money Saved:</strong> You saved around <span style="font-weight:800; font-size:17px; color:var(--success);">₹${finalWalletSavingsPerHead.toLocaleString('en-IN')} INR per head</span>! Keep it in your wallet!
-        </div>
-      </div>
-    </div>
-  `;
-
-  document.getElementById('step7').style.display = 'none';
-  document.getElementById('compulsoryFeedbackContainer').style.display = 'none';
-  document.getElementById('stepTabs').style.display = 'none';
-  document.getElementById('itineraryExploreShowcaseHub').innerHTML = commonHubExploreItems;
-  
-  document.getElementById('outputPanel').style.display = 'block';
-  document.getElementById('outputBody').innerHTML = htmlBody;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+    </>
+  );
 }
-
-function setupExclusiveChips(containerId, stateKey, callback) {
-  document.getElementById(containerId).querySelectorAll('.chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.getElementById(containerId).querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
-      chip.classList.add('selected'); state[stateKey] = chip.dataset.val;
-      document.getElementById('customDest').value = "";
-      if(callback) callback(chip.dataset.val);
-    });
-  });
-}
-
-function setupMultiSelectChips(containerId, stateKey, callback) {
-  document.getElementById(containerId).querySelectorAll('.chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      chip.classList.toggle('selected');
-      const val = chip.dataset.val;
-      if (chip.classList.contains('selected')) { if(!state[stateKey].includes(val)) state[stateKey].push(val); } 
-      else { state[stateKey] = state[stateKey].filter(v => v !== val); }
-      document.getElementById('customDest').value = "";
-      if(callback) callback();
-    });
-  });
-}
-
-setupMultiSelectChips('destChips', 'destinations', () => { if(state.startCity) runGeographicalDistanceAndSpeedSuggester(); });
-setupExclusiveChips('crewChips', 'crew', (val) => {
-  const sizeField = document.getElementById('groupSizeField');
-  if (['Friends', 'Family'].includes(val)) { if (sizeField) sizeField.style.display = 'block'; state.groupSize = 4; const gSize = document.getElementById('groupSize'); if (gSize) gSize.value = 4; } 
-  else { if (sizeField) sizeField.style.display = 'none'; state.groupSize = val === 'Solo' ? 1 : 2; }
-  document.getElementById('budgetInputLabel').textContent = val === 'Solo' ? 'Target Budget Allocation Amount (INR)' : 'Target Budget Allocation Amount per Person (INR)';
-});
-
-setupExclusiveChips('vehicleChips', 'vehicleMode', (val) => {
-  const hasVehicle = ['Own Private Car', 'Own Private Bike'].includes(val);
-  const mGroup = document.getElementById('mileageInputGroup');
-  if (mGroup) mGroup.style.display = hasVehicle ? 'block' : 'none';
-  runGeographicalDistanceAndSpeedSuggester();
-});
-
-setupExclusiveChips('budgetScopeChips', 'budgetScope');
-</script>
-</body>
-</html>
