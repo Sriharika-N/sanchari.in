@@ -3,121 +3,91 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Your Travel Planner — Let's Explore!</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Your Travel Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --ink: #0d1117; --paper: #faf8f4; --sand: #f0ebe1; --ocean: #1a3a5c;
-    --ocean-dark: #0f2340; --ocean-mid: #2a5580; --coral: #e8633a;
-    --coral-light: #fdf0eb; --gold: #c9a44a; --muted: #6b7280; --border: #e5e0d8; --white: #ffffff;
-    --success: #2d6647; --success-bg: #e8f5ee;
+    --ink: #0d1117; --paper: #faf8f4; --sand: #f4eee3; --border-muted: #e2dacb;
+    --ocean-dark: #0a192f; --ocean-mid: #172a45; --ocean-light: #30475e;
+    --coral: #e05230; --coral-light: #fdf2ee; --gold: #cca43b; --muted: #6b7280;
+    --border: #dcd4c4; --white: #ffffff; --success: #1b4d3e; --success-bg: #e8f4f0;
+    --radius-lg: 16px; --radius-md: 10px; --radius-sm: 6px; --shadow: 0 12px 40px rgba(0,0,0,0.06);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--paper); color: var(--ink); font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6; min-height: 100vh; position: relative; }
+  body { background: var(--paper); color: var(--ink); font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6; min-height: 100vh; }
   
-  /* Modern App Header Navbar Layout */
-  nav { background: var(--ocean-dark); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
-  .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; font-weight:600; font-family: 'Fraunces', serif; }
+  nav { background: var(--ocean-dark); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+  .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; font-weight: 700; font-family: 'Fraunces', serif; font-size: 20px; }
   .nav-auth-group { display: flex; align-items: center; gap: 12px; }
-  .nav-auth-btn { background: transparent; color: white; border: none; font-size: 13.5px; font-weight: 500; cursor: pointer; padding: 6px 12px; border-radius: 8px; transition: all 0.2s; }
-  .nav-auth-btn.signup-highlight { background: var(--coral); font-weight: 600; }
-  .nav-auth-btn:hover { opacity: 0.9; background: rgba(255,255,255,0.1); }
-  .nav-auth-btn.signup-highlight:hover { background: var(--coral); }
-  .user-badge { color: white; font-size: 13.5px; font-weight: 600; background: var(--ocean-mid); padding: 6px 14px; border-radius: 8px; display: flex; align-items: center; gap: 6px; }
+  .nav-auth-btn { background: transparent; color: white; border: 1px solid rgba(255,255,255,0.2); font-size: 13.5px; font-weight: 600; cursor: pointer; padding: 8px 16px; border-radius: var(--radius-sm); transition: all 0.2s; }
+  .nav-auth-btn.signup-highlight { background: var(--coral); border-color: var(--coral); }
+  .nav-auth-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
+  .nav-auth-btn.signup-highlight:hover { background: #c43d17; border-color: #c43d17; }
+  .user-badge { color: white; font-size: 13.5px; font-weight: 600; background: var(--ocean-light); padding: 8px 16px; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 6px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); }
 
-  .main { max-width: 780px; margin: 40px auto; padding: 0 16px; }
-  .card { background: var(--white); border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid var(--border); }
-  .progress-bar { height: 4px; background: var(--border); }
-  .progress-fill { height: 100%; background: var(--coral); transition: width 0.4s ease; width: 14%; }
+  .main { max-width: 760px; margin: 40px auto; padding: 0 16px; }
+  .card { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border); transition: all 0.3s ease; }
+  .progress-bar { height: 5px; background: var(--sand); }
+  .progress-fill { height: 100%; background: var(--coral); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); width: 14%; }
   
-  .step-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--sand); overflow-x: auto; }
-  .step-tab { flex: 1; padding: 16px 12px; text-align: center; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; white-space: nowrap; letter-spacing: -0.01em; }
-  .step-tab.active { color: var(--ocean); background: var(--white); font-weight: 700; border-bottom: 3px solid var(--coral); }
+  .dashboard-toggle-bar { display: flex; gap: 8px; margin-bottom: 24px; background: var(--sand); padding: 6px; border-radius: var(--radius-md); border: 1px solid var(--border-muted); }
+  .dashboard-toggle-btn { flex: 1; padding: 12px; text-align: center; font-weight: 700; font-size: 14px; border-radius: var(--radius-sm); cursor: pointer; background: transparent; border: none; color: var(--muted); transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .dashboard-toggle-btn.active { background: var(--white); color: var(--ocean-dark); box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.02); }
   
-  .step-panel { display: none; padding: 28px 24px; }
+  .step-tabs { display: flex; border-bottom: 1px solid var(--border); background: #fdfcf9; overflow-x: auto; scrollbar-width: none; }
+  .step-tabs::-webkit-scrollbar { display: none; }
+  .step-tab { flex: 1; padding: 14px 8px; text-align: center; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; white-space: nowrap; border-bottom: 3px solid transparent; transition: all 0.2s; opacity: 0.7; }
+  .step-tab.active { color: var(--coral); font-weight: 700; border-bottom-color: var(--coral); opacity: 1; background: var(--white); }
+  
+  .step-panel { display: none; padding: 32px 32px; }
   .step-panel.active { display: block; }
-  .step-heading { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 4px; }
-  .step-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
-  label { display: block; font-size: 12px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 5px; text-transform: uppercase; }
+  .step-heading { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 6px; letter-spacing: -0.01em; }
+  .step-sub { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
   
-  /* Password Visibility Eye Toggle Layout Positioning */
-  .password-input-container { position: relative; width: 100%; }
-  .password-toggle-eye { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--muted); font-size: 16px; user-select: none; z-index: 5; margin-top: 2px; }
-
+  label { display: block; font-size: 11.5px; font-weight: 700; color: var(--ocean-dark); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
   input[type="text"], input[type="date"], input[type="time"], input[type="number"], input[type="email"], input[type="password"], select, textarea {
-    width: 100%; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; background: white; margin-bottom: 5px;
+    width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-md); font-size: 14.5px; outline: none; background: var(--white); color: var(--ink); font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s;
   }
-  .form-row { display: flex; gap: 16px; margin-bottom: 18px; }
+  input:focus, select:focus, textarea:focus { border-color: var(--ocean-light); box-shadow: 0 0 0 4px rgba(48, 71, 94, 0.08); }
+  
+  .form-row { display: flex; gap: 16px; margin-bottom: 20px; }
   .form-row .form-group { flex: 1; margin-bottom: 0; }
-  .form-group { margin-bottom: 18px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip { padding: 7px 14px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; background: white; }
-  .chip.selected { border-color: var(--coral); color: var(--coral); background: var(--coral-light); font-weight: 600; }
-  .compulsory-feedback-card { background: var(--coral-light); border: 1.5px solid var(--coral); border-radius: 14px; padding: 16px; margin: 20px 24px 24px; }
-  .btn-row { display: flex; gap: 10px; margin-top: 24px; }
-  .btn { padding: 11px 22px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; justify-content: center; width: 100%; }
-  .btn-primary { background: var(--coral); color: white; flex: 1; }
-  .btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--border); }
-  .error-box { background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 10px; padding: 12px 16px; margin-top: 14px; display: none; font-size: 13px; color: #991b1b; }
-  .error-box.show { display: block; }
+  .form-group { margin-bottom: 20px; }
   
-  .daily-card { background: var(--white); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 16px; }
-  .vibe-checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
-  .vibe-checkbox-label { font-size: 13px; display: flex; align-items: center; gap: 4px; background: var(--paper); padding: 4px 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+  .chip { padding: 9px 16px; border: 1.5px solid var(--border); border-radius: 24px; font-size: 13.5px; font-weight: 600; color: var(--ink); cursor: pointer; background: var(--white); transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+  .chip:hover { border-color: var(--muted); background: #fafafa; }
+  .chip.selected { border-color: var(--coral); color: var(--coral); background: var(--coral-light); font-weight: 700; box-shadow: 0 4px 10px rgba(224, 82, 48, 0.08); }
   
-  .live-helper-link { 
-    color: var(--white) !important; font-weight: 600; text-decoration: none; 
-    background: var(--coral); padding: 5px 10px !important; border-radius: 6px; 
-    border: 1px solid var(--coral); font-size: 12px !important; display: inline-flex; 
-    align-items: center; gap: 4px; transition: all 0.2s ease-in-out;
-    box-shadow: 0 2px 4px rgba(232, 99, 58, 0.1); text-transform: none;
-  }
-  .live-helper-link:hover { background: var(--ocean); border-color: var(--ocean); color: var(--white) !important; transform: translateY(-1px); }
-
-  /* Window Overlay Systems */
-  .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13,17,23,0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; }
-  .auth-modal { background: white; border-radius: 20px; max-width: 400px; width: 90%; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-  .auth-toggle-link { color: var(--coral); font-weight: 600; cursor: pointer; text-decoration: underline; font-size: 13px; }
+  .compulsory-feedback-card { background: #fbf9f3; border-top: 1px solid var(--border); padding: 24px 32px; }
+  .btn-row { display: flex; gap: 12px; margin-top: 28px; }
+  .btn { padding: 12px 24px; border-radius: var(--radius-md); font-size: 14.5px; font-weight: 700; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; justify-content: center; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); font-family: inherit; text-decoration: none; }
+  .btn-primary { background: var(--coral); color: white; box-shadow: 0 4px 14px rgba(224, 82, 48, 0.25); }
+  .btn-primary:hover { background: #c43d17; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(224, 82, 48, 0.35); }
+  .btn-ghost { background: var(--white); color: var(--ocean-dark); border: 1.5px solid var(--border); }
+  .btn-ghost:hover { background: var(--sand); border-color: var(--muted); }
   
-  .discovery-hub { display: flex; flex-direction: column; gap: 8px; background: var(--sand); padding: 12px; border-radius: 8px; margin-top: 8px; }
-  .discovery-item { background: var(--white); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: space-between; }
+  .password-input-container { position: relative; width: 100%; }
+  .password-toggle-eye { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--muted); font-size: 16px; user-select: none; z-index: 5; }
+  
+  .daily-card { background: var(--white); border: 1px solid var(--border); padding: 20px; border-radius: var(--radius-md); margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.01); }
+  .stopover-card-block { background: #fdfdfd; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.01); }
+  .discovery-hub { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--sand); padding: 14px; border-radius: var(--radius-md); margin-top: 10px; border: 1px solid var(--border-muted); }
+  .discovery-item { background: var(--white); border: 1px solid var(--border); padding: 10px 14px; border-radius: var(--radius-md); font-size: 13.5px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between; font-weight: 500; }
   .discovery-item:hover { border-color: var(--coral); background: var(--coral-light); color: var(--coral); }
-  .discovery-tag { font-size: 10px; text-transform: uppercase; background: var(--paper); padding: 2px 6px; border-radius: 4px; font-weight: 600; color: var(--muted); }
+  .discovery-tag { font-size: 10px; text-transform: uppercase; background: var(--paper); padding: 2px 6px; border-radius: 4px; font-weight: 700; color: var(--muted); border: 1px solid var(--border-muted); }
 
-  .app-notification-toast {
-    position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-    background: var(--ocean-dark); color: white; padding: 14px 24px;
-    border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-    z-index: 2000; font-size: 14px; font-weight: 500; display: flex;
-    align-items: center; gap: 10px; transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    border: 1px solid var(--ocean-mid); max-width: 90%; width: 500px;
-  }
-  .app-notification-toast.show { top: 20px; }
-
-  .injection-modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(15, 35, 64, 0.6); backdrop-filter: blur(4px);
-    display: none; justify-content: center; align-items: center; z-index: 3000;
-  }
-  .injection-modal-container {
-    background: var(--white); border-radius: 16px; padding: 24px;
-    width: 90%; max-width: 440px; box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-    border: 1px solid var(--border); animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-  @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-  .duration-summary-card {
-    background: var(--coral-light); border: 1.5px solid var(--coral); border-radius: 12px;
-    padding: 14px 18px; margin-bottom: 18px; display: flex; justify-content: space-around; align-items: center; text-align: center;
-  }
-  .duration-metric { font-size: 18px; font-weight: 700; color: var(--ocean-dark); }
-  .duration-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+  .app-notification-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--ocean-dark); color: white; padding: 14px 28px; border-radius: var(--radius-md); box-shadow: 0 20px 40px rgba(0,0,0,0.2); z-index: 2000; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 10px; transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); max-width: 90%; border: 1px solid rgba(255,255,255,0.1); }
+  .app-notification-toast.show { top: 24px; }
+  .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,25,47,0.4); backdrop-filter: blur(6px); display: none; justify-content: center; align-items: center; z-index: 1000; }
+  .auth-modal { background: white; border-radius: var(--radius-lg); max-width: 420px; width: 90%; padding: 32px; box-shadow: 0 30px 70px rgba(0,0,0,0.15); border: 1px solid var(--border); }
+  .injection-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,25,47,0.4); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 3000; }
+  .injection-modal-container { background: white; border-radius: var(--radius-lg); padding: 28px; width: 90%; max-width: 440px; box-shadow: 0 25px 60px rgba(0,0,0,0.15); border: 1px solid var(--border); }
   
-  .stopover-card-block { 
-    background: var(--white); border: 1px solid var(--border); border-radius: 14px; 
-    padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-  }
+  .live-helper-link { color: var(--ocean-mid) !important; font-weight: 600; text-decoration: none; background: var(--sand); padding: 6px 12px !important; border-radius: var(--radius-sm); font-size: 12px !important; display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--border-muted); transition: all 0.2s; }
+  .live-helper-link:hover { background: var(--ocean-light); color: white !important; border-color: var(--ocean-light); }
+  .info-summary-card { background: #fbfaf5; border: 1px dashed var(--border); padding: 18px; border-radius: var(--radius-md); font-size: 14.5px; color: var(--ink); line-height: 1.8; }
 </style>
 </head>
 <body>
@@ -127,7 +97,7 @@
 <!-- Custom Spotlight Insertion Window Component -->
 <div id="injectionModal" class="injection-modal-overlay">
   <div class="injection-modal-container">
-    <h3 style="font-family:'Fraunces', serif; color:var(--ocean-dark); font-size:18px; margin-bottom:8px;">Add Spotlight Item</h3>
+    <h3 style="font-family:'Fraunces', serif; color:var(--ocean-dark); font-size:19px; margin-bottom:8px;">Add Spotlight Item</h3>
     <p id="injectionModalLabel" style="font-size:13.5px; color:var(--muted); margin-bottom:16px;"></p>
     <div class="form-group">
       <label>Target Trip Day Number:</label>
@@ -135,20 +105,14 @@
     </div>
     <div class="btn-row" style="margin-top: 16px;">
       <button class="btn btn-ghost" onclick="closeInAppModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmInAppModalInjection()" style="background: var(--ocean-mid); width: auto; margin-top: 0;">Confirm Addition</button>
+      <button class="btn btn-primary" onclick="confirmInAppModalInjection()" style="margin-top: 0; width: auto;">Confirm Addition</button>
     </div>
   </div>
 </div>
 
-<nav>
-  <a class="nav-brand" href="#">✈️ Your Travel Planner</a>
-  <div class="nav-auth-group" id="navAuthGroup"></div>
-</nav>
-
-<!-- TRAVELLER DETAILS PROFILE ONBOARDING POPUP -->
 <div class="auth-overlay" id="profileCompletionOverlay" style="z-index: 1100;">
   <div class="auth-modal">
-    <h3 style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark); margin-bottom:12px;">Tell Us About You ✨</h3>
+    <h3 style="font-family:'Fraunces', serif; font-size:21px; color:var(--ocean-dark); margin-bottom:12px;">Tell Us About You ✨</h3>
     <div class="form-group"><label>Full Name</label><input type="text" id="profileName" placeholder="Alex Mercer"></div>
     <div class="form-row">
       <div class="form-group"><label>Age</label><input type="number" id="profileAge" min="1" max="120" value="31"></div>
@@ -169,12 +133,12 @@
 
 <div class="main">
   
-  <!-- ROOT GATEWAY CORRIDOR ENTRY PANEL (FIXED: Restored missing elements completely) -->
-  <div class="card" id="unauthenticatedGatewayCard" style="display: block; padding: 30px; max-width: 460px; margin: 40px auto;">
-    <h2 id="gatewayTitle" style="font-family:'Fraunces', serif; color: var(--ocean-dark); margin-bottom: 6px; text-align: center;">Welcome Explorer 🗺️</h2>
-    <p style="font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 24px;">Please choose an entry option to unlock travel route architectures.</p>
+  <!-- ROOT GATEWAY CORRIDOR ENTRY PANEL -->
+  <div class="card" id="unauthenticatedGatewayCard" style="display: block; padding: 36px; max-width: 460px; margin: 60px auto;">
+    <h2 id="gatewayTitle" style="font-family:'Fraunces', serif; color: var(--ocean-dark); margin-bottom: 6px; text-align: center; font-size: 28px;">Welcome Explorer 🗺️</h2>
+    <p style="font-size: 13.5px; color: var(--muted); text-align: center; margin-bottom: 24px;">Please choose an option to unlock customizable travel tracking features.</p>
     
-    <div class="dashboard-toggle-bar" id="gatewayTabsRow" style="margin-bottom: 20px; padding: 4px;">
+    <div class="dashboard-toggle-bar" id="gatewayTabsRow" style="margin-bottom: 24px; padding: 4px;">
       <button class="dashboard-toggle-btn active" id="gatewayTabSignin" onclick="toggleGatewayInterfaceMode('signin')">Sign Up</button>
       <button class="dashboard-toggle-btn" id="gatewayTabLogin" onclick="toggleGatewayInterfaceMode('login')">Log In</button>
     </div>
@@ -189,18 +153,18 @@
       </div>
     </div>
     
-    <div style="text-align: right; margin-top: -8px; margin-bottom: 18px;" id="forgotPasswordLinkRowWrapper">
-      <span style="color: var(--coral); cursor: pointer; font-size: 13px; text-decoration: underline;" onclick="toggleGatewayInterfaceMode('forgot')">Forgot Password?</span>
+    <div style="text-align: right; margin-top: -8px; margin-bottom: 20px;" id="forgotPasswordLinkRowWrapper">
+      <span style="color: var(--coral); cursor: pointer; font-size: 13.5px; font-weight: 600; text-decoration: underline;" onclick="toggleGatewayInterfaceMode('forgot')">Forgot Password?</span>
     </div>
     
-    <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" id="gatewaySubmitBtn" onclick="handleGatewayAuthenticationSubmit()">Create Account & Start</button>
+    <button class="btn btn-primary" style="width: 100%;" id="gatewaySubmitBtn" onclick="handleGatewayAuthenticationSubmit()">Create Account & Start</button>
     <div class="error-box" id="gatewayErrorMsg" style="margin-top: 14px;"></div>
   </div>
 
   <!-- PASSWORD RECOVERY OVERLAY PANEL -->
-  <div class="card" id="updatePasswordGatewayCard" style="display: none; padding: 30px; max-width: 460px; margin: 40px auto;">
-    <h2 style="font-family:'Fraunces', serif; color: var(--ocean-dark); margin-bottom: 6px; text-align: center;">Set New Password 🔑</h2>
-    <p style="font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 24px;">Please enter your new secure password configuration down below.</p>
+  <div class="card" id="updatePasswordGatewayCard" style="display: none; padding: 36px; max-width: 460px; margin: 60px auto;">
+    <h2 style="font-family:'Fraunces', serif; color: var(--ocean-dark); margin-bottom: 6px; text-align: center; font-size: 26px;">Set New Password 🔑</h2>
+    <p style="font-size: 13.5px; color: var(--muted); text-align: center; margin-bottom: 24px;">Please enter your new secure password configuration down below.</p>
     <div class="form-group">
       <label>New Secure Password</label>
       <div class="password-input-container">
@@ -224,16 +188,16 @@
     <div class="card" id="itineraryWizardFormWrapper" style="display: block;">
       <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
       <div class="step-tabs" id="stepTabs">
-        <div class="step-tab active">🗺️ Dest</div>
-        <div class="step-tab">👥 Crew</div>
-        <div class="step-tab">📅 Dates</div>
-        <div class="step-tab">🚗 Transit</div>
-        <div class="step-tab">✨ Vibes</div>
-        <div class="step-tab">💰 Budget</div>
-        <div class="step-tab">🚀 Review</div>
+        <div class="step-tab active" onclick="navigateToStep(1)">🗺️ Dest</div>
+        <div class="step-tab" onclick="navigateToStep(2)">👥 Crew</div>
+        <div class="step-tab" onclick="navigateToStep(3)">📅 Dates</div>
+        <div class="step-tab" onclick="navigateToStep(4)">🚗 Transit</div>
+        <div class="step-tab" onclick="navigateToStep(5)">✨ Vibes</div>
+        <div class="step-tab" onclick="navigateToStep(6)">💰 Budget</div>
+        <div class="step-tab" onclick="navigateToStep(7)">🚀 Review</div>
       </div>
 
-      <!-- STEP 1: DESTINATIONS Selection (FIXED: Dynamic Chips Connected) -->
+      <!-- STEP 1: DESTINATIONS -->
       <div class="step-panel active" id="step1">
         <div class="step-heading">Where are we exploring? 🗺️</div>
         <p class="step-sub">Select your primary travel destination hub below.</p>
@@ -260,7 +224,7 @@
         <div class="form-group"><label>Or enter custom location</label><input type="text" id="customDest" placeholder="e.g. Ooty, Wayanad..."></div>
         <div class="form-group"><label>Starting Location</label><input type="text" id="startCity" value="Bangalore"></div>
         <button class="btn btn-primary" style="width: auto; margin-top: 0;" onclick="submitStepAndProgress(1, 2, 'Destinations Selection')">Next — Companion Crew →</button>
-        <div class="error-box" id="err1">Please select at least one destination parameter and enter starting location.</div>
+        <div class="error-box" id="err1">Please map a destination hub and enter your starting location.</div>
       </div>
 
       <!-- STEP 2: CREW MAPPER -->
@@ -276,8 +240,14 @@
             <div class="chip" data-val="Family">👨‍👩‍👧 Family (Consolidated Group Budget)</div>
           </div>
         </div>
-        <div class="form-group" id="groupSizeField" style="display:none;"><label>Total Travelers</label><input type="number" id="groupSize" min="1" value="1"></div>
-        <div class="btn-row"><button class="btn btn-ghost" onclick="goBack(1)">← Back</button><button class="btn btn-primary" onclick="submitStepAndProgress(2, 3, 'Companion Mapping')">Next — Pick Dates →</button></div>
+        <div class="form-group" id="groupSizeField" style="display:none;">
+          <label>Total Number of Travelers</label>
+          <input type="number" id="groupSize" min="1" value="1" oninput="state.groupSize = parseInt(this.value) || 1; runGeographicalDistanceAndSpeedSuggester();">
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="goBack(1)">← Back</button>
+          <button class="btn btn-primary" style="width: auto;" onclick="submitStepAndProgress(2, 3, 'Companion Mapping')">Next — Pick Dates →</button>
+        </div>
         <div class="error-box" id="err2">Please select a companion style configuration.</div>
       </div>
 
@@ -298,12 +268,15 @@
           <div class="form-group"><label>Start Time</label><input type="time" id="startTime" value="06:00" onchange="validateDatesOnly()"></div>
           <div class="form-group"><label>End Time</label><input type="time" id="endTime" value="22:00" onchange="validateDatesOnly()"></div>
         </div>
-        <div class="error-box" id="dateErrorBox">⚠️ Return logic calendar variance caught. Start date cannot follow end date.</div>
-        <div class="btn-row"><button class="btn btn-ghost" onclick="goBack(2)">← Back</button><button class="btn btn-primary" id="btnStep3" onclick="submitStepAndProgress(3, 4, 'Date Setup')">Next — Transit Settings →</button></div>
+        <div class="error-box" id="dateErrorBox">⚠️ Return date cannot follow departure timing frames.</div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="goBack(2)">← Back</button>
+          <button class="btn btn-primary" style="width: auto;" id="btnStep3" onclick="submitStepAndProgress(3, 4, 'Date Setup')">Next — Transit Settings →</button>
+        </div>
         <div class="error-box" id="err3">Please choose valid dates and journey scheduling metrics.</div>
       </div>
 
-      <!-- STEP 4: TRANSIT SETUP MODULAR PIPELINES (FIXED: Re-integrated missing Phase arrays) -->
+      <!-- STEP 4: TRANSIT SETUP MODULAR PIPELINES -->
       <div class="step-panel" id="step4">
         <div class="step-heading">Transit & Travel Settings 🚗💨</div>
         <p class="step-sub">Map out your travel logistics and configure transport choices cleanly.</p>
@@ -361,13 +334,25 @@
         </div>
 
         <div class="stopover-card-block">
-          <label>🏡 Phase 4: Heading Back Home (Closing the Loop)</label>
+          <label>🏡 Phase 4: Heading Back Home</label>
           <input type="text" id="homewardStartCityInput" placeholder="Starting return journey city name" onchange="syncHomewardStartCityValue()" style="margin: 6px 0 10px;">
-          <div class="chips" id="leg3TransportChips"><div class="chip" data-val="Drive Return">🚗 Drive Back Home</div></div>
-          <div id="leg3CostDynamicGroup" style="display:none; background: var(--paper); padding:12px; border-radius:8px; margin-top:10px;" class="form-row">
-            <input type="hidden" id="leg3TicketCostInput" value="0">
-            <div><label>Return Petrol Price</label><input type="number" id="leg3FuelPrice" value="102" min="0" onchange="runGeographicalDistanceAndSpeedSuggester()"></div>
-            <div><label>Vehicle Mileage</label><input type="number" id="leg3VehicleMileage" value="15" min="1" onchange="runGeographicalDistanceAndSpeedSuggester()"></div>
+          
+          <div class="chips" id="leg3TransportChips" style="margin-top:6px;">
+            <div class="chip" data-val="Flight Return">✈️ Flying Back Home</div>
+            <div class="chip" data-val="Train Return">🚂 Taking a Train Back</div>
+            <div class="chip" data-val="Bus Return">🚌 Taking a Bus Back</div>
+            <div class="chip" data-val="Drive Return">🚗 Driving All the Way Back</div>
+          </div>
+          
+          <div id="leg3CostDynamicGroup" style="display:none; background: var(--paper); padding:12px; border-radius:8px; margin-top:10px;">
+            <div class="form-group" id="leg3FareWrapper" style="display:none;">
+              <label id="leg3FareLabel">Return Ticket Cost per Traveler (INR)</label>
+              <input type="number" id="leg3TicketCostInput" value="0" min="0" onchange="runGeographicalDistanceAndSpeedSuggester()">
+            </div>
+            <div id="leg3FuelWrapper" style="display:none;" class="form-row">
+              <div><label>Return Petrol Price (INR/Litre)</label><input type="number" id="leg3FuelPrice" value="102" min="0" onchange="runGeographicalDistanceAndSpeedSuggester()"></div>
+              <div><label>Vehicle Mileage (KM/Litre)</label><input type="number" id="leg3VehicleMileage" value="15" min="1" onchange="runGeographicalDistanceAndSpeedSuggester()"></div>
+            </div>
           </div>
         </div>
 
@@ -406,13 +391,14 @@
       <div class="step-panel" id="step7">
         <div class="step-heading" style="color:var(--coral);">Adventure is calling! Pack your bags! 🎒🔥</div>
         <p class="step-sub">Everything checks out perfectly. Get ready for an absolutely phenomenal journey!</p>
-        <div id="tripSummary" style="background:var(--sand); padding:16px; border-radius:10px; margin-bottom:15px;"></div>
+        <div id="tripSummary" class="info-summary-card" style="margin-bottom:15px;"></div>
         <div class="btn-row"><button class="btn btn-ghost" onclick="goBack(6)">← Back</button><button class="btn btn-primary" style="background:var(--ocean-dark);" onclick="triggerBuiltInGeneration()">🚀 Generate Itinerary Blueprint</button></div>
         <div id="apiStatusMessage" style="margin-top:14px; font-weight:600;"></div>
       </div>
 
       <div class="compulsory-feedback-card" id="compulsoryFeedbackContainer">
-        <div class="feedback-title" style="font-weight:600; font-size:14px; color: var(--ocean-dark); margin-bottom: 4px;">📋 Beta Tester Portal Review</div>
+        <div class="feedback-title" style="font-weight:600; font-size:14px; color: var(--ocean-dark); margin-bottom: 6px;">📋 Beta Tester Portal Review</div>
+        <p style="font-size: 12.5px; color: var(--muted); margin-bottom: 10px;">Please share how this application workflow feels and what additional details or features you think this layout page should display to advance.</p>
         <textarea id="singleBetaFeedbackInput" rows="2" placeholder="How does the app feel, and what else should this page show?..."></textarea>
       </div>
 
@@ -452,9 +438,6 @@
 </div>
 
 <script>
-// =========================================================================
-// UNIFIED DATA STORAGE METRICS & HOISTING PIPELINES CONFIG
-// =========================================================================
 const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlicHNxbGxnaXRudHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NTM1NDQsImV4cCI6MjA5OTMyOTU0NH0.V8FT2cDAJMcfv1mtgCGWZck5wxswAlj7tyW-KbaJ8bM"; 
 
@@ -606,7 +589,7 @@ async function runGeographicalDistanceAndSpeedSuggester() {
   syncDynamicCostUIFields(); 
   const suggestionBox = document.getElementById('distanceSuggestionBox');
   if (!state.destinations.length || !state.transport) { if(suggestionBox) suggestionBox.style.display = 'none'; return; }
-  if(suggestionBox) { suggestionBox.style.display = 'block'; suggestionBox.innerHTML = `⏳ Figuring out route choices and OSRM configurations...`; }
+  if(suggestionBox) { suggestionBox.style.display = 'block'; suggestionBox.innerHTML = `⏳ Figuring out route choices...`; }
 
   try {
     const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=`;
@@ -623,28 +606,45 @@ async function runGeographicalDistanceAndSpeedSuggester() {
       if (osrmData.routes && osrmData.routes.length) { finalCalculatedKM = Math.round(osrmData.routes[0].distance / 1000); }
     }
     state.calculatedDistanceKM = finalCalculatedKM;
-    if (suggestionBox) suggestionBox.innerHTML = `🗺️ <strong>Total Map Loop Distance:</strong> ~${finalCalculatedKM} KM loop tracked cleanly from hometown lines.`;
+    
+    let outboundCostPerHead = (state.transport === 'Full Road Trip') ? Math.round((finalCalculatedKM / state.leg1VehicleMileage) * state.leg1FuelPrice / state.groupSize) : state.leg1TicketCost;
+    let returnCostPerHead = (state.leg3Transport === 'Drive Return') ? Math.round((finalCalculatedKM / state.leg3VehicleMileage) * state.leg3FuelPrice / state.groupSize) : state.leg3TicketCost;
+    let totalLocalCommuteCostPerHead = Math.round((state.leg2DailyCost * state.days) / state.groupSize);
+    let cumulativeTransitSpend = outboundCostPerHead + returnCostPerHead + totalLocalCommuteCostPerHead;
+
+    if (suggestionBox) {
+      suggestionBox.innerHTML = `🗺️ <strong>Total Map Loop Distance:</strong> ~${finalCalculatedKM} KM loop tracked.<br>💰 <strong>Estimated Transit Overhead baseline (Per Head):</strong> ₹${cumulativeTransitSpend.toLocaleString('en-IN')} INR total transport weight factor.`;
+    }
   } catch (e) { if (suggestionBox) suggestionBox.innerHTML = `🏁 Transit Loop configured.`; }
 }
 
 function syncDynamicCostUIFields() {
+  // Phase 1 Logic Setup
   const leg1Group = document.getElementById('leg1CostDynamicGroup');
   const leg1FareWrap = document.getElementById('leg1FareWrapper');
   const leg1FuelWrap = document.getElementById('leg1FuelWrapper');
   if (state.transport && leg1Group) {
     leg1Group.style.display = 'block';
-    if (state.transport.includes('Road') || state.transport.includes('Drive')) { leg1FuelWrap.style.display = 'flex'; leg1FareWrap.style.display = 'none'; } 
+    if (state.transport.includes('Road') || state.transport.includes('Full Road Trip')) { leg1FuelWrap.style.display = 'flex'; leg1FareWrap.style.display = 'none'; } 
     else { leg1FuelWrap.style.display = 'none'; leg1FareWrap.style.display = 'block'; }
   }
+  
+  // Phase 4 Logic Setup matching Phase 1 exactly
+  const leg3Group = document.getElementById('leg3CostDynamicGroup');
+  const leg3FareWrap = document.getElementById('leg3FareWrapper');
+  const leg3FuelWrap = document.getElementById('leg3FuelWrapper');
+  if (state.leg3Transport && leg3Group) {
+    leg3Group.style.display = 'block';
+    if (state.leg3Transport.includes('Drive Return')) { leg3FuelWrap.style.display = 'flex'; leg3FareWrap.style.display = 'none'; }
+    else { leg3FuelWrap.style.display = 'none'; leg3FareWrap.style.display = 'block'; }
+  }
+
   const leg2Group = document.getElementById('leg2DailyCostGroup');
   if(leg2Group) leg2Group.style.display = state.leg2Transport.length > 0 ? 'block' : 'none';
 }
 </script>
 
 <script>
-// =========================================================================
-// WIZARD STEP HANDLERS & LIFECYCLE MANAGEMENT INTERCEPTORS
-// =========================================================================
 let currentStep = 1;
 
 function updateProgressBar() {
@@ -653,16 +653,25 @@ function updateProgressBar() {
   const tabs = document.getElementById('stepTabs').children;
   for (let i = 0; i < tabs.length; i++) {
     tabs[i].classList.toggle('active', i === currentStep - 1);
-    tabs[i].onclick = () => { navigateToStep(i + 1); };
   }
 }
 
 function navigateToStep(stepNum) {
+  // Enforce feedback constraints when navigating forward via tab selections
+  if (stepNum > currentStep) {
+    const feedbackText = document.getElementById('singleBetaFeedbackInput').value.trim();
+    if (!feedbackText) {
+      showAppNotification("Please fill out the feedback with your whole heart and genuinely! ❤️");
+      return;
+    }
+  }
+
   const currentPanel = document.getElementById(`step${currentStep}`);
   if(currentPanel) currentPanel.classList.remove('active');
   currentStep = stepNum;
   const targetPanel = document.getElementById(`step${currentStep}`);
   if(targetPanel) targetPanel.classList.add('active');
+  
   updateProgressBar();
   if (currentStep === 4) runGeographicalDistanceAndSpeedSuggester();
   if (currentStep === 5) generateDailyVibeSelectors(); 
@@ -678,6 +687,7 @@ window.addEventListener('load', () => {
     document.getElementById('updatePasswordGatewayCard').style.display = 'block';
     showAppNotification("Recovery token verified. Set your new password below.");
   }
+  updateProgressBar();
 });
 
 travelPlannerSupabaseClient.auth.onAuthStateChange(async (event, session) => {
@@ -758,10 +768,10 @@ async function handleGatewayAuthenticationSubmit() {
     if (!email) { errMsg.textContent = "Please enter your email."; errMsg.classList.add('show'); return; }
     const { error } = await travelPlannerSupabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
     if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); }
-    else { showAppNotification("Reset email link triggered successfully!"); toggleGatewayInterfaceMode('login'); }
+    else { showAppNotification("Reset link fired successfully!"); toggleGatewayInterfaceMode('login'); }
     return;
   }
-  if (!email || !password) { errMsg.textContent = "Please fill out all identification fields."; errMsg.classList.add('show'); return; }
+  if (!email || !password) { errMsg.textContent = "Please complete credentials registration blocks."; errMsg.classList.add('show'); return; }
   if (currentGatewayMode === 'signin') { 
     const { error } = await travelPlannerSupabaseClient.auth.signUp({ email, password }); 
     if(error) { errMsg.textContent = error.message; errMsg.classList.add('show'); }
@@ -816,9 +826,9 @@ function generateDailyVibeSelectors() {
       <div style="font-weight:600; margin-bottom:8px;">📅 Day ${i+1} (${getDayName(dateStr)})</div>
       <label>Location Base Focus</label><input type="text" class="daily-place-input" data-date="${dateStr}" value="${state.destinations[0] || ''}" oninput="updateLiveHelperMapLinks(this, '${dateStr}')">
       <div style="display:flex; gap:6px; margin: 8px 0;">
-        <a href="https://www.google.com/maps/search/Top+Restaurants+in+${encodeURIComponent(state.destinations[0] || '')}" id="live-link-food-${dateStr}" target="_blank" class="live-helper-link">🍛 Foods</a>
-        <a href="https://www.google.com/maps/search/${encodeURIComponent(state.destinations[0] || '')}+attractions" id="live-link-sights-${dateStr}" target="_blank" class="live-helper-link">Attractions</a>
-        <a href="https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(state.destinations[0] || '')}" id="live-link-stay-${dateStr}" target="_blank" class="live-helper-link">Stays</a>
+        <a href="https://www.google.com/maps/search/Restaurants+in+${encodeURIComponent(state.destinations[0] || '')}" id="live-link-food-${dateStr}" target="_blank" class="live-helper-link">🍛 Foods Matrix</a>
+        <a href="https://www.google.com/maps/search/${encodeURIComponent(state.destinations[0] || '')}+attractions" id="live-link-sights-${dateStr}" target="_blank" class="live-helper-link">🏛️ Attractions</a>
+        <a href="https://www.google.com/travel/search?q=Hotels+in+${encodeURIComponent(state.destinations[0] || '')}" id="live-link-stay-${dateStr}" target="_blank" class="live-helper-link">🛌 Stays Finder</a>
       </div>
       <label>Transit Style</label><select class="daily-transit-mode-select"><option value="Local Sightseeing">Local Commute</option><option value="Inter-City Transfer">Inter-City Link</option></select>
       <label style="margin-top:8px;">Vibe Tags</label>
@@ -856,6 +866,12 @@ function confirmInAppModalInjection() {
 }
 
 async function submitStepAndProgress(sNum, nextNum, name) {
+  const feedback = document.getElementById('singleBetaFeedbackInput').value.trim();
+  if(!feedback) { 
+    showAppNotification("Please fill out the feedback with your whole heart and genuinely! ❤️"); 
+    return; 
+  }
+
   const err = document.getElementById(`err${sNum}`); if(err) err.classList.remove('show');
   if (sNum === 1) {
     state.startCity = document.getElementById('startCity').value.trim();
@@ -881,8 +897,6 @@ async function submitStepAndProgress(sNum, nextNum, name) {
   }
   if (sNum === 6) { state.budgetVal = parseInt(document.getElementById('budgetAmount').value) || 15000; }
 
-  const feedback = document.getElementById('singleBetaFeedbackInput').value.trim();
-  if(!feedback) { showAppNotification("Beta response metrics tracking entries are required."); return; }
   await travelPlannerSupabaseClient.from('journey_feedback').insert([{ step_number: sNum, step_name: name, feedback_rating: 'v16_stable', user_comments: feedback }]);
   
   document.getElementById('singleBetaFeedbackInput').value = '';
@@ -896,7 +910,19 @@ async function saveCurrentTripToAccount() {
 }
 
 function buildSummary() {
-  document.getElementById('tripSummary').innerHTML = `🗺️ Route Summary Loop: <strong>${state.startCity} ➔ ${state.destinations[0]}</strong><br>📅 Total Calendar Span: <strong>${state.days} Days Matrix Mapped</strong>`;
+  let routingPathStr = `${state.startCity} ➔ ${state.destinations[0]}`;
+  if (state.routeStyle === 'Multi-City' && state.stopoverCities.length > 0) {
+    let stopNames = state.stopoverCities.map(c => c.cityName);
+    routingPathStr = `${state.startCity} ➔ ${stopNames.join(' ➔ ')} ➔ ${state.destinations[0]}`;
+  }
+  
+  document.getElementById('tripSummary').innerHTML = `
+    🗺️ <strong>Route Summary Layout:</strong> ${routingPathStr}<br>
+    🏁 <strong>Mapped Mileage Loops:</strong> ~${state.calculatedDistanceKM || 310} KM tracked online.<br>
+    📅 <strong>Timeline Capacity Span:</strong> ${state.days} Days / ${state.nights} Nights configured safely.<br>
+    🚗 <strong>Transit Profile Mode:</strong> Outbound [${state.transport}] | Local [${state.leg2Transport.join(', ')}] | Homeward [${state.leg3Transport}]<br>
+    💰 <strong>Capital Focus Framework:</strong> ₹${state.budgetVal.toLocaleString('en-IN')} INR targets active via ${state.budgetScope}.
+  `;
 }
 
 async function triggerBuiltInGeneration() {
@@ -922,6 +948,12 @@ async function triggerBuiltInGeneration() {
         <p>📍 Focus Hub Base: <strong>${day.place}</strong> | Commute Model: [${day.dailyTransit}]</p>
         <div id="injectedExploreBox-day-${idx}" style="display:none; padding:8px; background:var(--success-bg); border-left:3px solid var(--success); border-radius:6px; font-size:13px; margin:10px 0; color:var(--success);"></div>
         <p style="margin-top:5px; color:var(--muted);">🎯 Target Objective Checklist: ${day.thingsToDo || 'Local exploration.'}</p>
+        <div style="display:flex; gap:8px; margin:12px 0;">
+          <a href="https://www.google.com/maps/search/Restaurants+in+${encodeURIComponent(day.place)}" target="_blank" class="live-helper-link">🗺️ Google Maps Restaurants</a>
+          <a href="https://www.google.com/maps/search/Hotels+in+${encodeURIComponent(day.place)}" target="_blank" class="live-helper-link">🛌 Accommodations Finder</a>
+          <a href="https://www.irctc.co.in" target="_blank" class="live-helper-link">🚂 IRCTC Rail Link</a>
+          <a href="https://www.redbus.in" target="_blank" class="live-helper-link">🚌 Bus Bookings Hub</a>
+        </div>
         <ul style="padding-left:18px; margin-top:8px; font-size:13px; color:var(--ocean-mid);">
           <li>📸 Highlight: ${primaryFamousSight}</li>
           <li>🌿 Offbeat: ${secondaryGemSight}</li>
@@ -936,14 +968,39 @@ async function triggerBuiltInGeneration() {
   document.getElementById('outputBody').innerHTML = html;
 }
 
-function setupExclusiveChips(cid, key) { document.getElementById(cid).querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => { document.getElementById(cid).querySelectorAll('.chip').forEach(x => x.classList.remove('selected')); c.classList.add('selected'); state[key] = c.dataset.val; })); }
-setupExclusiveChips('destChips', 'destinations');
-setupExclusiveChips('crewChips', 'crew');
-setupExclusiveChips('leg1TransportChips', 'transport');
-setupExclusiveChips('leg3TransportChips', 'leg3Transport');
+function setupExclusiveChips(cid, key, callback) { 
+  document.getElementById(cid).querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => { 
+    document.getElementById(cid).querySelectorAll('.chip').forEach(x => x.classList.remove('selected')); 
+    c.classList.add('selected'); state[key] = c.dataset.val; 
+    if(callback) callback(c.dataset.val);
+  })); 
+}
+
+setupExclusiveChips('destChips', 'destinations', () => { runGeographicalDistanceAndSpeedSuggester(); });
+setupExclusiveChips('crewChips', 'crew', (val) => {
+  const sizeField = document.getElementById('groupSizeField');
+  if (['Friends', 'Family'].includes(val)) {
+    sizeField.style.display = 'block';
+    state.groupSize = 4;
+    document.getElementById('groupSize').value = 4;
+  } else {
+    sizeField.style.display = 'none';
+    state.groupSize = val === 'Solo' ? 1 : 2;
+  }
+  runGeographicalDistanceAndSpeedSuggester();
+});
+
+setupExclusiveChips('leg1TransportChips', 'transport', () => { runGeographicalDistanceAndSpeedSuggester(); });
+setupExclusiveChips('leg3TransportChips', 'leg3Transport', () => { runGeographicalDistanceAndSpeedSuggester(); });
 setupExclusiveChips('budgetScopeChips', 'budgetScope');
 
-document.getElementById('leg2TransportChips').querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => { c.classList.toggle('selected'); const v = c.dataset.val; if(c.classList.contains('selected')) { state.leg2Transport.push(v); } else { state.leg2Transport = state.leg2Transport.filter(x => x !== v); } runGeographicalDistanceAndSpeedSuggester(); }));
+document.getElementById('leg2TransportChips').querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => { 
+  c.classList.toggle('selected'); 
+  const v = c.dataset.val; 
+  if(c.classList.contains('selected')) { state.leg2Transport.push(v); } 
+  else { state.leg2Transport = state.leg2Transport.filter(x => x !== v); } 
+  runGeographicalDistanceAndSpeedSuggester(); 
+}));
 </script>
 </body>
 </html>
