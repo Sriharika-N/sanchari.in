@@ -31,8 +31,8 @@
   .progress-fill { height: 100%; background: var(--coral); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); width: 14%; }
   
   .dashboard-toggle-bar { display: flex; gap: 8px; margin-bottom: 24px; background: var(--sand); padding: 6px; border-radius: var(--radius-md); border: 1px solid #e1d8c7; }
-  .dashboard-toggle-btn { flex: 1; padding: 12px; text-align: center; font-weight: 700; font-size: 14px; border-radius: var(--radius-sm); cursor: pointer; background: transparent; border: none; color: var(--muted); transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .dashboard-toggle-btn.active { background: var(--white); color: var(--ocean-dark); box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.01); }
+  .dashboard-toggle-btn { flex: 1; padding: 12px; text-align: center; font-weight: 700; font-size: 14px; border-radius: var(--radius-sm); cursor: pointer; background: transparent; border: none; color: var(--muted); transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; }
+  .dashboard-toggle-btn.active { background: var(--white); color: var(--ocean-dark); box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid var(--border); }
   
   .step-tabs { display: flex; border-bottom: 1px solid var(--border); background: #fdfcf9; overflow-x: auto; scrollbar-width: none; }
   .step-tabs::-webkit-scrollbar { display: none; }
@@ -66,7 +66,7 @@
   .compulsory-feedback-card { background: #fdfcf8; border-top: 1px solid var(--border); padding: 24px 32px; }
   .btn-row { display: flex; gap: 12px; margin-top: 28px; }
   .btn { padding: 12px 24px; border-radius: var(--radius-md); font-size: 14.5px; font-weight: 700; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; justify-content: center; transition: all 0.2s; font-family: inherit; text-decoration: none; }
-  .btn-primary { background: var(--coral); color: white; box-shadow: 0 4px 14px rgba(224, 82, 48, 0.2); width: auto; flex: none; }
+  .btn-primary { background: var(--coral); color: white; box-shadow: 0 4px 14 rgba(224, 82, 48, 0.2); width: auto; flex: none; }
   .btn-primary:hover { background: #c43d17; transform: translateY(-1px); }
   .btn-ghost { background: var(--white); color: var(--ocean-dark); border: 1.5px solid var(--border); width: auto; flex: none; }
   .btn-ghost:hover { background: var(--sand); }
@@ -144,7 +144,7 @@
   <!-- ROOT GATEWAY PANEL -->
   <div class="card" id="unauthenticatedGatewayCard" style="display: block; padding: 40px; max-width: 460px; margin: 60px auto;">
     <h2 id="gatewayTitle" style="font-family:'Fraunces', serif; color: var(--ocean-dark); margin-bottom: 6px; text-align: center; font-size: 28px;">Welcome Explorer 🗺️</h2>
-    <p style="font-size: 13.5px; color: var(--muted); text-align: center; margin-bottom: 24px;">Please choose an option to unlock customizable travel tracking features.</p>
+    <p style="font-size: 13.5px; color: var(--muted); text-align: center; margin-bottom: 24px;">Please choose an entry option to unlock travel route architectures.</p>
     
     <div class="dashboard-toggle-bar" id="gatewayTabsRow" style="margin-bottom: 24px; padding: 4px;">
       <button class="dashboard-toggle-btn active" id="gatewayTabSignin" onclick="toggleGatewayInterfaceMode('signin')">Sign Up</button>
@@ -170,7 +170,7 @@
   </div>
 
   <!-- PASSWORD RECOVERY OVERLAY PANEL -->
-  <div class="card" id="updatePasswordGatewayCard" style="display: none; padding: 36px; max-width: 460px; margin: 40px auto;">
+  <div class="card" id="updatePasswordGatewayCard" style="display: none; padding: 36px; max-width: 460px; margin: 36px auto;">
     <h2 style="font-family:'Fraunces', serif; color: var(--ocean-dark); margin-bottom: 6px; text-align: center; font-size: 26px;">Set New Password 🔑</h2>
     <p style="font-size: 13.5px; color: var(--muted); text-align: center; margin-bottom: 24px;">Please enter your new secure password configuration down below.</p>
     <div class="form-group">
@@ -234,7 +234,7 @@
         <div class="btn-row">
           <button class="btn btn-primary" onclick="submitStepAndProgress(1, 2, 'Destinations Selection')">Next — Companion Crew →</button>
         </div>
-        <div class="error-box" id="err1">Please map a destination hub and enter your starting location.</div>
+        <div class="error-box" id="err1">Please select at least one destination parameter and enter starting location.</div>
       </div>
 
       <!-- STEP 2: CREW MAPPER -->
@@ -459,8 +459,10 @@
   </div>
 </div>
 
+<!-- =========================================================================
+    UNIFIED EXECUTION BLOCK: FIXESCross-Script Variable References Errors 
+========================================================================= -->
 <script>
-// Global Runtime Repositories
 const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlicHNxbGxnaXRudHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NTM1NDQsImV4cCI6MjA5OTMyOTU0NH0.V8FT2cDAJMcfv1mtgCGWZck5wxswAlj7tyW-KbaJ8bM"; 
 
@@ -469,7 +471,9 @@ let activeUserToken = null;
 let currentGatewayMode = 'signin';
 let isRecoverySessionActive = false; 
 let modalContextItem = { type: '', value: '' };
-let cachedLoadedPlansStore = []; // Safe static reference memory cache layer for interactive click routing
+let cachedLoadedPlansStore = []; 
+let currentStep = 1;
+const TOTAL_STEPS = 7;
 
 let state = { 
   destinations: [], startCity: 'Bangalore', startDate: '', endDate: '', startTime: '06:00', endTime: '22:00', days: 0, nights: 0, transitDaysAllocation: 2,
@@ -664,22 +668,7 @@ function syncDynamicCostUIFields() {
   const leg2Group = document.getElementById('leg2DailyCostGroup');
   if(leg2Group) leg2Group.style.display = state.leg2Transport.length > 0 ? 'block' : 'none';
 }
-</script>
 
-<script>
-// =========================================================================
-// INTERFACE CONTROLS & NAVIGATION ENGINE
-// =========================================================================
-function updateProgressBar() {
-  const fill = document.getElementById('progressFill');
-  if(fill) fill.style.width = ((currentStep / TOTAL_STEPS) * 100) + '%';
-  const tabs = document.getElementById('stepTabs').children;
-  for (let i = 0; i < tabs.length; i++) {
-    tabs[i].classList.toggle('active', i === currentStep - 1);
-  }
-}
-
-// ⚡ FIXED NAVIGATION PIPELINE: isProgrammatic bypass stops ghost comment wipe trapping
 function navigateToStep(stepNum, isProgrammatic = false) {
   if (!isProgrammatic && stepNum > currentStep) {
     const feedbackText = document.getElementById('singleBetaFeedbackInput').value.trim();
@@ -705,14 +694,12 @@ function navigateToStep(stepNum, isProgrammatic = false) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ⚡ CLICKABLE ITINERARY INJECTION ENGINE: Re-hydrates state directly from cached database records
 function loadSavedTripItinerary(tripId) {
   const matchingItinerary = cachedLoadedPlansStore.find(t => t.id === tripId);
   if (!matchingItinerary) {
     showAppNotification("Could not recall selected itinerary data coordinates.");
     return;
   }
-  // Re-hydrate running memory parameters
   state = matchingItinerary.trip_state;
   switchDashboardAppView('create');
   triggerBuiltInGeneration();
@@ -842,10 +829,8 @@ async function renderPlansHistoryDashboard(userId) {
     
     const { data: trips } = await travelPlannerSupabaseClient.from('trips').select('*').eq('user_id', userId).order('created_at', { ascending: false });
     
-    // Save to cache layer 
     cachedLoadedPlansStore = trips || [];
     
-    // FIXED COPYWRITING & ACTIVE LINKS: Removed the word Cloud and converted row to active click router
     document.getElementById('historySavedTripsContainer').innerHTML = trips?.length ? trips.map(t => `
       <div class="interactive-history-row" onclick="loadSavedTripItinerary('${t.id}')">
         <div>🗺️ <strong>${t.trip_name}</strong> (${t.trip_state.days} Days)</div>
@@ -948,7 +933,7 @@ async function submitStepAndProgress(sNum, nextNum, name) {
   
   document.getElementById('singleBetaFeedbackInput').value = '';
   
-  // ⚡ FIXED TRAP: Programmatic next call safely bypasses manual UI traps
+  // ⚡ FIXED BYPASS: Safe forward execution stops loop clearing bugs from blocking movement
   navigateToStep(nextNum, true);
 }
 
