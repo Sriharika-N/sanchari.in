@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Your Travel Planner</title>
+<title>AI Travel Planner — Let's Explore!</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --ink: #0d1117; --paper: #faf8f4; --sand: #f0ebe1; --ocean: #1a3a5c;
@@ -54,12 +53,12 @@
   .error-box.show { display: block; }
   
   .daily-card { background: var(--white); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 16px; }
-  .stopover-card-block { background: var(--white); border: 1.5px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
   .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13,17,23,0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; }
   .auth-modal { background: white; border-radius: 20px; max-width: 400px; width: 90%; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
   .duration-summary-card { background: var(--coral-light); border: 1.5px solid var(--coral); border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display: flex; justify-content: space-around; align-items: center; text-align: center; }
   .duration-metric { font-size: 18px; font-weight: 700; color: var(--ocean-dark); }
   .duration-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+  .stopover-card-block { background: var(--white); border: 1.5px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
   .app-notification-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--ocean-dark); color: white; padding: 14px 24px; border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.15); z-index: 2000; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); max-width: 90%; width: 500px; }
   .app-notification-toast.show { top: 20px; }
   
@@ -73,11 +72,11 @@
 <div id="appNotificationToast" class="app-notification-toast"></div>
 
 <nav>
-  <a class="nav-brand" href="#">✈️ Your Travel Planner</a>
+  <a class="nav-brand" href="#">✈️ AI Travel Planner</a>
   <div class="nav-auth-group" id="navAuthGroup"></div>
 </nav>
 
-<!-- PROFILING OPTION PANEL CONTROLLER -->
+<!-- TRAVELLER ADDITIONAL PARAMETERS PROFILING PANEL -->
 <div class="auth-overlay" id="profileCompletionOverlay" style="z-index: 1100;">
   <div class="auth-modal">
     <h3 style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark); margin-bottom:12px;">Tell Us About You ✨</h3>
@@ -96,10 +95,10 @@
 
 <div class="main">
   
-  <!-- ROOT SIGN IN GATEWAY VIEW (FIRST PANEL DISPLAYED TO USERS) -->
+  <!-- ROOT AUTHENTICATION FORM CORRIDOR GATEWAY -->
   <div class="card" id="unauthenticatedGatewayCard" style="display: block; padding: 30px; max-width: 460px; margin: 40px auto;">
     <h2 id="gatewayTitle" style="font-family:'Fraunces', serif; color: var(--ocean-dark); margin-bottom: 6px; text-align: center;">Welcome Explorer 🗺️</h2>
-    <p style="font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 24px;">Choose an option to unlock customizable travel tracking features.</p>
+    <p style="font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 24px;">Please choose an entry option to unlock travel route architectures.</p>
     
     <div class="dashboard-toggle-bar" style="margin-bottom: 20px; padding: 4px;">
       <button class="dashboard-toggle-btn active" id="gatewayTabSignin" onclick="toggleGatewayInterfaceMode('signin')">Sign Up</button>
@@ -112,7 +111,7 @@
     <div class="error-box" id="gatewayErrorMsg" style="margin-top: 14px;"></div>
   </div>
 
-  <!-- AUTHENTICATED CORE DASHBOARD LAYOUT WORKSPACE -->
+  <!-- AUTHENTICATED ACTIVE WORKSPACE -->
   <div id="authenticatedPlannerCard" style="display: none;">
     
     <div class="dashboard-toggle-bar">
@@ -120,7 +119,7 @@
       <button class="dashboard-toggle-btn" id="tabBtnHistory" onclick="switchDashboardAppView('history')">🗂️ Your Plans & History</button>
     </div>
 
-    <!-- SUB-VIEW 1: WIZARD CORE PANEL FORM -->
+    <!-- VIEW A: THE 7-STEP FORMS -->
     <div class="card" id="itineraryWizardFormWrapper" style="display: block;">
       <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
       <div class="step-tabs" id="stepTabs">
@@ -147,7 +146,7 @@
         <div class="form-group"><label>Or enter custom destination</label><input type="text" id="customDest" placeholder="e.g. Ooty, Udaipur..."></div>
         <div class="form-group"><label>Starting Location</label><input type="text" id="startCity" value="Bangalore"></div>
         <button class="btn btn-primary" onclick="submitStepAndProgress(1, 2, 'Destinations Selection')">Next — Companion Crew →</button>
-        <div class="error-box" id="err1">Please map a destination hub to begin loops.</div>
+        <div class="error-box" id="err1">Please map a primary destination hub to begin loops.</div>
       </div>
 
       <!-- STEP 2 -->
@@ -239,7 +238,7 @@
         <textarea id="singleBetaFeedbackInput" rows="2" placeholder="Experience comments..."></textarea>
       </div>
 
-      <!-- ITINERARY OUTPUT VIEW SHEET CONTAINER -->
+      <!-- OUTPUT SCREEN -->
       <div id="outputPanel" style="display:none; padding:20px; background:white;">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--border); padding-bottom:8px; margin-bottom:15px;">
           <h2 style="font-family:'Fraunces', serif; color:var(--ocean-dark);">✨ Custom Itinerary Plan Layout</h2>
@@ -249,7 +248,7 @@
       </div>
     </div>
 
-    <!-- SUB-VIEW 2: THE "YOUR PLANS & SEARCH HISTORY" TAB LOGS SHEET -->
+    <!-- VIEW B: SAVED PLANS AND HISTORY HUB TAB -->
     <div class="card" id="itineraryHistoryLogsWrapper" style="display: none; padding: 24px;">
       <h3 style="font-family:'Fraunces', serif; color:var(--ocean-dark); margin-bottom:6px;">🗂️ Your Plans & Search History</h3>
       <p style="font-size:13px; color:var(--muted); margin-bottom:20px;">Review your tracked routing loops and previous platform searches.</p>
@@ -270,7 +269,7 @@
 
 <script>
 // =========================================================================
-// RUNTIME DATA STORES & ENGINES (UNIFIED ARCHITECTURE PREVENTS 404 CRASHES)
+// RUNTIME DATA STORES & CORE HOISTING SAFETY CONTROLS
 // =========================================================================
 const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlicHNxbGxnaXRudHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NTM1NDQsImV4cCI6MjA5OTMyOTU0NH0.V8FT2cDAJMcfv1mtgCGWZck5wxswAlj7tyW-KbaJ8bM"; 
@@ -282,7 +281,7 @@ let securityPasswordBuffer = "";
 
 let state = { 
   destinations: [], startCity: 'Bangalore', startDate: '', endDate: '', startTime: '06:00', endTime: '22:00', days: 0, nights: 0, transitDaysAllocation: 2,
-  crew: 'Solo', groupSize: 1, transport: 'Full Road Trip', leg2Transport: ["Hired Outstation Cab"], leg3Transport: 'Drive Return', dailyPlanData: [], budgetVal: 0, budgetScope: 'Per-Person Scope' ,
+  crew: 'Solo', groupSize: 1, transport: 'Full Road Trip', leg2Transport: ["Hired Outstation Cab"], leg3Transport: 'Drive Return', vehicleMode: 'Own Private Car', dailyPlanData: [], budgetVal: 0, budgetScope: 'Per-Person Scope' ,
   calculatedDistanceKM: 0, leg1TicketCost: 0, leg1FuelPrice: 102, leg1VehicleMileage: 15, routeStyle: 'Single Hub', stopoverCities: [],
   leg2DailyCost: 500, hasLayover: false, leg3TicketCost: 0, leg3FuelPrice: 102, leg3VehicleMileage: 15, homewardStartCity: ''
 };
@@ -344,7 +343,7 @@ async function runGeographicalDistanceAndSpeedSuggester() {
 let currentStep = 1;
 const TOTAL_STEPS = 7;
 
-// USER IDENTITY ROUTER SEQUENCE
+// AUTHENTICATION LISTENER: Identifies users and flags whether details are missing
 travelPlannerSupabaseClient.auth.onAuthStateChange(async (event, session) => {
   const authContainer = document.getElementById('navAuthGroup');
   const gatewayCard = document.getElementById('unauthenticatedGatewayCard');
@@ -357,8 +356,10 @@ travelPlannerSupabaseClient.auth.onAuthStateChange(async (event, session) => {
 
     const { data: profile } = await travelPlannerSupabaseClient.from('profiles').select('full_name').eq('id', session.user.id).single();
     
-    // SKIP CHECK MATRIX DETECTOR: Show profile collector only if missing entirely
-    if (!profile) { openProfileCompletionWindow(); }
+    // 💡 IDENTIFICATION LOGIC: Only trigger travelers details popup if profile row doesn't exist
+    if (!profile) { 
+      openProfileCompletionWindow(); 
+    }
     
     const displayName = profile ? profile.full_name : session.user.email;
     authContainer.innerHTML = `
@@ -415,14 +416,44 @@ function openProfileCompletionWindow() { document.getElementById('profileComplet
 function closeProfileCompletionWindow() { document.getElementById('profileCompletionOverlay').style.display = 'none'; }
 
 async function submitTravelerProfileDetails() {
+  console.log("Save button clicked..."); // Debug log
   const nameVal = document.getElementById('profileName').value.trim();
   const ageVal = parseInt(document.getElementById('profileAge').value);
   const genderVal = document.getElementById('profileGender').value;
-  const { data: { user } } = await travelPlannerSupabaseClient.auth.getUser();
-  if(!user || !nameVal) return;
   
-  await travelPlannerSupabaseClient.from('profiles').upsert({ id: user.id, full_name: nameVal, age: ageVal, gender: genderVal, updated_at: new Date().toISOString() });
-  closeProfileCompletionWindow(); window.location.reload();
+  const { data: { user } } = await travelPlannerSupabaseClient.auth.getUser();
+  
+  // Debug log: See what the browser is seeing
+  console.log("User detected:", user);
+  
+  if(!user) {
+    alert("Error: User session not found. Please log out and log in again.");
+    return;
+  }
+  
+  if(!nameVal) {
+    alert("Please enter your name.");
+    return;
+  }
+
+  const { error } = await travelPlannerSupabaseClient
+    .from('profiles')
+    .upsert({ 
+      id: user.id, 
+      full_name: nameVal, 
+      age: ageVal, 
+      gender: genderVal, 
+      updated_at: new Date().toISOString() 
+    });
+
+  if(error) {
+    console.error("Database error:", error);
+    alert("Database Error: " + error.message);
+  } else {
+    console.log("Profile saved successfully!");
+    closeProfileCompletionWindow(); 
+    window.location.reload();
+  }
 }
 
 async function renderPlansHistoryDashboard(userId) {
@@ -462,7 +493,6 @@ async function submitStepAndProgress(sNum, nextNum, name) {
     if (cDest) state.destinations = [cDest];
     if (state.destinations.length === 0 || !state.startCity) { if(err) err.classList.add('show'); return; }
     
-    // AUTOMATED SEARCH PERSISTENCE CHANNEL LOGGER
     try {
       const qText = state.destinations.join(", ");
       const { data: { user } } = await travelPlannerSupabaseClient.auth.getUser();
@@ -485,7 +515,7 @@ async function submitStepAndProgress(sNum, nextNum, name) {
   if (sNum === 6) { state.budgetVal = parseInt(document.getElementById('budgetAmount').value) || 15000; }
 
   const feedback = document.getElementById('singleBetaFeedbackInput').value.trim();
-  if(!feedback) { showAppNotification("Please write experience feedback comments first."); return; }
+  if(!feedback) { showAppNotification("Please write experience comments first."); return; }
   await travelPlannerSupabaseClient.from('journey_feedback').insert([{ step_number: sNum, step_name: name, feedback_rating: 'v16_stable', user_comments: feedback }]);
 
   document.getElementById('singleBetaFeedbackInput').value = '';
