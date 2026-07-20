@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Travel Planner — Let's Explore!</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
@@ -16,15 +16,72 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--paper); color: var(--ink); font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6; min-height: 100vh; position: relative; }
   
-  /* Modern Navbar */
-  nav { background: var(--ocean-dark); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
-  .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; font-weight:600; font-family: 'Fraunces', serif; }
+  /* Modern Sticky Top Navbar */
+  nav { 
+    background: var(--ocean-dark); 
+    padding: 0 32px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    height: 64px; 
+    position: sticky; 
+    top: 0; 
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+  .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; font-weight:600; font-family: 'Fraunces', serif; font-size: 18px; }
   .nav-auth-group { display: flex; align-items: center; gap: 12px; }
-  .nav-auth-btn { background: transparent; color: white; border: none; font-size: 13.5px; font-weight: 500; cursor: pointer; padding: 6px 12px; border-radius: 8px; transition: all 0.2s; }
+  .nav-auth-btn { background: transparent; color: white; border: none; font-size: 13.5px; font-weight: 500; cursor: pointer; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; }
   .nav-auth-btn.signup-highlight { background: var(--coral); font-weight: 600; }
   .nav-auth-btn:hover { opacity: 0.9; background: rgba(255,255,255,0.1); }
-  .nav-auth-btn.signup-highlight:hover { background: var(--coral); }
+  .nav-auth-btn.signup-highlight:hover { background: var(--coral); opacity: 0.95; }
 
+  /* Premium Split Landing Section */
+  .landing-container {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 24px;
+    display: flex;
+    gap: 48px;
+    align-items: center;
+    min-height: calc(100vh - 140px);
+  }
+  .hero-text-block { flex: 1; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--coral-light); color: var(--coral);
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px;
+  }
+  .landing-title { font-family: 'Fraunces', serif; font-size: 42px; color: var(--ocean-dark); margin-bottom: 16px; line-height: 1.15; font-weight: 600; }
+  .landing-subtitle { font-size: 16px; color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
+  .hero-feature-list { display: flex; flex-direction: column; gap: 14px; }
+  .hero-feature-item { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; color: var(--ocean-dark); }
+  .hero-feature-icon { font-size: 18px; background: white; padding: 8px; border-radius: 10px; border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+
+  /* Integrated Landing Auth Card */
+  .landing-auth-card {
+    width: 420px;
+    background: white;
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 20px 60px rgba(15, 35, 64, 0.08);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .landing-auth-card h3 { font-family: 'Fraunces', serif; font-size: 22px; color: var(--ocean-dark); margin-bottom: 6px; }
+  .landing-auth-card p { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+  /* Auth Tabs Component */
+  .auth-tabs { display: flex; border-bottom: 2px solid var(--sand); margin-bottom: 20px; }
+  .auth-tab { flex: 1; padding: 12px 8px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--muted); transition: all 0.2s; }
+  .auth-tab.active { color: var(--coral); border-bottom: 2px solid var(--coral); font-weight: 700; }
+
+  .password-input-wrapper { position: relative; display: flex; align-items: center; }
+  .password-toggle-btn { position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 16px; color: var(--muted); opacity: 0.7; }
+  .password-toggle-btn:hover { opacity: 1; }
+
+  /* Planner Wizard Layout */
   .main { max-width: 780px; margin: 40px auto; padding: 0 16px; display: none; }
   .card { background: var(--white); border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid var(--border); }
   .progress-bar { height: 4px; background: var(--border); }
@@ -69,27 +126,9 @@
   }
   .live-helper-link:hover { background: var(--ocean); border-color: var(--ocean); color: var(--white) !important; transform: translateY(-1px); }
 
-  /* Landing Screen */
-  .landing-hero { max-width: 600px; margin: 60px auto 30px; text-align: center; padding: 0 20px; }
-  .landing-title { font-family: 'Fraunces', serif; font-size: 36px; color: var(--ocean-dark); margin-bottom: 12px; line-height: 1.2; }
-  .landing-subtitle { font-size: 16px; color: var(--muted); margin-bottom: 24px; }
-
-  /* Auth Modals */
+  /* Modals */
   .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13,17,23,0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-  .auth-modal { background: white; border-radius: 20px; max-width: 420px; width: 90%; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); position: relative; }
-  .auth-toggle-link { color: var(--coral); font-weight: 600; cursor: pointer; text-decoration: underline; font-size: 13px; }
-  .auth-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
-  .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); }
-  .auth-tab.active { color: var(--coral); border-bottom: 2px solid var(--coral); }
-
-  .password-input-wrapper { position: relative; display: flex; align-items: center; }
-  .password-toggle-btn { position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 16px; color: var(--muted); opacity: 0.7; }
-  .password-toggle-btn:hover { opacity: 1; }
-  
-  .discovery-hub { display: flex; flex-direction: column; gap: 8px; background: var(--sand); padding: 12px; border-radius: 8px; margin-top: 8px; }
-  .discovery-item { background: var(--white); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: space-between; }
-  .discovery-item:hover { border-color: var(--coral); background: var(--coral-light); color: var(--coral); }
-  .discovery-tag { font-size: 10px; text-transform: uppercase; background: var(--paper); padding: 2px 6px; border-radius: 4px; font-weight: 600; color: var(--muted); }
+  .auth-modal { background: white; border-radius: 20px; max-width: 440px; width: 90%; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); position: relative; }
 
   .app-notification-toast {
     position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
@@ -124,57 +163,60 @@
     background: var(--white); border: 1.5px solid var(--border); border-radius: 14px; 
     padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);
   }
+
+  @media (max-width: 900px) {
+    .landing-container { flex-direction: column; text-align: center; gap: 32px; min-height: auto; margin: 24px auto; }
+    .landing-auth-card { width: 100%; max-width: 440px; }
+    .hero-feature-list { align-items: center; }
+  }
 </style>
 </head>
 <body>
 
 <div id="appNotificationToast" class="app-notification-toast"></div>
 
-<!-- Landing Hero -->
-<div id="landingHero" class="landing-hero">
-  <h1 class="landing-title">Your AI-Powered Journey Begins Here ✈️</h1>
-  <p class="landing-subtitle">Craft personalized routes, smart daily itineraries, and budget breakdowns in minutes. Please sign in or create an account to start planning.</p>
-  <button class="btn btn-primary" onclick="openAuthModal('signin')" style="max-width: 260px; margin: 0 auto;">Get Started / Create Account</button>
-</div>
-
-<!-- Add Spotlight Overlay Modal -->
-<div id="injectionModal" class="injection-modal-overlay">
-  <div class="injection-modal-container">
-    <h3 style="font-family:'Fraunces', serif; color:var(--ocean-dark); font-size:18px; margin-bottom:8px;">Add Spotlight Item</h3>
-    <p id="injectionModalLabel" style="font-size:13.5px; color:var(--muted); margin-bottom:16px;"></p>
-    <div class="form-group">
-      <label>Target Trip Day Number:</label>
-      <input type="number" id="injectionDayInput" min="1" step="1" value="1" style="font-weight: 600;">
-    </div>
-    <div class="btn-row" style="margin-top: 16px;">
-      <button class="btn btn-ghost" onclick="closeInAppModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmInAppModalInjection()" style="background: var(--ocean-mid);">Confirm Addition</button>
-    </div>
-  </div>
-</div>
-
-<!-- Header Navigation -->
+<!-- ALWAYS TOP: Header Navigation -->
 <nav>
   <a class="nav-brand" href="#">✈️ AI Travel Planner</a>
   <div class="nav-auth-group" id="navAuthGroup">
-    <button class="nav-auth-btn" onclick="openAuthModal('login')">Log In</button>
-    <button class="nav-auth-btn signup-highlight" onclick="openAuthModal('signin')">Sign Up</button>
+    <button class="nav-auth-btn" onclick="focusAuthTab('login')">Log In</button>
+    <button class="nav-auth-btn signup-highlight" onclick="focusAuthTab('signin')">Sign Up</button>
   </div>
 </nav>
 
-<!-- Auth Portal Overlay -->
-<div class="auth-overlay" id="authOverlay">
-  <div class="auth-modal">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-      <h3 id="authModalTitle" style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark);">Account Portal</h3>
-      <button id="closeAuthModalBtn" style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted);" onclick="closeAuthModal()">×</button>
+<!-- LANDING PAGE VIEW (Appears when user is logged out) -->
+<div id="landingView" class="landing-container">
+  <div class="hero-text-block">
+    <div class="hero-badge">✨ AI Route & Itinerary Engine</div>
+    <h1 class="landing-title">Plan Less. Wander More. 🗺️</h1>
+    <p class="landing-subtitle">Craft intelligent multi-stop routes, custom daily vibes, and detailed financial budget breakdowns tailored specifically for your travel style.</p>
+    
+    <div class="hero-feature-list">
+      <div class="hero-feature-item">
+        <span class="hero-feature-icon">🚗</span>
+        <span>Smart Multi-City Transit & Highway Route Pacing</span>
+      </div>
+      <div class="hero-feature-item">
+        <span class="hero-feature-icon">✨</span>
+        <span>Daily Vibe Customization & Live Regional Spotlight Links</span>
+      </div>
+      <div class="hero-feature-item">
+        <span class="hero-feature-icon">💰</span>
+        <span>Integrated Expense Splitting & Savings Calculator</span>
+      </div>
     </div>
+  </div>
 
-    <div class="auth-tabs" id="authTabsHeader">
+  <!-- On-Page Tabbed Auth Card -->
+  <div class="landing-auth-card">
+    <h3 id="landingAuthTitle">Welcome Adventurer!</h3>
+    <p id="landingAuthSub">Sign up or log in to launch your custom trip.</p>
+
+    <div class="auth-tabs">
       <div class="auth-tab active" id="authTabSignin" onclick="setAuthInterfaceMode('signin')">Sign Up</div>
       <div class="auth-tab" id="authTabLogin" onclick="setAuthInterfaceMode('login')">Log In</div>
     </div>
-    
+
     <div id="authFormContainer">
       <div class="form-group">
         <label>Email Address</label>
@@ -201,11 +243,27 @@
   </div>
 </div>
 
-<!-- Traveler Details Profile Setup Modal (Name, Age, Gender, Phone Number) -->
+<!-- Add Spotlight Overlay Modal -->
+<div id="injectionModal" class="injection-modal-overlay">
+  <div class="injection-modal-container">
+    <h3 style="font-family:'Fraunces', serif; color:var(--ocean-dark); font-size:18px; margin-bottom:8px;">Add Spotlight Item</h3>
+    <p id="injectionModalLabel" style="font-size:13.5px; color:var(--muted); margin-bottom:16px;"></p>
+    <div class="form-group">
+      <label>Target Trip Day Number:</label>
+      <input type="number" id="injectionDayInput" min="1" step="1" value="1" style="font-weight: 600;">
+    </div>
+    <div class="btn-row" style="margin-top: 16px;">
+      <button class="btn btn-ghost" onclick="closeInAppModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmInAppModalInjection()" style="background: var(--ocean-mid);">Confirm Addition</button>
+    </div>
+  </div>
+</div>
+
+<!-- Traveler Details Profile Setup Modal (Mandatory Name, Age, Gender, Phone Number) -->
 <div class="auth-overlay" id="profileSetupOverlay" style="display: none; z-index: 1100;">
-  <div class="auth-modal" style="max-width: 480px;">
-    <h3 style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark); margin-bottom:6px;">Welcome Adventurer! 👋</h3>
-    <p style="font-size:13px; color:var(--muted); margin-bottom:18px;">Please complete your traveler details below to continue.</p>
+  <div class="auth-modal">
+    <h3 style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark); margin-bottom:6px;">Complete Traveler Profile 👋</h3>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:18px;">Please fill out your details below to activate your planner.</p>
     
     <div class="form-group">
       <label>Full Name</label>
@@ -240,7 +298,7 @@
 
 <!-- Account Settings Modal -->
 <div class="auth-overlay" id="accountSettingsOverlay" style="display: none; z-index: 1100;">
-  <div class="auth-modal" style="max-width: 480px;">
+  <div class="auth-modal">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
       <h3 style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark);">User Profile & Account Settings</h3>
       <button style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted);" onclick="closeAccountSettingsModal()">×</button>
@@ -291,6 +349,7 @@
   </div>
 </div>
 
+<!-- MAIN TRAVEL PLANNER CARD (Appears when logged in) -->
 <div class="main" id="mainPlannerCard">
   <div class="card">
     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
@@ -788,9 +847,8 @@ async function onUserAuthenticated(session) {
     <button class="nav-auth-btn signup-highlight" onclick="handleUserSignOut()">Sign Out</button>
   `;
   
-  document.getElementById('landingHero').style.display = 'none';
+  document.getElementById('landingView').style.display = 'none';
   document.getElementById('mainPlannerCard').style.display = 'block';
-  closeAuthModal();
 
   await checkAndPromptProfileOnboarding(session.user);
 }
@@ -799,11 +857,16 @@ function onUserLoggedOut() {
   activeUserToken = null;
   activeUserId = null;
   document.getElementById('navAuthGroup').innerHTML = `
-    <button class="nav-auth-btn" onclick="openAuthModal('login')">Log In</button>
-    <button class="nav-auth-btn signup-highlight" onclick="openAuthModal('signin')">Sign Up</button>
+    <button class="nav-auth-btn" onclick="focusAuthTab('login')">Log In</button>
+    <button class="nav-auth-btn signup-highlight" onclick="focusAuthTab('signin')">Sign Up</button>
   `;
-  document.getElementById('landingHero').style.display = 'block';
+  document.getElementById('landingView').style.display = 'flex';
   document.getElementById('mainPlannerCard').style.display = 'none';
+}
+
+function focusAuthTab(mode) {
+  setAuthInterfaceMode(mode);
+  document.querySelector('.landing-auth-card').scrollIntoView({ behavior: 'smooth' });
 }
 
 async function handleUserSignOut() {
@@ -934,28 +997,22 @@ async function updateUserPassword() {
   }
 }
 
-function openAuthModal(mode) {
-  document.getElementById('authOverlay').style.display = 'flex';
-  if(mode) setAuthInterfaceMode(mode);
-}
-
-function closeAuthModal() { 
-  document.getElementById('authOverlay').style.display = 'none'; 
-}
-
 function setAuthInterfaceMode(mode) {
   currentAuthMode = mode;
   const errMsg = document.getElementById('authErrorMsg');
   errMsg.classList.remove('show');
+  
   document.getElementById('authTabSignin').classList.toggle('active', mode === 'signin');
   document.getElementById('authTabLogin').classList.toggle('active', mode === 'login');
   
   if (mode === 'signin') {
-    document.getElementById('authModalTitle').textContent = "Create Account";
+    document.getElementById('landingAuthTitle').textContent = "Join AI Travel Planner";
+    document.getElementById('landingAuthSub').textContent = "Sign up to start designing custom routes.";
     document.getElementById('passwordGroup').style.display = 'block';
     document.getElementById('forgotPasswordLink').style.display = 'none';
-  } else {
-    document.getElementById('authModalTitle').textContent = "Log In to Account";
+  } else if (mode === 'login') {
+    document.getElementById('landingAuthTitle').textContent = "Welcome Back!";
+    document.getElementById('landingAuthSub').textContent = "Log in to access your planned adventures.";
     document.getElementById('passwordGroup').style.display = 'block';
     document.getElementById('forgotPasswordLink').style.display = 'inline-block';
   }
@@ -963,7 +1020,8 @@ function setAuthInterfaceMode(mode) {
 
 function triggerForgotPasswordRecovery() {
   currentAuthMode = 'recovery';
-  document.getElementById('authModalTitle').textContent = "Reset Your Password";
+  document.getElementById('landingAuthTitle').textContent = "Reset Password";
+  document.getElementById('landingAuthSub').textContent = "Enter your email address to receive a recovery link.";
   document.getElementById('passwordGroup').style.display = 'none';
   document.getElementById('forgotPasswordLink').style.display = 'none';
 }
@@ -1003,10 +1061,8 @@ async function handleCredentialAuth() {
     } else { 
       if (data.session) {
         showAppNotification("Account created successfully!");
-        closeAuthModal();
       } else {
         showAppNotification("Verification link dispatched to your inbox! Check your email.");
-        closeAuthModal();
       }
     }
   } else if (currentAuthMode === 'login') {
@@ -1015,7 +1071,6 @@ async function handleCredentialAuth() {
       errMsg.textContent = error.message; errMsg.classList.add('show'); 
     } else {
       showAppNotification("Welcome back!");
-      closeAuthModal();
     }
   } else if (currentAuthMode === 'recovery') {
     const { error } = await travelPlannerSupabaseClient.auth.resetPasswordForEmail(email, {
@@ -1025,7 +1080,6 @@ async function handleCredentialAuth() {
       errMsg.textContent = error.message; errMsg.classList.add('show'); 
     } else { 
       showAppNotification("Password reset email sent! Check your inbox."); 
-      closeAuthModal(); 
     }
   }
 }
