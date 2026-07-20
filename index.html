@@ -16,7 +16,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--paper); color: var(--ink); font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6; min-height: 100vh; position: relative; }
   
-  /* Modern Navbar with standard Sign Up & Log In Actions */
+  /* Modern Navbar */
   nav { background: var(--ocean-dark); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
   .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; font-weight:600; font-family: 'Fraunces', serif; }
   .nav-auth-group { display: flex; align-items: center; gap: 12px; }
@@ -25,7 +25,7 @@
   .nav-auth-btn:hover { opacity: 0.9; background: rgba(255,255,255,0.1); }
   .nav-auth-btn.signup-highlight:hover { background: var(--coral); }
 
-  .main { max-width: 780px; margin: 40px auto; padding: 0 16px; display: none; } /* Hidden until logged in */
+  .main { max-width: 780px; margin: 40px auto; padding: 0 16px; display: none; }
   .card { background: var(--white); border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid var(--border); }
   .progress-bar { height: 4px; background: var(--border); }
   .progress-fill { height: 100%; background: var(--coral); transition: width 0.4s ease; width: 14%; }
@@ -69,12 +69,12 @@
   }
   .live-helper-link:hover { background: var(--ocean); border-color: var(--ocean); color: var(--white) !important; transform: translateY(-1px); }
 
-  /* Landing Screen Hero for Unauthenticated State */
+  /* Landing Screen */
   .landing-hero { max-width: 600px; margin: 60px auto 30px; text-align: center; padding: 0 20px; }
   .landing-title { font-family: 'Fraunces', serif; font-size: 36px; color: var(--ocean-dark); margin-bottom: 12px; line-height: 1.2; }
   .landing-subtitle { font-size: 16px; color: var(--muted); margin-bottom: 24px; }
 
-  /* Auth Modals Styling */
+  /* Auth Modals */
   .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13,17,23,0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 1000; }
   .auth-modal { background: white; border-radius: 20px; max-width: 420px; width: 90%; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); position: relative; }
   .auth-toggle-link { color: var(--coral); font-weight: 600; cursor: pointer; text-decoration: underline; font-size: 13px; }
@@ -82,7 +82,6 @@
   .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); }
   .auth-tab.active { color: var(--coral); border-bottom: 2px solid var(--coral); }
 
-  /* Password field with eye toggle */
   .password-input-wrapper { position: relative; display: flex; align-items: center; }
   .password-toggle-btn { position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 16px; color: var(--muted); opacity: 0.7; }
   .password-toggle-btn:hover { opacity: 1; }
@@ -131,7 +130,7 @@
 
 <div id="appNotificationToast" class="app-notification-toast"></div>
 
-<!-- Landing Hero view displayed when logged out -->
+<!-- Landing Hero -->
 <div id="landingHero" class="landing-hero">
   <h1 class="landing-title">Your AI-Powered Journey Begins Here ✈️</h1>
   <p class="landing-subtitle">Craft personalized routes, smart daily itineraries, and budget breakdowns in minutes. Please sign in or create an account to start planning.</p>
@@ -154,7 +153,7 @@
   </div>
 </div>
 
-<!-- Header Navigation with standard Sign Up / Login workflow layout setup -->
+<!-- Header Navigation -->
 <nav>
   <a class="nav-brand" href="#">✈️ AI Travel Planner</a>
   <div class="nav-auth-group" id="navAuthGroup">
@@ -202,22 +201,36 @@
   </div>
 </div>
 
-<!-- Traveler Details Profile Setup Modal (Triggered Post-Signup) -->
+<!-- Traveler Details Profile Setup Modal (Name, Age, Gender, Phone Number) -->
 <div class="auth-overlay" id="profileSetupOverlay" style="display: none; z-index: 1100;">
   <div class="auth-modal" style="max-width: 480px;">
     <h3 style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark); margin-bottom:6px;">Welcome Adventurer! 👋</h3>
-    <p style="font-size:13px; color:var(--muted); margin-bottom:18px;">Tell us a bit about yourself to personalize your journey planning experience.</p>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:18px;">Please complete your traveler details below to continue.</p>
     
     <div class="form-group">
       <label>Full Name</label>
       <input type="text" id="profileFullName" placeholder="e.g. Alex Morgan">
     </div>
-    <div class="form-group">
-      <label>Default Starting City</label>
-      <input type="text" id="profileHomeCity" placeholder="e.g. Bangalore, Delhi, Mumbai">
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Age</label>
+        <input type="number" id="profileAge" min="1" max="120" placeholder="e.g. 25">
+      </div>
+      <div class="form-group">
+        <label>Gender</label>
+        <select id="profileGender">
+          <option value="">Select Gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Non-binary/Other">Non-binary / Other</option>
+          <option value="Prefer not to say">Prefer not to say</option>
+        </select>
+      </div>
     </div>
+
     <div class="form-group">
-      <label>Contact Phone Number (Optional)</label>
+      <label>Phone Number</label>
       <input type="tel" id="profilePhone" placeholder="+91 9876543210">
     </div>
     
@@ -225,7 +238,7 @@
   </div>
 </div>
 
-<!-- Account Settings & Password Change Modal -->
+<!-- Account Settings Modal -->
 <div class="auth-overlay" id="accountSettingsOverlay" style="display: none; z-index: 1100;">
   <div class="auth-modal" style="max-width: 480px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
@@ -239,9 +252,21 @@
         <label>Full Name</label>
         <input type="text" id="settingsFullName">
       </div>
-      <div class="form-group">
-        <label>Default Starting City</label>
-        <input type="text" id="settingsHomeCity">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Age</label>
+          <input type="number" id="settingsAge" min="1" max="120">
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <select id="settingsGender">
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Non-binary/Other">Non-binary / Other</option>
+            <option value="Prefer not to say">Prefer not to say</option>
+          </select>
+        </div>
       </div>
       <div class="form-group">
         <label>Phone Number</label>
@@ -725,7 +750,6 @@ function showAppNotification(messageString) {
   setTimeout(() => { toast.classList.remove('show'); }, 4500);
 }
 
-// Eye toggle for password fields
 function togglePasswordVisibility(inputId, btnEl) {
   const input = document.getElementById(inputId);
   if (input.type === 'password') {
@@ -737,7 +761,6 @@ function togglePasswordVisibility(inputId, btnEl) {
   }
 }
 
-// Session management & page setup
 window.addEventListener('load', async () => {
   const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
   if (session) {
@@ -748,7 +771,6 @@ window.addEventListener('load', async () => {
   updateProgressBar();
 });
 
-// Listen to auth state changes (e.g. login, logout, password change)
 travelPlannerSupabaseClient.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_IN' && session) {
     onUserAuthenticated(session);
@@ -761,18 +783,15 @@ async function onUserAuthenticated(session) {
   activeUserToken = session.access_token;
   activeUserId = session.user.id;
   
-  // Update Top Nav
   document.getElementById('navAuthGroup').innerHTML = `
     <button class="nav-auth-btn" onclick="openAccountSettingsModal()">👤 My Account</button>
     <button class="nav-auth-btn signup-highlight" onclick="handleUserSignOut()">Sign Out</button>
   `;
   
-  // Hide landing view, show main planner
   document.getElementById('landingHero').style.display = 'none';
   document.getElementById('mainPlannerCard').style.display = 'block';
   closeAuthModal();
 
-  // Check if profile details are populated, otherwise prompt traveler details popup
   await checkAndPromptProfileOnboarding(session.user);
 }
 
@@ -792,7 +811,6 @@ async function handleUserSignOut() {
   showAppNotification("You have been logged out safely.");
 }
 
-// Check Profile Completeness & Prompt Modal
 async function checkAndPromptProfileOnboarding(user) {
   try {
     const { data: profile } = await travelPlannerSupabaseClient
@@ -801,18 +819,13 @@ async function checkAndPromptProfileOnboarding(user) {
       .eq('id', user.id)
       .single();
 
-    if (!profile || !profile.full_name || !profile.home_city) {
+    if (!profile || !profile.full_name || !profile.age || !profile.gender || !profile.phone_number) {
       document.getElementById('profileSetupOverlay').style.display = 'flex';
       if (profile) {
         if (profile.full_name) document.getElementById('profileFullName').value = profile.full_name;
-        if (profile.home_city) document.getElementById('profileHomeCity').value = profile.home_city;
+        if (profile.age) document.getElementById('profileAge').value = profile.age;
+        if (profile.gender) document.getElementById('profileGender').value = profile.gender;
         if (profile.phone_number) document.getElementById('profilePhone').value = profile.phone_number;
-      }
-    } else {
-      // Pre-fill starting city in trip planner if available
-      if (profile.home_city && !document.getElementById('startCity').value) {
-        document.getElementById('startCity').value = profile.home_city;
-        state.startCity = profile.home_city;
       }
     }
   } catch (e) {
@@ -822,11 +835,12 @@ async function checkAndPromptProfileOnboarding(user) {
 
 async function saveTravelerProfile() {
   const fullName = document.getElementById('profileFullName').value.trim();
-  const homeCity = document.getElementById('profileHomeCity').value.trim();
+  const age = parseInt(document.getElementById('profileAge').value);
+  const gender = document.getElementById('profileGender').value;
   const phone = document.getElementById('profilePhone').value.trim();
 
-  if (!fullName || !homeCity) {
-    alert("Please fill in your Full Name and Starting City to continue.");
+  if (!fullName || isNaN(age) || !gender || !phone) {
+    alert("Please fill out all mandatory fields: Full Name, Age, Gender, and Phone Number.");
     return;
   }
 
@@ -835,7 +849,8 @@ async function saveTravelerProfile() {
     .upsert({
       id: activeUserId,
       full_name: fullName,
-      home_city: homeCity,
+      age: age,
+      gender: gender,
       phone_number: phone,
       updated_at: new Date().toISOString()
     });
@@ -844,19 +859,13 @@ async function saveTravelerProfile() {
     alert("Could not save profile details: " + error.message);
   } else {
     document.getElementById('profileSetupOverlay').style.display = 'none';
-    showAppNotification(`Welcome aboard, ${fullName}! Your profile is ready.`);
-    if (homeCity) {
-      document.getElementById('startCity').value = homeCity;
-      state.startCity = homeCity;
-    }
+    showAppNotification(`Welcome aboard, ${fullName}! Profile saved.`);
   }
 }
 
-// Account Settings Modal
 async function openAccountSettingsModal() {
   document.getElementById('accountSettingsOverlay').style.display = 'flex';
   
-  // Fetch existing profile data
   const { data: profile } = await travelPlannerSupabaseClient
     .from('profiles')
     .select('*')
@@ -865,7 +874,8 @@ async function openAccountSettingsModal() {
 
   if (profile) {
     document.getElementById('settingsFullName').value = profile.full_name || '';
-    document.getElementById('settingsHomeCity').value = profile.home_city || '';
+    document.getElementById('settingsAge').value = profile.age || '';
+    document.getElementById('settingsGender').value = profile.gender || '';
     document.getElementById('settingsPhone').value = profile.phone_number || '';
   }
 }
@@ -876,15 +886,22 @@ function closeAccountSettingsModal() {
 
 async function updateAccountProfileDetails() {
   const fullName = document.getElementById('settingsFullName').value.trim();
-  const homeCity = document.getElementById('settingsHomeCity').value.trim();
+  const age = parseInt(document.getElementById('settingsAge').value);
+  const gender = document.getElementById('settingsGender').value;
   const phone = document.getElementById('settingsPhone').value.trim();
+
+  if (!fullName || isNaN(age) || !gender || !phone) {
+    showAppNotification("Please complete all fields (Name, Age, Gender, Phone).");
+    return;
+  }
 
   const { error } = await travelPlannerSupabaseClient
     .from('profiles')
     .upsert({
       id: activeUserId,
       full_name: fullName,
-      home_city: homeCity,
+      age: age,
+      gender: gender,
       phone_number: phone,
       updated_at: new Date().toISOString()
     });
@@ -917,7 +934,6 @@ async function updateUserPassword() {
   }
 }
 
-// App Authentication Window Controls
 function openAuthModal(mode) {
   document.getElementById('authOverlay').style.display = 'flex';
   if(mode) setAuthInterfaceMode(mode);
@@ -976,7 +992,6 @@ async function handleCredentialAuth() {
   if (currentAuthMode === 'signin') {
     const { data, error } = await travelPlannerSupabaseClient.auth.signUp({ email, password });
     if (error) {
-      // Catch existing account error and notify user
       if(error.message.toLowerCase().includes("already registered") || error.status === 422 || error.message.toLowerCase().includes("user already exists")) {
         setAuthInterfaceMode('login');
         errMsg.textContent = "An account with this email already exists! Please enter your password to log in.";
@@ -1015,7 +1030,6 @@ async function handleCredentialAuth() {
   }
 }
 
-// Multi City Workflow Logic Tools
 function toggleRouteStyle(chosenStyle) {
   state.routeStyle = chosenStyle;
   const chips = document.querySelectorAll('#routePaceChips .chip');
@@ -1627,7 +1641,6 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   const betaFeedbackText = document.getElementById('singleBetaFeedbackInput').value.trim();
   if (!betaFeedbackText) { showAppNotification("Please share your feedback below to advance parameters!"); return; }
 
-  // Save feedback to Supabase journey_feedback table
   try {
     await travelPlannerSupabaseClient.from('journey_feedback').insert({
       user_id: activeUserId || null,
