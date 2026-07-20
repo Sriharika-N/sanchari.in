@@ -272,7 +272,7 @@
   </div>
 </div>
 
-<!-- Traveler Details Profile Setup Modal (Mandatory Name, Age, Gender, Phone Number) -->
+<!-- Traveler Details Profile Setup Modal -->
 <div class="auth-overlay" id="profileSetupOverlay" style="display: none; z-index: 1100;">
   <div class="auth-modal">
     <h3 style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark); margin-bottom:6px;">Complete Traveler Profile 👋</h3>
@@ -835,6 +835,7 @@ const travelKnowledgeBase = {
 
 function showAppNotification(messageString) {
   const toast = document.getElementById('appNotificationToast');
+  if (!toast) return;
   toast.innerHTML = `✨ ${messageString}`;
   toast.classList.add('show');
   setTimeout(() => { toast.classList.remove('show'); }, 4500);
@@ -842,6 +843,7 @@ function showAppNotification(messageString) {
 
 function togglePasswordVisibility(inputId, btnEl) {
   const input = document.getElementById(inputId);
+  if (!input) return;
   if (input.type === 'password') {
     input.type = 'text';
     btnEl.textContent = '🙈';
@@ -860,11 +862,15 @@ window.addEventListener('beforeunload', (e) => {
 });
 
 window.addEventListener('load', async () => {
-  const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
-  if (session) {
-    onUserAuthenticated(session);
-  } else {
-    onUserLoggedOut();
+  try {
+    const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
+    if (session) {
+      onUserAuthenticated(session);
+    } else {
+      onUserLoggedOut();
+    }
+  } catch (err) {
+    console.warn("Session check fallback:", err);
   }
   updateProgressBar();
 });
@@ -881,12 +887,15 @@ async function onUserAuthenticated(session) {
   activeUserToken = session.access_token;
   activeUserId = session.user.id;
   
-  document.getElementById('navAuthGroup').innerHTML = `
-    <button class="nav-auth-btn" onclick="openMyPlansModal()">📂 My Plans</button>
-    <button class="nav-auth-btn" onclick="promptStartNewPlan()">➕ New Plan</button>
-    <button class="nav-auth-btn" onclick="openAccountSettingsModal()">👤 My Account</button>
-    <button class="nav-auth-btn signup-highlight" onclick="handleUserSignOut()">Sign Out</button>
-  `;
+  const navGroup = document.getElementById('navAuthGroup');
+  if (navGroup) {
+    navGroup.innerHTML = `
+      <button class="nav-auth-btn" onclick="openMyPlansModal()">📂 My Plans</button>
+      <button class="nav-auth-btn" onclick="promptStartNewPlan()">➕ New Plan</button>
+      <button class="nav-auth-btn" onclick="openAccountSettingsModal()">👤 My Account</button>
+      <button class="nav-auth-btn signup-highlight" onclick="handleUserSignOut()">Sign Out</button>
+    `;
+  }
   
   document.getElementById('landingView').style.display = 'none';
   document.getElementById('mainPlannerCard').style.display = 'block';
@@ -899,17 +908,21 @@ function onUserLoggedOut() {
   activeUserId = null;
   hasUnsavedPlanChanges = false;
   currentActivePlanId = null;
-  document.getElementById('navAuthGroup').innerHTML = `
-    <button class="nav-auth-btn" onclick="focusAuthTab('login')">Log In</button>
-    <button class="nav-auth-btn signup-highlight" onclick="focusAuthTab('signin')">Sign Up</button>
-  `;
+  const navGroup = document.getElementById('navAuthGroup');
+  if (navGroup) {
+    navGroup.innerHTML = `
+      <button class="nav-auth-btn" onclick="focusAuthTab('login')">Log In</button>
+      <button class="nav-auth-btn signup-highlight" onclick="focusAuthTab('signin')">Sign Up</button>
+    `;
+  }
   document.getElementById('landingView').style.display = 'flex';
   document.getElementById('mainPlannerCard').style.display = 'none';
 }
 
 function focusAuthTab(mode) {
   setAuthInterfaceMode(mode);
-  document.querySelector('.landing-auth-card').scrollIntoView({ behavior: 'smooth' });
+  const authCard = document.querySelector('.landing-auth-card');
+  if (authCard) authCard.scrollIntoView({ behavior: 'smooth' });
 }
 
 async function handleUserSignOut() {
@@ -941,7 +954,6 @@ async function promptStartNewPlan() {
   document.getElementById('compulsoryFeedbackContainer').style.display = 'block';
   document.getElementById('stepTabs').style.display = 'flex';
   
-  // Reset Step Panels
   for (let i = 1; i <= TOTAL_STEPS; i++) {
     const panel = document.getElementById(`step${i}`);
     if (panel) panel.classList.remove('active');
@@ -970,8 +982,8 @@ async function checkAndPromptProfileOnboarding(user) {
         if (profile.phone_number) document.getElementById('profilePhone').value = profile.phone_number;
       }
     }
-  } catch (e) {
-    console.warn("Profile check note:", e);
+  } catch (err) {
+    console.warn("Profile check note:", err);
   }
 }
 
@@ -1105,7 +1117,7 @@ async function openMyPlansModal() {
       <div class="plan-card-item">
         <div>
           <div class="plan-card-title">${plan.plan_title}</div>
-          <div class="plan-card-meta">📅 Saved on ${createdDate} | ~${plan.plan_data.calculatedDistanceKM || 0} KM</div>
+          <div class="plan-card-meta">📅 Saved on ${createdDate} | ~${plan.plan_data ? (plan.plan_data.calculatedDistanceKM || 0) : 0} KM</div>
         </div>
         <div style="display:flex; gap:8px;">
           <button class="btn btn-primary" style="padding:5px 12px; font-size:12px;" onclick="loadSavedPlan('${plan.id}')">📖 Open / Edit</button>
@@ -1192,7 +1204,6 @@ async function loadSavedPlan(planId) {
     return;
   }
 
-  // Restore state and output UI
   state = plan.plan_data.state;
   currentActivePlanId = plan.id;
   hasUnsavedPlanChanges = false;
@@ -1232,7 +1243,7 @@ async function deleteSavedPlan(planId) {
 function setAuthInterfaceMode(mode) {
   currentAuthMode = mode;
   const errMsg = document.getElementById('authErrorMsg');
-  errMsg.classList.remove('show');
+  if (errMsg) errMsg.classList.remove('show');
   
   document.getElementById('authTabSignin').classList.toggle('active', mode === 'signin');
   document.getElementById('authTabLogin').classList.toggle('active', mode === 'login');
@@ -1264,54 +1275,85 @@ async function loginWithGoogle() {
   });
   if (error) {
     const box = document.getElementById('authErrorMsg');
-    box.textContent = error.message; box.classList.add('show');
+    if (box) {
+      box.textContent = error.message; box.classList.add('show');
+    }
   }
 }
 
 async function handleCredentialAuth() {
-  const email = document.getElementById('authEmail').value.trim();
-  const password = document.getElementById('authPassword').value;
+  const emailInput = document.getElementById('authEmail');
+  const passwordInput = document.getElementById('authPassword');
+  const email = emailInput ? emailInput.value.trim() : '';
+  const password = passwordInput ? passwordInput.value : '';
   const errMsg = document.getElementById('authErrorMsg');
-  errMsg.classList.remove('show');
+  if (errMsg) errMsg.classList.remove('show');
 
   if (!email || (currentAuthMode !== 'recovery' && !password)) {
-    errMsg.textContent = "Please fill out all fields completely.";
-    errMsg.classList.add('show'); return;
+    if (errMsg) {
+      errMsg.textContent = "Please fill out all fields completely.";
+      errMsg.classList.add('show');
+    }
+    return;
   }
 
-  if (currentAuthMode === 'signin') {
-    const { data, error } = await travelPlannerSupabaseClient.auth.signUp({ email, password });
-    if (error) {
-      if(error.message.toLowerCase().includes("already registered") || error.status === 422 || error.message.toLowerCase().includes("user already exists")) {
-        setAuthInterfaceMode('login');
-        errMsg.textContent = "An account with this email already exists! Please enter your password to log in.";
-        errMsg.classList.add('show');
-        showAppNotification("Account already exists! Switched to Log In.");
+  if (currentAuthMode === 'signin' && password.length < 6) {
+    if (errMsg) {
+      errMsg.textContent = "Password must be at least 6 characters long.";
+      errMsg.classList.add('show');
+    }
+    return;
+  }
+
+  try {
+    if (currentAuthMode === 'signin') {
+      const { data, error } = await travelPlannerSupabaseClient.auth.signUp({ email, password });
+      if (error) {
+        if (error.status === 422 || error.message.toLowerCase().includes("already registered") || error.message.toLowerCase().includes("user already exists")) {
+          setAuthInterfaceMode('login');
+          if (errMsg) {
+            errMsg.textContent = "An account with this email already exists! Please enter your password to log in.";
+            errMsg.classList.add('show');
+          }
+          showAppNotification("Account already exists! Switched to Log In.");
+        } else { 
+          if (errMsg) {
+            errMsg.textContent = error.message; errMsg.classList.add('show'); 
+          }
+        }
       } else { 
-        errMsg.textContent = error.message; errMsg.classList.add('show'); 
+        if (data.session) {
+          showAppNotification("Account created successfully!");
+        } else {
+          showAppNotification("Account created! Check your email for confirmation if required.");
+        }
       }
-    } else { 
-      if (data.session) {
-        showAppNotification("Account created successfully!");
+    } else if (currentAuthMode === 'login') {
+      const { data, error } = await travelPlannerSupabaseClient.auth.signInWithPassword({ email, password });
+      if (error) { 
+        if (errMsg) {
+          errMsg.textContent = error.message; errMsg.classList.add('show'); 
+        }
       } else {
-        showAppNotification("Verification link dispatched to your inbox! Check your email.");
+        showAppNotification("Welcome back!");
+      }
+    } else if (currentAuthMode === 'recovery') {
+      const { error } = await travelPlannerSupabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}`,
+      });
+      if (error) { 
+        if (errMsg) {
+          errMsg.textContent = error.message; errMsg.classList.add('show'); 
+        }
+      } else { 
+        showAppNotification("Password reset email sent! Check your inbox."); 
       }
     }
-  } else if (currentAuthMode === 'login') {
-    const { data, error } = await travelPlannerSupabaseClient.auth.signInWithPassword({ email, password });
-    if (error) { 
-      errMsg.textContent = error.message; errMsg.classList.add('show'); 
-    } else {
-      showAppNotification("Welcome back!");
-    }
-  } else if (currentAuthMode === 'recovery') {
-    const { error } = await travelPlannerSupabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}`,
-    });
-    if (error) { 
-      errMsg.textContent = error.message; errMsg.classList.add('show'); 
-    } else { 
-      showAppNotification("Password reset email sent! Check your inbox."); 
+  } catch (err) {
+    console.error("Auth Exception:", err);
+    if (errMsg) {
+      errMsg.textContent = err.message || "Authentication error occurred.";
+      errMsg.classList.add('show');
     }
   }
 }
@@ -1606,7 +1648,7 @@ async function queryInAppRealtimeDistance(dateKey) {
       }
     }
     throw new Error("Coordinates mismatch.");
-  } catch(e) {
+  } catch(err) {
     feedbackNode.innerHTML = `<span style="color:var(--muted); font-size:12.5px;">🏁 Fallback: <a href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startLoc)}&destination=${encodeURIComponent(endLoc)}" target="_blank" style="text-decoration:underline; font-weight:600; color:var(--coral);">Launch direct routing loops on Google Maps</a></span>`;
   }
 }
@@ -1875,9 +1917,9 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
     state.startCity = document.getElementById('startCity').value.trim();
     const customInputVal = document.getElementById('customDest').value.trim();
     if (customInputVal && !state.destinations.includes(customInputVal)) { state.destinations = [customInputVal]; }
-    if (state.destinations.length === 0 || !state.startCity) { err.classList.add('show'); return; }
+    if (state.destinations.length === 0 || !state.startCity) { if (err) err.classList.add('show'); return; }
   }
-  if (stepNum === 2 && !state.crew) { err.classList.add('show'); return; }
+  if (stepNum === 2 && !state.crew) { if (err) err.classList.add('show'); return; }
   
   if (stepNum === 3) {
     const datesAreValid = validateDatesOnly();
@@ -1895,8 +1937,8 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
     state.dailyPlanData = [];
     document.querySelectorAll('.daily-card').forEach((card, idx) => {
       const placeInp = card.querySelector('.daily-place-input');
-      const dateStr = placeInp.dataset.date;
-      const placeVal = placeInp.value.trim();
+      const dateStr = placeInp ? placeInp.dataset.date : state.startDate;
+      const placeVal = placeInp ? placeInp.value.trim() : (state.destinations[0] || '');
       
       const selectEl = card.querySelector('.daily-transit-mode-select');
       const transitVal = selectEl ? selectEl.value : "Local Travel Outbound";
@@ -1921,7 +1963,7 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   }
   if (stepNum === 6) {
     state.budgetVal = parseInt(document.getElementById('budgetAmount').value);
-    if (!state.budgetVal || !state.budgetScope) { err.classList.add('show'); return; }
+    if (!state.budgetVal || !state.budgetScope) { if (err) err.classList.add('show'); return; }
   }
 
   const betaFeedbackText = document.getElementById('singleBetaFeedbackInput').value.trim();
@@ -1935,7 +1977,7 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
       feedback_rating: 'v15_multimodal_enabled', 
       user_comments: betaFeedbackText
     });
-  } catch(e) { console.warn("Logged safely.", e); }
+  } catch(err) { console.warn("Logged safely.", err); }
 
   document.getElementById('singleBetaFeedbackInput').value = '';
   
@@ -1971,7 +2013,6 @@ function modifyItinerary() {
 
 function getDayName(dateStr) { return dateStr ? new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long' }) : ''; }
 
-// SPOTLIGHT ITEM INJECTION POPUP & LOGIC
 function injectExploreTargetIntoItinerary(targetType, contentValue) {
   modalContextItem.type = targetType;
   modalContextItem.value = contentValue;
@@ -2189,29 +2230,34 @@ async function triggerBuiltInGeneration() {
     
     outPanel.style.display = 'block';
     document.getElementById('outputBody').innerHTML = htmlBody;
-    hasUnsavedPlanChanges = true; // Mark that plan is ready and unsaved
+    hasUnsavedPlanChanges = true;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  } catch (error) {
-    console.error("Generation Error:", error);
+  } catch (err) {
+    console.error("Generation Error:", err);
     statusEl.style.color = "red";
     statusEl.textContent = "Glitch caught. Double check your input parameters values.";
   }
 }
 
 function setupExclusiveChips(containerId, stateKey, callback) {
-  document.getElementById(containerId).querySelectorAll('.chip').forEach(chip => {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll('.chip').forEach(chip => {
     chip.addEventListener('click', () => {
-      document.getElementById(containerId).querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+      container.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
       chip.classList.add('selected'); state[stateKey] = chip.dataset.val;
-      document.getElementById('customDest').value = "";
+      const customInp = document.getElementById('customDest');
+      if (customInp) customInp.value = "";
       if(callback) callback(chip.dataset.val);
     });
   });
 }
 
 function setupMultiSelectTransportChips(containerId, stateKey, callback) {
-  document.getElementById(containerId).querySelectorAll('.chip').forEach(chip => {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll('.chip').forEach(chip => {
     chip.addEventListener('click', () => {
       chip.classList.toggle('selected');
       const val = chip.dataset.val;
@@ -2226,13 +2272,16 @@ function setupMultiSelectTransportChips(containerId, stateKey, callback) {
 }
 
 function setupMultiSelectChips(containerId, stateKey, callback) {
-  document.getElementById(containerId).querySelectorAll('.chip').forEach(chip => {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll('.chip').forEach(chip => {
     chip.addEventListener('click', () => {
       chip.classList.toggle('selected');
       const val = chip.dataset.val;
       if (chip.classList.contains('selected')) { if(!state[stateKey].includes(val)) state[stateKey].push(val); } 
       else { state[stateKey] = state[stateKey].filter(v => v !== val); }
-      document.getElementById('customDest').value = "";
+      const customInp = document.getElementById('customDest');
+      if (customInp) customInp.value = "";
       if(callback) callback();
     });
   });
@@ -2250,7 +2299,7 @@ function selectThematicRandomEngine(themeKey) {
   showAppNotification(`Theme match found! Selected ${matchedCity} automatically.`);
   if(state.startCity) runGeographicalDistanceAndSpeedSuggester();
 }
-ƒ
+
 setupMultiSelectChips('destChips', 'destinations', () => { if(state.startCity) runGeographicalDistanceAndSpeedSuggester(); });
 setupExclusiveChips('crewChips', 'crew', (val) => {
   const sizeField = document.getElementById('groupSizeField');
