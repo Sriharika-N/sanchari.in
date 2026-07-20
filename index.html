@@ -30,8 +30,8 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
   }
   .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; font-weight:600; font-family: 'Fraunces', serif; font-size: 18px; }
-  .nav-auth-group { display: flex; align-items: center; gap: 12px; }
-  .nav-auth-btn { background: transparent; color: white; border: none; font-size: 13.5px; font-weight: 500; cursor: pointer; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; }
+  .nav-auth-group { display: flex; align-items: center; gap: 10px; }
+  .nav-auth-btn { background: transparent; color: white; border: none; font-size: 13.5px; font-weight: 500; cursor: pointer; padding: 8px 14px; border-radius: 8px; transition: all 0.2s; }
   .nav-auth-btn.signup-highlight { background: var(--coral); font-weight: 600; }
   .nav-auth-btn:hover { opacity: 0.9; background: rgba(255,255,255,0.1); }
   .nav-auth-btn.signup-highlight:hover { background: var(--coral); opacity: 0.95; }
@@ -164,6 +164,19 @@
     padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);
   }
 
+  /* My Plans Item Block */
+  .plan-card-item {
+    background: var(--paper); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .plan-card-title { font-family: 'Fraunces', serif; font-size: 16px; color: var(--ocean-dark); font-weight: 600; }
+  .plan-card-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .discovery-hub { display: flex; flex-direction: column; gap: 8px; background: var(--sand); padding: 12px; border-radius: 8px; margin-top: 8px; }
+  .discovery-item { background: var(--white); border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; font-size: 13.5px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: space-between; }
+  .discovery-item:hover { border-color: var(--coral); background: var(--coral-light); color: var(--coral); transform: translateX(2px); }
+  .discovery-tag { font-size: 10px; text-transform: uppercase; background: var(--paper); padding: 3px 8px; border-radius: 4px; font-weight: 700; color: var(--muted); }
+
   @media (max-width: 900px) {
     .landing-container { flex-direction: column; text-align: center; gap: 32px; min-height: auto; margin: 24px auto; }
     .landing-auth-card { width: 100%; max-width: 440px; }
@@ -177,7 +190,7 @@
 
 <!-- ALWAYS TOP: Header Navigation -->
 <nav>
-  <a class="nav-brand" href="#">✈️ AI Travel Planner</a>
+  <a class="nav-brand" href="#" onclick="promptStartNewPlan()">✈️ AI Travel Planner</a>
   <div class="nav-auth-group" id="navAuthGroup">
     <button class="nav-auth-btn" onclick="focusAuthTab('login')">Log In</button>
     <button class="nav-auth-btn signup-highlight" onclick="focusAuthTab('signin')">Sign Up</button>
@@ -345,6 +358,19 @@
         </div>
       </div>
       <button class="btn btn-ghost" style="width:100%; border-color:var(--coral); color:var(--coral);" onclick="updateUserPassword()">Update Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- My Plans Modal -->
+<div class="auth-overlay" id="myPlansOverlay" style="display: none; z-index: 1100;">
+  <div class="auth-modal" style="max-width: 580px; max-height: 85vh; overflow-y: auto;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+      <h3 style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark);">📂 My Saved Travel Plans</h3>
+      <button style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted);" onclick="closeMyPlansModal()">×</button>
+    </div>
+    <div id="savedPlansListContainer">
+      <p style="color:var(--muted); font-size:13px; text-align:center; padding: 20px 0;">Loading your saved itineraries...</p>
     </div>
   </div>
 </div>
@@ -685,9 +711,12 @@
 
     <!-- OUTPUT SCREEN -->
     <div id="outputPanel" style="display:none; padding: 24px; background: #fff;">
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--border); padding-bottom:10px; margin-bottom:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--border); padding-bottom:10px; margin-bottom:20px; flex-wrap: wrap; gap: 10px;">
         <h2 style="font-family:'Fraunces', serif; color: var(--ocean-dark);">✨ Your Custom Live Itinerary Blueprint</h2>
-        <button class="btn btn-ghost" style="padding: 6px 14px; font-size:12px; color:var(--coral); border-color:var(--coral);" onclick="modifyItinerary()">✏️ Modify & Adjust</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-primary" style="padding: 7px 16px; font-size:13px; background: var(--success);" onclick="saveCurrentPlanToSupabase()">💾 Save Plan</button>
+          <button class="btn btn-ghost" style="padding: 7px 16px; font-size:13px; color:var(--coral); border-color:var(--coral);" onclick="modifyItinerary()">✏️ Modify & Adjust</button>
+        </div>
       </div>
 
       <div style="background:var(--sand); padding:16px; border-radius:12px; margin-bottom:20px;">
@@ -711,6 +740,8 @@ const travelPlannerSupabaseClient = window.supabase.createClient(SUPABASE_URL, S
 let activeUserToken = null;
 let activeUserId = null;
 let currentAuthMode = 'signin'; 
+let hasUnsavedPlanChanges = false;
+let currentActivePlanId = null;
 
 let state = { 
   destinations: [], startCity: '', startDate: '', endDate: '', startTime: '06:00', endTime: '22:00', days: 0, nights: 0, transitDaysAllocation: 2,
@@ -820,6 +851,14 @@ function togglePasswordVisibility(inputId, btnEl) {
   }
 }
 
+// Window BeforeUnload Prompt for Unsaved Plans
+window.addEventListener('beforeunload', (e) => {
+  if (hasUnsavedPlanChanges) {
+    e.preventDefault();
+    e.returnValue = 'You have unsaved travel plan changes. Are you sure you want to leave?';
+  }
+});
+
 window.addEventListener('load', async () => {
   const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
   if (session) {
@@ -843,6 +882,8 @@ async function onUserAuthenticated(session) {
   activeUserId = session.user.id;
   
   document.getElementById('navAuthGroup').innerHTML = `
+    <button class="nav-auth-btn" onclick="openMyPlansModal()">📂 My Plans</button>
+    <button class="nav-auth-btn" onclick="promptStartNewPlan()">➕ New Plan</button>
     <button class="nav-auth-btn" onclick="openAccountSettingsModal()">👤 My Account</button>
     <button class="nav-auth-btn signup-highlight" onclick="handleUserSignOut()">Sign Out</button>
   `;
@@ -856,6 +897,8 @@ async function onUserAuthenticated(session) {
 function onUserLoggedOut() {
   activeUserToken = null;
   activeUserId = null;
+  hasUnsavedPlanChanges = false;
+  currentActivePlanId = null;
   document.getElementById('navAuthGroup').innerHTML = `
     <button class="nav-auth-btn" onclick="focusAuthTab('login')">Log In</button>
     <button class="nav-auth-btn signup-highlight" onclick="focusAuthTab('signin')">Sign Up</button>
@@ -870,8 +913,44 @@ function focusAuthTab(mode) {
 }
 
 async function handleUserSignOut() {
+  if (hasUnsavedPlanChanges) {
+    const wantSave = confirm("You have unsaved changes in your current plan. Do you want to save it before logging out?");
+    if (wantSave) {
+      const saved = await saveCurrentPlanToSupabase();
+      if (!saved) return;
+    }
+  }
   await travelPlannerSupabaseClient.auth.signOut();
   showAppNotification("You have been logged out safely.");
+}
+
+async function promptStartNewPlan() {
+  if (hasUnsavedPlanChanges) {
+    const wantSave = confirm("You have unsaved changes in your current plan. Would you like to save it before starting a new plan?");
+    if (wantSave) {
+      const saved = await saveCurrentPlanToSupabase();
+      if (!saved) return;
+    }
+  }
+  
+  // Reset active state
+  currentActivePlanId = null;
+  hasUnsavedPlanChanges = false;
+  document.getElementById('outputPanel').style.display = 'none';
+  document.getElementById('step7').style.display = 'none';
+  document.getElementById('compulsoryFeedbackContainer').style.display = 'block';
+  document.getElementById('stepTabs').style.display = 'flex';
+  
+  // Reset Step Panels
+  for (let i = 1; i <= TOTAL_STEPS; i++) {
+    const panel = document.getElementById(`step${i}`);
+    if (panel) panel.classList.remove('active');
+  }
+  currentStep = 1;
+  document.getElementById('step1').classList.add('active');
+  updateProgressBar();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  showAppNotification("Started a fresh trip plan template.");
 }
 
 async function checkAndPromptProfileOnboarding(user) {
@@ -994,6 +1073,159 @@ async function updateUserPassword() {
     showAppNotification("Password updated successfully!");
     document.getElementById('newPasswordInput').value = '';
     closeAccountSettingsModal();
+  }
+}
+
+// MY PLANS MODAL & SUPABASE STORAGE ENGINE
+async function openMyPlansModal() {
+  document.getElementById('myPlansOverlay').style.display = 'flex';
+  const container = document.getElementById('savedPlansListContainer');
+  container.innerHTML = '<p style="color:var(--muted); font-size:13px; text-align:center; padding: 20px 0;">Loading your saved itineraries...</p>';
+
+  const { data: plans, error } = await travelPlannerSupabaseClient
+    .from('saved_plans')
+    .select('*')
+    .eq('user_id', activeUserId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    container.innerHTML = `<p style="color:red; font-size:13px; text-align:center;">Failed to load saved plans: ${error.message}</p>`;
+    return;
+  }
+
+  if (!plans || plans.length === 0) {
+    container.innerHTML = '<p style="color:var(--muted); font-size:13px; text-align:center; padding: 20px 0;">No saved travel plans found yet. Generate a route and click "Save Plan" to store it here!</p>';
+    return;
+  }
+
+  let listHtml = "";
+  plans.forEach(plan => {
+    const createdDate = new Date(plan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    listHtml += `
+      <div class="plan-card-item">
+        <div>
+          <div class="plan-card-title">${plan.plan_title}</div>
+          <div class="plan-card-meta">📅 Saved on ${createdDate} | ~${plan.plan_data.calculatedDistanceKM || 0} KM</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-primary" style="padding:5px 12px; font-size:12px;" onclick="loadSavedPlan('${plan.id}')">📖 Open / Edit</button>
+          <button class="btn btn-ghost" style="padding:5px 10px; font-size:12px; color:red; border-color:#fecaca;" onclick="deleteSavedPlan('${plan.id}')">🗑️</button>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = listHtml;
+}
+
+function closeMyPlansModal() {
+  document.getElementById('myPlansOverlay').style.display = 'none';
+}
+
+async function saveCurrentPlanToSupabase() {
+  if (!activeUserId) {
+    showAppNotification("Please sign in to save your plan.");
+    return false;
+  }
+
+  let defaultTitle = `Trip to ${state.destinations[0] || 'Destination'} (${state.days} Days)`;
+  const planTitle = prompt("Enter a title for this travel plan:", defaultTitle);
+  if (!planTitle) return false;
+
+  const outputBodyHtml = document.getElementById('outputBody').innerHTML;
+
+  const planPayload = {
+    user_id: activeUserId,
+    plan_title: planTitle,
+    plan_data: {
+      state: state,
+      outputBodyHtml: outputBodyHtml,
+      calculatedDistanceKM: state.calculatedDistanceKM
+    },
+    updated_at: new Date().toISOString()
+  };
+
+  let response;
+  if (currentActivePlanId) {
+    response = await travelPlannerSupabaseClient
+      .from('saved_plans')
+      .update(planPayload)
+      .eq('id', currentActivePlanId);
+  } else {
+    response = await travelPlannerSupabaseClient
+      .from('saved_plans')
+      .insert(planPayload)
+      .select();
+    
+    if (response.data && response.data[0]) {
+      currentActivePlanId = response.data[0].id;
+    }
+  }
+
+  if (response.error) {
+    showAppNotification("Error saving plan: " + response.error.message);
+    return false;
+  } else {
+    hasUnsavedPlanChanges = false;
+    showAppNotification(`Plan "${planTitle}" saved safely to My Plans!`);
+    return true;
+  }
+}
+
+async function loadSavedPlan(planId) {
+  if (hasUnsavedPlanChanges) {
+    const wantSave = confirm("You have unsaved changes in your active plan. Do you want to save before opening another?");
+    if (wantSave) {
+      const saved = await saveCurrentPlanToSupabase();
+      if (!saved) return;
+    }
+  }
+
+  const { data: plan, error } = await travelPlannerSupabaseClient
+    .from('saved_plans')
+    .select('*')
+    .eq('id', planId)
+    .single();
+
+  if (error || !plan) {
+    showAppNotification("Failed to fetch selected plan details.");
+    return;
+  }
+
+  // Restore state and output UI
+  state = plan.plan_data.state;
+  currentActivePlanId = plan.id;
+  hasUnsavedPlanChanges = false;
+
+  document.getElementById('step7').style.display = 'none';
+  document.getElementById('compulsoryFeedbackContainer').style.display = 'none';
+  document.getElementById('stepTabs').style.display = 'none';
+  
+  const outPanel = document.getElementById('outputPanel');
+  outPanel.style.display = 'block';
+  document.getElementById('outputBody').innerHTML = plan.plan_data.outputBodyHtml || '';
+
+  closeMyPlansModal();
+  showAppNotification(`Loaded plan: "${plan.plan_title}"`);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function deleteSavedPlan(planId) {
+  if (!confirm("Are you sure you want to delete this travel plan?")) return;
+
+  const { error } = await travelPlannerSupabaseClient
+    .from('saved_plans')
+    .delete()
+    .eq('id', planId);
+
+  if (error) {
+    showAppNotification("Delete failed: " + error.message);
+  } else {
+    showAppNotification("Plan deleted successfully.");
+    if (currentActivePlanId === planId) {
+      currentActivePlanId = null;
+    }
+    openMyPlansModal();
   }
 }
 
@@ -1739,44 +1971,51 @@ function modifyItinerary() {
 
 function getDayName(dateStr) { return dateStr ? new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long' }) : ''; }
 
+// SPOTLIGHT ITEM INJECTION POPUP & LOGIC
 function injectExploreTargetIntoItinerary(targetType, contentValue) {
   modalContextItem.type = targetType;
   modalContextItem.value = contentValue;
   
   const modalLabel = document.getElementById('injectionModalLabel');
-  modalLabel.innerHTML = `Enter the day number (<strong>1 to ${state.days}</strong>) where you want to add <em>"${contentValue}"</em> to your generated itinerary layout structure:`;
+  modalLabel.innerHTML = `Choose which day (<strong>Day 1 to Day ${state.days}</strong>) you want to add <em>"${contentValue}"</em> to:`;
   
   const dayInputField = document.getElementById('injectionDayInput');
   dayInputField.max = state.days;
+  dayInputField.min = 1;
   dayInputField.value = 1;
   
   document.getElementById('injectionModal').style.display = 'flex';
 }
 
-function closeInAppModal() { document.getElementById('injectionModal').style.display = 'none'; }
+function closeInAppModal() { 
+  document.getElementById('injectionModal').style.display = 'none'; 
+}
 
 function confirmInAppModalInjection() {
   const targetDayVal = parseInt(document.getElementById('injectionDayInput').value);
   const parsedDayIndex = targetDayVal - 1;
 
   if (isNaN(parsedDayIndex) || parsedDayIndex < 0 || parsedDayIndex >= state.days) {
-    alert(`Invalid day target allocation value. Drop a number between 1 and ${state.days}.`); return;
+    alert(`Invalid day target allocation. Please pick a number between 1 and ${state.days}.`); return;
   }
 
   const container = document.getElementById(`injectedExploreBox-day-${parsedDayIndex}`);
-  if (!container) { alert("This elements day card cannot handle additions."); closeInAppModal(); return; }
+  if (!container) { alert("This day card cannot accept additions."); closeInAppModal(); return; }
 
   container.style.display = "block";
+  let itemMarkup = "";
   if (modalContextItem.type === 'cuisine') {
-    container.innerHTML = `🍲 <strong>Added Culinary Goal:</strong> Explore regional food styles highlighting: <em>${modalContextItem.value}</em>.`;
+    itemMarkup = `<div style="margin-top:3px;">🍲 <strong>Added Culinary Goal:</strong> Explore regional food styles highlighting: <em>${modalContextItem.value}</em></div>`;
   } else if (modalContextItem.type === 'famous') {
-    container.innerHTML = `📸 <strong>Added Iconic Sightseeing Check:</strong> Drop by the signature landmark target: <em>${modalContextItem.value}</em>.`;
+    itemMarkup = `<div style="margin-top:3px;">📸 <strong>Added Landmark Visit:</strong> Drop by signature highlight: <em>${modalContextItem.value}</em></div>`;
   } else {
-    container.innerHTML = `🌿 <strong>Added Remote Trail Exploration:</strong> Venture down offbeat path tracks to discover: <em>${modalContextItem.value}</em>.`;
+    itemMarkup = `<div style="margin-top:3px;">🌿 <strong>Added Offbeat Trail:</strong> Venture down scenic path tracks to discover: <em>${modalContextItem.value}</em></div>`;
   }
   
+  container.innerHTML += itemMarkup;
+  hasUnsavedPlanChanges = true;
   closeInAppModal();
-  showAppNotification(`${modalContextItem.type.toUpperCase()} option added to Day ${targetDayVal} safely inside layout.`);
+  showAppNotification(`Added "${modalContextItem.value}" to Day ${targetDayVal}!`);
 }
 
 function buildSummary() {
@@ -1816,7 +2055,7 @@ async function triggerBuiltInGeneration() {
 
     if (!state.dailyPlanData || state.dailyPlanData.length === 0) {
       state.dailyPlanData = Array.from({length: state.days}, (_, i) => ({
-        date: state.startDate, place: state.destinations[0] || "Destination", vibes: ["🍛 Local Foodie"], thingsToDo: "Explore regional spots.", dailyTransit: "Local Sightseeing"
+        date: state.startDate, place: state.destinations[0] || "Destination", vibes: ["Calm"], thingsToDo: "Explore regional spots.", dailyTransit: "Local Sightseeing"
       }));
     }
 
@@ -1848,9 +2087,15 @@ async function triggerBuiltInGeneration() {
 
       if (index === 0) {
         commonHubExploreItems = `
-          <div class="discovery-item" onclick="injectExploreTargetIntoItinerary('famous', '${primaryFamousSight}')"><span>🏛️ ${primaryFamousSight}</span> <span class="discovery-tag">Famous</span></div>
-          <div class="discovery-item" onclick="injectExploreTargetIntoItinerary('offbeat', '${secondaryGemSight}')"><span>🌲 ${secondaryGemSight}</span> <span class="discovery-tag">Offbeat</span></div>
-          <div class="discovery-item" onclick="injectExploreTargetIntoItinerary('cuisine', '${eveningCulinaryVibe}')"><span>🍛 ${eveningCulinaryVibe}</span> <span class="discovery-tag">Cuisine</span></div>
+          <div class="discovery-item" onclick="injectExploreTargetIntoItinerary('famous', '${primaryFamousSight}')">
+            <span>🏛️ ${primaryFamousSight}</span> <span class="discovery-tag">Famous</span>
+          </div>
+          <div class="discovery-item" onclick="injectExploreTargetIntoItinerary('offbeat', '${secondaryGemSight}')">
+            <span>🌲 ${secondaryGemSight}</span> <span class="discovery-tag">Offbeat</span>
+          </div>
+          <div class="discovery-item" onclick="injectExploreTargetIntoItinerary('cuisine', '${eveningCulinaryVibe}')">
+            <span>🍛 ${eveningCulinaryVibe}</span> <span class="discovery-tag">Cuisine</span>
+          </div>
         `;
       }
 
@@ -1897,7 +2142,7 @@ async function triggerBuiltInGeneration() {
             <div style="background:var(--paper); padding:12px; border-radius:10px; border:1px solid var(--border);">
               <strong>☀️ Afternoon Spotlight:</strong> 
               <div style="margin-bottom:6px; padding:6px; background:var(--coral-light); border-radius:6px; font-size:13px;">🎯 Objective: <em>"${day.thingsToDo || 'Explore customized attractions chosen from deep-links.'}"</em></div>
-              <div id="injectedExploreBox-day-${index}" style="display:none; padding:8px; background:var(--success-bg); border-left:3px solid var(--success); border-radius:6px; font-size:13px; margin-bottom:10px; color:var(--success);"></div>
+              <div id="injectedExploreBox-day-${index}" style="display:none; padding:10px; background:var(--success-bg); border-left:3px solid var(--success); border-radius:6px; font-size:13px; margin-bottom:10px; color:var(--success);"></div>
               <ul style="padding-left:18px; font-size:13px; color:var(--ocean-mid);">
                 <li>📸 Famous Highlight: ${primaryFamousSight}</li>
                 <li>🌿 Detour Gem: ${secondaryGemSight}</li>
@@ -1944,6 +2189,7 @@ async function triggerBuiltInGeneration() {
     
     outPanel.style.display = 'block';
     document.getElementById('outputBody').innerHTML = htmlBody;
+    hasUnsavedPlanChanges = true; // Mark that plan is ready and unsaved
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
   } catch (error) {
@@ -2004,7 +2250,7 @@ function selectThematicRandomEngine(themeKey) {
   showAppNotification(`Theme match found! Selected ${matchedCity} automatically.`);
   if(state.startCity) runGeographicalDistanceAndSpeedSuggester();
 }
-
+ƒ
 setupMultiSelectChips('destChips', 'destinations', () => { if(state.startCity) runGeographicalDistanceAndSpeedSuggester(); });
 setupExclusiveChips('crewChips', 'crew', (val) => {
   const sizeField = document.getElementById('groupSizeField');
