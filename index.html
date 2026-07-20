@@ -25,7 +25,7 @@
   .nav-auth-btn:hover { opacity: 0.9; background: rgba(255,255,255,0.1); }
   .nav-auth-btn.signup-highlight:hover { background: var(--coral); }
 
-  .main { max-width: 780px; margin: 40px auto; padding: 0 16px; }
+  .main { max-width: 780px; margin: 40px auto; padding: 0 16px; display: none; } /* Hidden until logged in */
   .card { background: var(--white); border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid var(--border); }
   .progress-bar { height: 4px; background: var(--border); }
   .progress-fill { height: 100%; background: var(--coral); transition: width 0.4s ease; width: 14%; }
@@ -39,7 +39,7 @@
   .step-heading { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 4px; }
   .step-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
   label { display: block; font-size: 12px; font-weight: 600; color: var(--ocean-dark); margin-bottom: 5px; text-transform: uppercase; }
-  input[type="text"], input[type="date"], input[type="time"], input[type="number"], input[type="email"], input[type="password"], select, textarea {
+  input[type="text"], input[type="date"], input[type="time"], input[type="number"], input[type="email"], input[type="password"], input[type="tel"], select, textarea {
     width: 100%; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; background: white;
   }
   .form-row { display: flex; gap: 16px; margin-bottom: 18px; }
@@ -69,13 +69,23 @@
   }
   .live-helper-link:hover { background: var(--ocean); border-color: var(--ocean); color: var(--white) !important; transform: translateY(-1px); }
 
+  /* Landing Screen Hero for Unauthenticated State */
+  .landing-hero { max-width: 600px; margin: 60px auto 30px; text-align: center; padding: 0 20px; }
+  .landing-title { font-family: 'Fraunces', serif; font-size: 36px; color: var(--ocean-dark); margin-bottom: 12px; line-height: 1.2; }
+  .landing-subtitle { font-size: 16px; color: var(--muted); margin-bottom: 24px; }
+
   /* Auth Modals Styling */
-  .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13,17,23,0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; }
-  .auth-modal { background: white; border-radius: 20px; max-width: 400px; width: 90%; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+  .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13,17,23,0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+  .auth-modal { background: white; border-radius: 20px; max-width: 420px; width: 90%; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); position: relative; }
   .auth-toggle-link { color: var(--coral); font-weight: 600; cursor: pointer; text-decoration: underline; font-size: 13px; }
   .auth-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
   .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); }
   .auth-tab.active { color: var(--coral); border-bottom: 2px solid var(--coral); }
+
+  /* Password field with eye toggle */
+  .password-input-wrapper { position: relative; display: flex; align-items: center; }
+  .password-toggle-btn { position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 16px; color: var(--muted); opacity: 0.7; }
+  .password-toggle-btn:hover { opacity: 1; }
   
   .discovery-hub { display: flex; flex-direction: column; gap: 8px; background: var(--sand); padding: 12px; border-radius: 8px; margin-top: 8px; }
   .discovery-item { background: var(--white); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: space-between; }
@@ -121,6 +131,13 @@
 
 <div id="appNotificationToast" class="app-notification-toast"></div>
 
+<!-- Landing Hero view displayed when logged out -->
+<div id="landingHero" class="landing-hero">
+  <h1 class="landing-title">Your AI-Powered Journey Begins Here ✈️</h1>
+  <p class="landing-subtitle">Craft personalized routes, smart daily itineraries, and budget breakdowns in minutes. Please sign in or create an account to start planning.</p>
+  <button class="btn btn-primary" onclick="openAuthModal('signin')" style="max-width: 260px; margin: 0 auto;">Get Started / Create Account</button>
+</div>
+
 <!-- Add Spotlight Overlay Modal -->
 <div id="injectionModal" class="injection-modal-overlay">
   <div class="injection-modal-container">
@@ -146,15 +163,15 @@
   </div>
 </nav>
 
-<!-- Clean Application Auth overlay popup matrix -->
+<!-- Auth Portal Overlay -->
 <div class="auth-overlay" id="authOverlay">
   <div class="auth-modal">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
       <h3 id="authModalTitle" style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark);">Account Portal</h3>
-      <button style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted);" onclick="closeAuthModal()">×</button>
+      <button id="closeAuthModalBtn" style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted);" onclick="closeAuthModal()">×</button>
     </div>
 
-    <div class="auth-tabs">
+    <div class="auth-tabs" id="authTabsHeader">
       <div class="auth-tab active" id="authTabSignin" onclick="setAuthInterfaceMode('signin')">Sign Up</div>
       <div class="auth-tab" id="authTabLogin" onclick="setAuthInterfaceMode('login')">Log In</div>
     </div>
@@ -166,7 +183,10 @@
       </div>
       <div class="form-group" id="passwordGroup">
         <label>Password</label>
-        <input type="password" id="authPassword" placeholder="••••••••">
+        <div class="password-input-wrapper">
+          <input type="password" id="authPassword" placeholder="••••••••">
+          <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('authPassword', this)">👁️</button>
+        </div>
       </div>
       
       <button class="btn btn-primary" id="mainAuthSubmitBtn" style="width:100%; margin-bottom:12px;" onclick="handleCredentialAuth()">Continue</button>
@@ -182,7 +202,71 @@
   </div>
 </div>
 
-<div class="main">
+<!-- Traveler Details Profile Setup Modal (Triggered Post-Signup) -->
+<div class="auth-overlay" id="profileSetupOverlay" style="display: none; z-index: 1100;">
+  <div class="auth-modal" style="max-width: 480px;">
+    <h3 style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark); margin-bottom:6px;">Welcome Adventurer! 👋</h3>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:18px;">Tell us a bit about yourself to personalize your journey planning experience.</p>
+    
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="profileFullName" placeholder="e.g. Alex Morgan">
+    </div>
+    <div class="form-group">
+      <label>Default Starting City</label>
+      <input type="text" id="profileHomeCity" placeholder="e.g. Bangalore, Delhi, Mumbai">
+    </div>
+    <div class="form-group">
+      <label>Contact Phone Number (Optional)</label>
+      <input type="tel" id="profilePhone" placeholder="+91 9876543210">
+    </div>
+    
+    <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="saveTravelerProfile()">Save Profile & Start Planning →</button>
+  </div>
+</div>
+
+<!-- Account Settings & Password Change Modal -->
+<div class="auth-overlay" id="accountSettingsOverlay" style="display: none; z-index: 1100;">
+  <div class="auth-modal" style="max-width: 480px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+      <h3 style="font-family:'Fraunces', serif; font-size:20px; color:var(--ocean-dark);">User Profile & Account Settings</h3>
+      <button style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted);" onclick="closeAccountSettingsModal()">×</button>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <h4 style="font-size: 14px; color: var(--ocean-dark); margin-bottom: 10px;">👤 Profile Information</h4>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="settingsFullName">
+      </div>
+      <div class="form-group">
+        <label>Default Starting City</label>
+        <input type="text" id="settingsHomeCity">
+      </div>
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="tel" id="settingsPhone">
+      </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="updateAccountProfileDetails()">Update Profile Details</button>
+    </div>
+
+    <hr style="border:0; border-top:1px solid var(--border); margin:18px 0;">
+
+    <div>
+      <h4 style="font-size: 14px; color: var(--ocean-dark); margin-bottom: 10px;">🔒 Change Password</h4>
+      <div class="form-group">
+        <label>New Password</label>
+        <div class="password-input-wrapper">
+          <input type="password" id="newPasswordInput" placeholder="••••••••">
+          <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('newPasswordInput', this)">👁️</button>
+        </div>
+      </div>
+      <button class="btn btn-ghost" style="width:100%; border-color:var(--coral); color:var(--coral);" onclick="updateUserPassword()">Update Password</button>
+    </div>
+  </div>
+</div>
+
+<div class="main" id="mainPlannerCard">
   <div class="card">
     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
 
@@ -537,10 +621,11 @@
 <script>
 // Supabase Client Setup
 const SUPABASE_URL = "https://xtvaluybpsqllgitntwa.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlic3FsbGdpdG50d2EiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNzEwNTE4OSwiZXhwIjoyMDUyNjgxMTg5fQ.q0zM8gK1M0k4q0m1_K0k4q0m1_K0k4q0m1_K0k4q0m1"; 
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dmFsdXlicHNxbGxnaXRudHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NTM1NDQsImV4cCI6MjA5OTMyOTU0NH0.V8FT2cDAJMcfv1mtgCGWZck5wxswAlj7tyW-KbaJ8bM"; 
 
 const travelPlannerSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let activeUserToken = null;
+let activeUserId = null;
 let currentAuthMode = 'signin'; 
 
 let state = { 
@@ -640,14 +725,197 @@ function showAppNotification(messageString) {
   setTimeout(() => { toast.classList.remove('show'); }, 4500);
 }
 
+// Eye toggle for password fields
+function togglePasswordVisibility(inputId, btnEl) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btnEl.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btnEl.textContent = '👁️';
+  }
+}
+
+// Session management & page setup
 window.addEventListener('load', async () => {
   const { data: { session } } = await travelPlannerSupabaseClient.auth.getSession();
   if (session) {
-    activeUserToken = session.access_token;
-    document.getElementById('navAuthGroup').innerHTML = `<span style="color: white; font-size: 13.5px; font-weight: 600;">🟢 ${session.user.email}</span>`;
+    onUserAuthenticated(session);
+  } else {
+    onUserLoggedOut();
   }
   updateProgressBar();
 });
+
+// Listen to auth state changes (e.g. login, logout, password change)
+travelPlannerSupabaseClient.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    onUserAuthenticated(session);
+  } else if (event === 'SIGNED_OUT') {
+    onUserLoggedOut();
+  }
+});
+
+async function onUserAuthenticated(session) {
+  activeUserToken = session.access_token;
+  activeUserId = session.user.id;
+  
+  // Update Top Nav
+  document.getElementById('navAuthGroup').innerHTML = `
+    <button class="nav-auth-btn" onclick="openAccountSettingsModal()">👤 My Account</button>
+    <button class="nav-auth-btn signup-highlight" onclick="handleUserSignOut()">Sign Out</button>
+  `;
+  
+  // Hide landing view, show main planner
+  document.getElementById('landingHero').style.display = 'none';
+  document.getElementById('mainPlannerCard').style.display = 'block';
+  closeAuthModal();
+
+  // Check if profile details are populated, otherwise prompt traveler details popup
+  await checkAndPromptProfileOnboarding(session.user);
+}
+
+function onUserLoggedOut() {
+  activeUserToken = null;
+  activeUserId = null;
+  document.getElementById('navAuthGroup').innerHTML = `
+    <button class="nav-auth-btn" onclick="openAuthModal('login')">Log In</button>
+    <button class="nav-auth-btn signup-highlight" onclick="openAuthModal('signin')">Sign Up</button>
+  `;
+  document.getElementById('landingHero').style.display = 'block';
+  document.getElementById('mainPlannerCard').style.display = 'none';
+}
+
+async function handleUserSignOut() {
+  await travelPlannerSupabaseClient.auth.signOut();
+  showAppNotification("You have been logged out safely.");
+}
+
+// Check Profile Completeness & Prompt Modal
+async function checkAndPromptProfileOnboarding(user) {
+  try {
+    const { data: profile } = await travelPlannerSupabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile || !profile.full_name || !profile.home_city) {
+      document.getElementById('profileSetupOverlay').style.display = 'flex';
+      if (profile) {
+        if (profile.full_name) document.getElementById('profileFullName').value = profile.full_name;
+        if (profile.home_city) document.getElementById('profileHomeCity').value = profile.home_city;
+        if (profile.phone_number) document.getElementById('profilePhone').value = profile.phone_number;
+      }
+    } else {
+      // Pre-fill starting city in trip planner if available
+      if (profile.home_city && !document.getElementById('startCity').value) {
+        document.getElementById('startCity').value = profile.home_city;
+        state.startCity = profile.home_city;
+      }
+    }
+  } catch (e) {
+    console.warn("Profile check note:", e);
+  }
+}
+
+async function saveTravelerProfile() {
+  const fullName = document.getElementById('profileFullName').value.trim();
+  const homeCity = document.getElementById('profileHomeCity').value.trim();
+  const phone = document.getElementById('profilePhone').value.trim();
+
+  if (!fullName || !homeCity) {
+    alert("Please fill in your Full Name and Starting City to continue.");
+    return;
+  }
+
+  const { error } = await travelPlannerSupabaseClient
+    .from('profiles')
+    .upsert({
+      id: activeUserId,
+      full_name: fullName,
+      home_city: homeCity,
+      phone_number: phone,
+      updated_at: new Date().toISOString()
+    });
+
+  if (error) {
+    alert("Could not save profile details: " + error.message);
+  } else {
+    document.getElementById('profileSetupOverlay').style.display = 'none';
+    showAppNotification(`Welcome aboard, ${fullName}! Your profile is ready.`);
+    if (homeCity) {
+      document.getElementById('startCity').value = homeCity;
+      state.startCity = homeCity;
+    }
+  }
+}
+
+// Account Settings Modal
+async function openAccountSettingsModal() {
+  document.getElementById('accountSettingsOverlay').style.display = 'flex';
+  
+  // Fetch existing profile data
+  const { data: profile } = await travelPlannerSupabaseClient
+    .from('profiles')
+    .select('*')
+    .eq('id', activeUserId)
+    .single();
+
+  if (profile) {
+    document.getElementById('settingsFullName').value = profile.full_name || '';
+    document.getElementById('settingsHomeCity').value = profile.home_city || '';
+    document.getElementById('settingsPhone').value = profile.phone_number || '';
+  }
+}
+
+function closeAccountSettingsModal() {
+  document.getElementById('accountSettingsOverlay').style.display = 'none';
+}
+
+async function updateAccountProfileDetails() {
+  const fullName = document.getElementById('settingsFullName').value.trim();
+  const homeCity = document.getElementById('settingsHomeCity').value.trim();
+  const phone = document.getElementById('settingsPhone').value.trim();
+
+  const { error } = await travelPlannerSupabaseClient
+    .from('profiles')
+    .upsert({
+      id: activeUserId,
+      full_name: fullName,
+      home_city: homeCity,
+      phone_number: phone,
+      updated_at: new Date().toISOString()
+    });
+
+  if (error) {
+    showAppNotification("Failed to update profile: " + error.message);
+  } else {
+    showAppNotification("Profile details updated successfully!");
+    closeAccountSettingsModal();
+  }
+}
+
+async function updateUserPassword() {
+  const newPassword = document.getElementById('newPasswordInput').value;
+  if (!newPassword || newPassword.length < 6) {
+    showAppNotification("Password must be at least 6 characters long.");
+    return;
+  }
+
+  const { error } = await travelPlannerSupabaseClient.auth.updateUser({
+    password: newPassword
+  });
+
+  if (error) {
+    showAppNotification("Password update failed: " + error.message);
+  } else {
+    showAppNotification("Password updated successfully!");
+    document.getElementById('newPasswordInput').value = '';
+    closeAccountSettingsModal();
+  }
+}
 
 // App Authentication Window Controls
 function openAuthModal(mode) {
@@ -655,7 +923,9 @@ function openAuthModal(mode) {
   if(mode) setAuthInterfaceMode(mode);
 }
 
-function closeAuthModal() { document.getElementById('authOverlay').style.display = 'none'; }
+function closeAuthModal() { 
+  document.getElementById('authOverlay').style.display = 'none'; 
+}
 
 function setAuthInterfaceMode(mode) {
   currentAuthMode = mode;
@@ -706,26 +976,42 @@ async function handleCredentialAuth() {
   if (currentAuthMode === 'signin') {
     const { data, error } = await travelPlannerSupabaseClient.auth.signUp({ email, password });
     if (error) {
-      if(error.message.toLowerCase().includes("already registered") || error.status === 422) {
+      // Catch existing account error and notify user
+      if(error.message.toLowerCase().includes("already registered") || error.status === 422 || error.message.toLowerCase().includes("user already exists")) {
         setAuthInterfaceMode('login');
-        errMsg.textContent = "Account verified. Please enter your password to log in directly.";
+        errMsg.textContent = "An account with this email already exists! Please enter your password to log in.";
         errMsg.classList.add('show');
-      } else { errMsg.textContent = error.message; errMsg.classList.add('show'); }
-    } else { showAppNotification("Verification link dispatched to your inbox!"); closeAuthModal(); }
+        showAppNotification("Account already exists! Switched to Log In.");
+      } else { 
+        errMsg.textContent = error.message; errMsg.classList.add('show'); 
+      }
+    } else { 
+      if (data.session) {
+        showAppNotification("Account created successfully!");
+        closeAuthModal();
+      } else {
+        showAppNotification("Verification link dispatched to your inbox! Check your email.");
+        closeAuthModal();
+      }
+    }
   } else if (currentAuthMode === 'login') {
     const { data, error } = await travelPlannerSupabaseClient.auth.signInWithPassword({ email, password });
-    if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); }
-    else {
-      activeUserToken = data.session.access_token;
-      document.getElementById('navAuthGroup').innerHTML = `<span style="color: white; font-size: 13.5px; font-weight: 600;">🟢 ${data.user.email}</span>`;
+    if (error) { 
+      errMsg.textContent = error.message; errMsg.classList.add('show'); 
+    } else {
+      showAppNotification("Welcome back!");
       closeAuthModal();
     }
   } else if (currentAuthMode === 'recovery') {
     const { error } = await travelPlannerSupabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${window.location.origin}`,
     });
-    if (error) { errMsg.textContent = error.message; errMsg.classList.add('show'); }
-    else { showAppNotification("Password initialization link sent."); closeAuthModal(); }
+    if (error) { 
+      errMsg.textContent = error.message; errMsg.classList.add('show'); 
+    } else { 
+      showAppNotification("Password reset email sent! Check your inbox."); 
+      closeAuthModal(); 
+    }
   }
 }
 
@@ -1341,11 +1627,16 @@ async function submitStepAndProgress(stepNum, nextStepNum, stepName) {
   const betaFeedbackText = document.getElementById('singleBetaFeedbackInput').value.trim();
   if (!betaFeedbackText) { showAppNotification("Please share your feedback below to advance parameters!"); return; }
 
+  // Save feedback to Supabase journey_feedback table
   try {
     await travelPlannerSupabaseClient.from('journey_feedback').insert({
-      step_number: stepNum, step_name: stepName, feedback_rating: 'v15_multimodal_enabled', user_comments: betaFeedbackText
+      user_id: activeUserId || null,
+      step_number: stepNum, 
+      step_name: stepName, 
+      feedback_rating: 'v15_multimodal_enabled', 
+      user_comments: betaFeedbackText
     });
-  } catch(e) { console.warn("Logged safely."); }
+  } catch(e) { console.warn("Logged safely.", e); }
 
   document.getElementById('singleBetaFeedbackInput').value = '';
   
